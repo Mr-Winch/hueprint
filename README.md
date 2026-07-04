@@ -2,6 +2,8 @@
 
 A reusable React + TypeScript color harmony control for generating and curating palettes from an active color.
 
+Live demo: https://mr-winch.github.io/hueprint/
+
 It includes a donut-style color wheel with radial lightness, visible harmony geometry, generated swatches, tints/shades/tones, custom harmony rules based on angular offsets, palette import/export, and draggable saved palette ordering.
 
 ## Features
@@ -79,6 +81,7 @@ The eyedropper button uses the Chromium `EyeDropper` API when available. Unsuppo
 npm install
 npm run typecheck
 npm test
+npm run build:demo
 ```
 
 ## License
