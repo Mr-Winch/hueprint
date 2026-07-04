@@ -1,0 +1,88 @@
+# Color Harmony Picker
+
+A reusable React + TypeScript color harmony control for generating and curating palettes from an active color.
+
+It includes a donut-style color wheel with radial lightness, visible harmony geometry, generated swatches, tints/shades/tones, custom harmony rules based on angular offsets, palette import/export, and draggable saved palette ordering.
+
+This component was built as a custom implementation after evaluating the fork/wrapper path described in the original brief. It does not copy code from `@studiotoolkit/color-wheel`.
+
+## Features
+
+- React + TypeScript component: `<ColorHarmonyPicker />`
+- Donut wheel with hue by angle and lightness by radius
+- Harmony rules: monochromatic, analogous, complementary, split complementary, triadic, square, rectangle/tetradic, polygon/equidistant, tint, shade, tone, custom
+- SVG harmony geometry overlay
+- Generated swatch band with active marker
+- Active color HEX, RGB, CMYK, and HSL info
+- Native browser eyedropper support where available
+- Saved palette with select, remove, clear, drag reorder, import, and export
+- Custom harmony rules store hue offsets from the anchor color, not fixed colors
+
+## Install By Source Copy
+
+Copy this folder into your React or Next.js project:
+
+```text
+src/color-harmony-picker
+```
+
+Then import it:
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import { ColorHarmonyPicker } from "./color-harmony-picker";
+
+export function PaletteTool() {
+  const [color, setColor] = useState("#2F80ED");
+
+  return (
+    <ColorHarmonyPicker
+      value={color}
+      onChange={setColor}
+      initialRule="analogous"
+      initialSwatchCount={5}
+    />
+  );
+}
+```
+
+The component uses CSS Modules. If your project does not already support `*.module.css`, add support before importing the component.
+
+## Props
+
+```ts
+export interface ColorHarmonyPickerProps {
+  value: string;
+  onChange?: (color: string) => void;
+  onGeneratedColorsChange?: (colors: GeneratedColor[]) => void;
+  onAddToPalette?: (color: GeneratedColor) => void;
+  initialRule?: HarmonyRule;
+  initialSwatchCount?: number;
+  minSwatches?: number;
+  maxSwatches?: number;
+  showGeometryOverlay?: boolean;
+  className?: string;
+}
+```
+
+## Styling
+
+The component is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by editing the CSS variables and class rules in that file. The current layout is compact so it can be embedded in editor side panels.
+
+## Browser Notes
+
+The eyedropper button uses the Chromium `EyeDropper` API when available. Unsupported browsers will show the button disabled.
+
+## Development
+
+```bash
+npm install
+npm run typecheck
+npm test
+```
+
+## License
+
+MIT
