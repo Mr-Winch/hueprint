@@ -108,6 +108,7 @@ export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelPro
     const outerRadius = size / 2;
     const thickness = (WHEEL_THICKNESS / WHEEL_SIZE) * size;
     const innerRadius = outerRadius - thickness;
+    const edgeSoftness = Math.max(1, pixelRatio);
     const saturation = clamp(currentHsl.s, 0, 1);
 
     for (let y = 0; y < size; y += 1) {
@@ -117,7 +118,11 @@ export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelPro
         const distance = Math.sqrt(dx * dx + dy * dy);
         const index = (y * size + x) * 4;
 
-        if (distance < innerRadius || distance > outerRadius) {
+        const innerCoverage = clamp((distance - innerRadius) / edgeSoftness, 0, 1);
+        const outerCoverage = clamp((outerRadius - distance) / edgeSoftness, 0, 1);
+        const alpha = Math.min(innerCoverage, outerCoverage);
+
+        if (alpha <= 0) {
           image.data[index + 3] = 0;
           continue;
         }
@@ -129,7 +134,7 @@ export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelPro
         image.data[index] = rgb.r;
         image.data[index + 1] = rgb.g;
         image.data[index + 2] = rgb.b;
-        image.data[index + 3] = 255;
+        image.data[index + 3] = Math.round(255 * alpha);
       }
     }
 
