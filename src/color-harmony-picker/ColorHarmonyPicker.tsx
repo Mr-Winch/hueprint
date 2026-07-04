@@ -166,24 +166,34 @@ export function ColorHarmonyPicker({
     });
   }
 
-  function customOffsetsFromPalette(palette: GeneratedColor[]) {
-    const offsets = palette.map((color) => normalizeHue(hexToWheelHue(color.hex, activeHue) - activeHue));
-    if (!offsets.some((offset) => Math.abs(offset) < 1)) offsets.unshift(0);
+  function customAnchorFromPalette(palette: GeneratedColor[]) {
+    return palette.find((color) => color.hex.toUpperCase() === activeHex.toUpperCase()) ?? palette[0];
+  }
+
+  function customOffsetsFromPalette(palette: GeneratedColor[], anchorHue: number) {
+    const offsets = palette.slice(0, maxSwatches).map((color) => normalizeHue(hexToWheelHue(color.hex, anchorHue) - anchorHue));
     while (offsets.length < minSwatches) {
       offsets.push(normalizeHue((360 / minSwatches) * offsets.length));
     }
-    return offsets.slice(0, maxSwatches);
+    return offsets;
   }
 
   function syncCustomRuleToPalette(palette: GeneratedColor[]) {
-    const offsets = customOffsetsFromPalette(palette);
+    const anchorColor = customAnchorFromPalette(palette);
+    if (!anchorColor) return;
+    const anchorHue = hexToWheelHue(anchorColor.hex, activeHue);
+    const offsets = customOffsetsFromPalette(palette, anchorHue);
+    if (anchorColor.hex.toUpperCase() !== activeHex.toUpperCase()) commitColor(anchorColor.hex);
     setCustomOffsets(offsets);
     setSwatchCount(clamp(offsets.length, minSwatches, maxSwatches));
   }
 
   function applySavedPaletteAsCustomRule() {
     if (!savedPalette.length) return;
-    const offsets = customOffsetsFromPalette(savedPalette);
+    const anchorColor = customAnchorFromPalette(savedPalette);
+    const anchorHue = hexToWheelHue(anchorColor.hex, activeHue);
+    const offsets = customOffsetsFromPalette(savedPalette, anchorHue);
+    if (anchorColor.hex.toUpperCase() !== activeHex.toUpperCase()) commitColor(anchorColor.hex);
     setCustomOffsets(offsets);
     setLastHarmonyRule("custom");
     setRule("custom");
