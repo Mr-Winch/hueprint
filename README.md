@@ -4,8 +4,6 @@ A reusable React + TypeScript color harmony control for generating and curating 
 
 It includes a donut-style color wheel with radial lightness, visible harmony geometry, generated swatches, tints/shades/tones, custom harmony rules based on angular offsets, palette import/export, and draggable saved palette ordering.
 
-This component was built as a custom implementation after evaluating the fork/wrapper path described in the original brief. 
-
 ## Features
 
 - React + TypeScript component: `<ColorHarmonyPicker />`
