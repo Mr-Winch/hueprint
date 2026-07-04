@@ -44,6 +44,13 @@ export function EditorColorPanel() {
 Palette recipes are anchor-relative OKLCH transform sets. Each recipe swatch is generated from the active color with `L = anchor.L + dL`, `C = anchor.C * multiplier`, and `H = anchor.H + dH`, then fitted into sRGB by reducing chroma before changing perceived lightness. This keeps recipes portable across anchors instead of baking fixed colors into the component.
 
 Choosing a recipe updates the swatch count to that recipe's native transform count. The swatch slider can still be used for exploratory variants.
+
+### Adding or removing palette recipes
+
+Palette recipes are intentionally source-copy friendly. To add one, add an ID to `PaletteRecipe` in `src/color-harmony-picker/colorHarmony.types.ts`, add its display label to `paletteRecipeLabels`, add the ID to `paletteRecipeOrder`, and add its OKLCH transforms to `recipeDefinitions` in `src/color-harmony-picker/colorHarmony.recipes.ts`.
+
+To remove one, delete the same ID from those places. The dropdown, native swatch count, generated colors, and geometry overlay are all driven by those definitions.
+
 ## Custom Harmony Rule
 
 The custom rule is geometric. It stores hue offsets from the active anchor hue. If a custom harmony was built from a blue palette and the active color changes to red, the same angular relationships are preserved around red.

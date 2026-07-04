@@ -3,7 +3,7 @@
   --wheel-thickness: 34px;
   --marker-size: 16px;
   --overlay-opacity: 0.72;
-  --overlay-stroke-width: 1.15px;
+  --overlay-stroke-width: 1.35px;
   --swatch-band-height: 32px;
   display: grid;
   grid-template-columns: minmax(184px, 204px) minmax(250px, 1fr);

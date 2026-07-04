@@ -276,7 +276,7 @@ export function ColorHarmonyPicker({
       <div className={styles.wheelColumn}>
         <div className={styles.wheelWrap}>
           <ColorHarmonyWheel color={activeHex} hue={activeHue} onChange={commitColor} />
-          {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={paletteRecipe === "none" ? rule : "custom"} /> : null}
+          {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={paletteRecipe === "none" ? rule : "custom"} recipeMode={paletteRecipe !== "none"} /> : null}
         </div>
         <ActiveColorInfo hex={activeHex} />
       </div>

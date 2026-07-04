@@ -26,7 +26,7 @@ const recipeDefinitions: RecipeDefinition[] = [
   { id: "dustAccent", transforms: [{ dL: 0, c: 1, dH: 0 }, { dL: -0.28, c: 0.22, dH: 5 }, { dL: 0.18, c: 0.2, dH: 5 }, { dL: 0.12, c: 1.05, dH: 115 }] },
   { id: "friendlyContrast", transforms: [{ dL: 0, c: 1, dH: 0 }, { dL: 0.24, c: 0.95, dH: 0 }, { dL: -0.01, c: 1.15, dH: -95 }, { dL: -0.24, c: 1.05, dH: -95 }] },
   { id: "seededShades", transforms: [{ dL: 0, c: 1, dH: 0 }, { dL: 0.28, c: 0.45, dH: -8 }, { dL: 0.12, c: 0.85, dH: 6 }, { dL: -0.22, c: 0.8, dH: 0 }, { dL: 0.34, c: 0.3, dH: 12 }] },
-  { id: "cleanUi", transforms: [{ dL: 0, c: 1, dH: 0 }, { dL: 0.36, c: 0.12, dH: 0 }, { dL: -0.38, c: 0.18, dH: 0 }, { dL: 0.04, c: 0.85, dH: -85 }, { dL: 0.3, c: 0.08, dH: 0 }] },
+  { id: "cleanUi", transforms: [{ dL: 0, c: 1, dH: 0 }, { dL: 0.46, c: 0.04, dH: 0 }, { dL: 0.36, c: 0.12, dH: 0 }, { dL: -0.38, c: 0.18, dH: 0 }, { dL: 0.04, c: 0.85, dH: -85 }, { dL: 0.3, c: 0.08, dH: 0 }] },
   { id: "boldPop", transforms: [{ dL: 0, c: 1, dH: 0 }, { dL: 0.04, c: 1.25, dH: 90 }, { dL: -0.02, c: 1.2, dH: -95 }, { dL: 0.12, c: 1.15, dH: 150 }, { dL: -0.18, c: 0.9, dH: 0 }] },
   { id: "mutedEditorial", transforms: [{ dL: 0, c: 0.7, dH: 0 }, { dL: -0.22, c: 0.22, dH: 4 }, { dL: 0.16, c: 0.18, dH: 6 }, { dL: 0.28, c: 0.1, dH: 0 }, { dL: -0.04, c: 0.45, dH: 105 }] },
   { id: "luxuryNeutral", transforms: [{ dL: 0, c: 0.65, dH: 0 }, { dL: -0.32, c: 0.16, dH: 20 }, { dL: -0.12, c: 0.12, dH: 35 }, { dL: 0.2, c: 0.1, dH: 45 }, { dL: 0.08, c: 0.55, dH: 115 }] },

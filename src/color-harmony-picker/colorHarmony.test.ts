@@ -53,6 +53,7 @@ test("tint generation uses the active input color", () => {
 
 test("palette recipes derive OKLCH transforms from the active anchor", () => {
   assert.equal(paletteRecipeSize("spotAccent"), 4);
+  assert.equal(paletteRecipeSize("cleanUi"), 6);
   const blue = generatePaletteRecipeColors("#3366FF", "spotAccent", 4);
   const red = generatePaletteRecipeColors("#FF3333", "spotAccent", 4);
   assert.equal(blue.length, 4);
