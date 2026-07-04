@@ -8,6 +8,7 @@ import styles from "./ColorHarmonyPicker.module.css";
 import { GeneratedSwatches } from "./GeneratedSwatches";
 import { HarmonyOverlay } from "./HarmonyOverlay";
 import { HarmonyRuleSelector } from "./HarmonyRuleSelector";
+import { PaletteRecipeSelector } from "./PaletteRecipeSelector";
 import { SavedPaletteStrip } from "./SavedPaletteStrip";
 import { SwatchCountControl } from "./SwatchCountControl";
 import {
@@ -20,8 +21,9 @@ import {
   normalizeHue,
   sanitizeHex,
 } from "./colorHarmony.math";
+import { generatePaletteRecipeColors, paletteRecipeSize } from "./colorHarmony.recipes";
 import { generateShades, generateTints, generateTones } from "./colorHarmony.tonal";
-import { ColorHarmonyPickerProps, GeneratedColor, HarmonyRule } from "./colorHarmony.types";
+import { ColorHarmonyPickerProps, GeneratedColor, HarmonyRule, PaletteRecipe } from "./colorHarmony.types";
 
 function paletteFileName() {
   const stamp = new Date().toISOString().slice(0, 10);
@@ -80,6 +82,7 @@ export function ColorHarmonyPicker({
 }: ColorHarmonyPickerProps) {
   const [activeHex, setActiveHex] = useState(() => sanitizeHex(value));
   const [rule, setRule] = useState<HarmonyRule>(initialRule);
+  const [paletteRecipe, setPaletteRecipe] = useState<PaletteRecipe>("none");
   const [lastHarmonyRule, setLastHarmonyRule] = useState<HarmonyRule>(isTonalRule(initialRule) ? "analogous" : initialRule);
   const [swatchCount, setSwatchCount] = useState(() => clamp(initialSwatchCount, minSwatches, maxSwatches));
   const [fallbackHue, setFallbackHue] = useState(() => hexToWheelHue(value));
@@ -98,12 +101,13 @@ export function ColorHarmonyPicker({
   }, [activeHue]);
 
   const generatedColors = useMemo(() => {
+    if (paletteRecipe !== "none") return generatePaletteRecipeColors(activeHex, paletteRecipe, swatchCount, fallbackHue);
     if (rule === "tint") return generateTints(activeHex, swatchCount);
     if (rule === "shade") return generateShades(activeHex, swatchCount);
     if (rule === "tone") return generateTones(activeHex, swatchCount);
     if (rule === "custom") return customHarmonyColors(activeHex, customOffsets, fallbackHue);
     return generateHarmonyColors(activeHex, rule, swatchCount, fallbackHue);
-  }, [activeHex, customOffsets, fallbackHue, rule, swatchCount]);
+  }, [activeHex, customOffsets, fallbackHue, paletteRecipe, rule, swatchCount]);
 
   useEffect(() => {
     onGeneratedColorsChange?.(generatedColors);
@@ -121,11 +125,17 @@ export function ColorHarmonyPicker({
 
   function selectHarmonyRule(nextRule: HarmonyRule) {
     const fixedCount = fixedSwatchCountForRule(nextRule, minSwatches, maxSwatches);
+    setPaletteRecipe("none");
     setLastHarmonyRule(nextRule);
     setRule(nextRule);
     if (fixedCount != null) setSwatchCount(fixedCount);
   }
 
+  function selectPaletteRecipe(nextRecipe: PaletteRecipe) {
+    setPaletteRecipe(nextRecipe);
+    const recipeCount = paletteRecipeSize(nextRecipe);
+    if (recipeCount != null) setSwatchCount(clamp(recipeCount, minSwatches, maxSwatches));
+  }
   function changeSwatchCount(nextCount: number) {
     const safeCount = clamp(nextCount, minSwatches, maxSwatches);
     setSwatchCount(safeCount);
@@ -140,7 +150,10 @@ export function ColorHarmonyPicker({
     });
   }
 
-  const activeGeneratedColor = useMemo(() => generatedColors.find((color) => color.hex.toUpperCase() === activeHex.toUpperCase()) ?? makeGeneratedColorFromHex(rule, 0, activeHex, "anchor", fallbackHue), [activeHex, fallbackHue, generatedColors, rule]);
+  const activeGeneratedColor = useMemo(() => {
+    const activeSource = paletteRecipe === "none" ? rule : paletteRecipe;
+    return generatedColors.find((color) => color.hex.toUpperCase() === activeHex.toUpperCase()) ?? makeGeneratedColorFromHex(activeSource, 0, activeHex, "anchor", fallbackHue);
+  }, [activeHex, fallbackHue, generatedColors, paletteRecipe, rule]);
 
   const activeColorIsSaved = savedPalette.some((color) => color.hex.toUpperCase() === activeHex.toUpperCase());
 
@@ -263,16 +276,17 @@ export function ColorHarmonyPicker({
       <div className={styles.wheelColumn}>
         <div className={styles.wheelWrap}>
           <ColorHarmonyWheel color={activeHex} hue={activeHue} onChange={commitColor} />
-          {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={rule} /> : null}
+          {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={paletteRecipe === "none" ? rule : "custom"} /> : null}
         </div>
         <ActiveColorInfo hex={activeHex} />
       </div>
 
       <div className={styles.controlColumn}>
-        <ActiveColorPanel activeHex={activeHex} canAddActiveColor={!activeColorIsSaved} onAddActiveColor={() => addToPalette(activeGeneratedColor)} onColorChange={commitColor} onRuleChange={setRule} />
+        <ActiveColorPanel activeHex={activeHex} canAddActiveColor={!activeColorIsSaved} onAddActiveColor={() => addToPalette(activeGeneratedColor)} onColorChange={commitColor} onRuleChange={(nextRule) => { setPaletteRecipe("none"); setRule(nextRule); }} />
 
         <div className={styles.controlRow}>
-          <HarmonyRuleSelector value={isTonalRule(rule) ? lastHarmonyRule : rule} onChange={selectHarmonyRule} />
+          <HarmonyRuleSelector value={paletteRecipe === "none" && !isTonalRule(rule) ? rule : lastHarmonyRule} onChange={selectHarmonyRule} />
+          <PaletteRecipeSelector value={paletteRecipe} onChange={selectPaletteRecipe} />
           <SwatchCountControl value={rule === "custom" ? customOffsets.length : swatchCount} min={minSwatches} max={maxSwatches} onChange={changeSwatchCount} />
         </div>
 
@@ -301,3 +315,6 @@ export function ColorHarmonyPicker({
     </section>
   );
 }
+
+
+

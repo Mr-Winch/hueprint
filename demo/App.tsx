@@ -9,7 +9,7 @@ export function ColorHarmonyDemo() {
     <main className="demoShell" data-theme={theme}>
       <section className="demoIntro" aria-labelledby="demo-title">
         <div className="demoTopline">
-          <p className="demoEyebrow">Hueprint</p>
+          <a className="demoRepoLink" href="https://github.com/Mr-Winch/hueprint">Hueprint on GitHub</a>
           <div className="themeSwitch" aria-label="Demo theme">
             <button type="button" aria-pressed={theme === "light"} onClick={() => setTheme("light")}>Light</button>
             <button type="button" aria-pressed={theme === "dark"} onClick={() => setTheme("dark")}>Dark</button>
@@ -18,7 +18,7 @@ export function ColorHarmonyDemo() {
         <h1 id="demo-title">Color Harmony Picker</h1>
         <p>
           A reusable React color harmony tool with radial lightness, geometric harmony rules,
-          tonal palettes, custom offset rules, and palette import/export.
+          tonal palettes, OKLCH palette recipes, custom offset rules, and palette import/export.
         </p>
       </section>
 

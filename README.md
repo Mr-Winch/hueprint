@@ -4,13 +4,14 @@ A reusable React + TypeScript color harmony control for generating and curating 
 
 Live demo: https://mr-winch.github.io/hueprint/
 
-It includes a donut-style color wheel with radial lightness, visible harmony geometry, generated swatches, tints/shades/tones, custom harmony rules based on angular offsets, palette import/export, and draggable saved palette ordering.
+It includes a donut-style color wheel with radial lightness, visible harmony geometry, generated swatches, tints/shades/tones, OKLCH palette recipes, custom harmony rules based on angular offsets, palette import/export, and draggable saved palette ordering.
 
 ## Features
 
 - React + TypeScript component: `<ColorHarmonyPicker />`
 - Donut wheel with hue by angle and lightness by radius
 - Harmony rules: monochromatic, analogous, complementary, split complementary, triadic, square, rectangle/tetradic, polygon/equidistant, tint, shade, tone, custom
+- Palette recipes generated from direct OKLCH anchor transforms, including Warm Arc, Spot Accent, Clean UI, Luxury Neutral, High Contrast, and more
 - SVG harmony geometry overlay
 - Generated swatch band with active marker
 - Active color HEX, RGB, CMYK, and HSL info
@@ -70,7 +71,7 @@ export interface ColorHarmonyPickerProps {
 
 ## Styling
 
-The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by editing the CSS variables and class rules in that file. The current layout is compact so it can be embedded in editor side panels.
+The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`. The current layout is compact so it can be embedded in editor side panels.
 
 ## Browser Notes
 
@@ -88,3 +89,4 @@ npm run build:demo
 ## License
 
 MIT
+

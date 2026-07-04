@@ -55,6 +55,7 @@ select {
   margin-bottom: 8px;
 }
 
+.demoRepoLink,
 .demoEyebrow {
   margin: 0;
   color: #64748b;
@@ -64,6 +65,15 @@ select {
   text-transform: uppercase;
 }
 
+.demoRepoLink {
+  text-decoration: none;
+}
+
+.demoRepoLink:hover {
+  color: #1f5f8b;
+}
+
+.demoShell[data-theme="dark"] .demoRepoLink,
 .demoShell[data-theme="dark"] .demoEyebrow {
   color: #94a3b8;
 }
@@ -157,3 +167,4 @@ select {
     min-width: 0;
   }
 }
+

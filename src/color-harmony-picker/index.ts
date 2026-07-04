@@ -1,2 +1,3 @@
 export { ColorHarmonyPicker } from "./ColorHarmonyPicker";
-export type { ColorHarmonyPickerProps, ColorHarmonyTheme, GeneratedColor, HarmonyRule } from "./colorHarmony.types";
+export type { ColorHarmonyPickerProps, ColorHarmonyTheme, GeneratedColor, GeneratedColorSource, HarmonyRule, PaletteRecipe } from "./colorHarmony.types";
+

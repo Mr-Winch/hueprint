@@ -9,6 +9,7 @@
 5. Use `onAddToPalette` if the host editor owns its own palette state.
 6. Set `theme="dark"` when embedding in dark editor surfaces, otherwise omit it for light mode.
 7. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
+8. Use CSS variables on the wrapper or edit `ColorHarmonyPicker.module.css` to align spacing, color, wheel size, overlay thickness, swatch height, and dark/light surfaces with the host UI.
 
 ## Example
 
@@ -38,6 +39,11 @@ export function EditorColorPanel() {
 }
 ```
 
+## Palette Recipes
+
+Palette recipes are anchor-relative OKLCH transform sets. Each recipe swatch is generated from the active color with `L = anchor.L + dL`, `C = anchor.C * multiplier`, and `H = anchor.H + dH`, then fitted into sRGB by reducing chroma before changing perceived lightness. This keeps recipes portable across anchors instead of baking fixed colors into the component.
+
+Choosing a recipe updates the swatch count to that recipe's native transform count. The swatch slider can still be used for exploratory variants.
 ## Custom Harmony Rule
 
 The custom rule is geometric. It stores hue offsets from the active anchor hue. If a custom harmony was built from a blue palette and the active color changes to red, the same angular relationships are preserved around red.

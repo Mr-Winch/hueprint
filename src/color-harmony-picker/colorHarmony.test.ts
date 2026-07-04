@@ -10,6 +10,7 @@ import {
   splitComplementaryHues,
   squareHues,
 } from "./colorHarmony.math";
+import { generatePaletteRecipeColors, paletteRecipeSize } from "./colorHarmony.recipes";
 import { generateTints } from "./colorHarmony.tonal";
 
 test("normalizes hue angles into [0, 360)", () => {
@@ -48,3 +49,15 @@ test("tint generation uses the active input color", () => {
   assert.equal(blueTint.sourceRule, "tint");
   assert.equal(redTint.role, "tint");
 });
+
+
+test("palette recipes derive OKLCH transforms from the active anchor", () => {
+  assert.equal(paletteRecipeSize("spotAccent"), 4);
+  const blue = generatePaletteRecipeColors("#3366FF", "spotAccent", 4);
+  const red = generatePaletteRecipeColors("#FF3333", "spotAccent", 4);
+  assert.equal(blue.length, 4);
+  assert.equal(blue[0].role, "anchor");
+  assert.equal(blue[1].sourceRule, "spotAccent");
+  assert.notEqual(blue[3].hex, red[3].hex);
+});
+

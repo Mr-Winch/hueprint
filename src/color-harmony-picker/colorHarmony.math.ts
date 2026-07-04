@@ -1,4 +1,4 @@
-import { GeneratedColor, HarmonyRule } from "./colorHarmony.types";
+import { GeneratedColor, GeneratedColorSource, HarmonyRule } from "./colorHarmony.types";
 
 export type OklchColor = {
   l: number;
@@ -199,7 +199,7 @@ export function hexToOklch(hex: string, fallbackHue = 0): OklchColor {
   return { l: clamp(okL, 0, 1), c, h: hue };
 }
 
-export function oklchToHex(color: OklchColor): string {
+function oklchToRgbRaw(color: OklchColor): Rgb {
   const hRad = (normalizeHue(color.h) * Math.PI) / 180;
   const a = color.c * Math.cos(hRad);
   const b = color.c * Math.sin(hRad);
@@ -213,15 +213,37 @@ export function oklchToHex(color: OklchColor): string {
   const mCubed = mPrime ** 3;
   const sCubed = sPrime ** 3;
 
-  return rgbToHex({
+  return {
     r: linearToSrgb(4.0767416621 * lCubed - 3.3077115913 * mCubed + 0.2309699292 * sCubed),
     g: linearToSrgb(-1.2684380046 * lCubed + 2.6097574011 * mCubed - 0.3413193965 * sCubed),
     b: linearToSrgb(-0.0041960863 * lCubed - 0.7034186147 * mCubed + 1.707614701 * sCubed),
-  });
+  };
+}
+
+function rgbIsInGamut(rgb: Rgb): boolean {
+  return rgb.r >= 0 && rgb.r <= 1 && rgb.g >= 0 && rgb.g <= 1 && rgb.b >= 0 && rgb.b <= 1;
+}
+
+export function fitOklchToSrgb(color: OklchColor): OklchColor {
+  const fitted = { l: clamp(color.l, 0.08, 0.96), c: clamp(color.c, 0.02, 0.34), h: normalizeHue(color.h) };
+  if (rgbIsInGamut(oklchToRgbRaw(fitted))) return fitted;
+
+  let low = 0;
+  let high = fitted.c;
+  for (let i = 0; i < 18; i += 1) {
+    const c = (low + high) / 2;
+    if (rgbIsInGamut(oklchToRgbRaw({ ...fitted, c }))) low = c;
+    else high = c;
+  }
+  return { ...fitted, c: Math.max(0.02, low) };
+}
+
+export function oklchToHex(color: OklchColor): string {
+  return rgbToHex(oklchToRgbRaw(fitOklchToSrgb(color)));
 }
 
 export function makeGeneratedColor(
-  rule: HarmonyRule,
+  rule: GeneratedColorSource,
   index: number,
   oklch: OklchColor,
   role: GeneratedColor["role"] = "harmony"
@@ -236,7 +258,7 @@ export function makeGeneratedColor(
 }
 
 export function makeGeneratedColorFromHex(
-  rule: HarmonyRule,
+  rule: GeneratedColorSource,
   index: number,
   hex: string,
   role: GeneratedColor["role"] = "harmony",
@@ -328,3 +350,6 @@ export function generateHarmonyColors(color: string, rule: HarmonyRule, count: n
 
   return [makeGeneratedColorFromHex(rule, 0, color, "custom", baseHsl.h)];
 }
+
+
+

@@ -99,6 +99,19 @@ export function ActiveColorPanel({ activeHex, canAddActiveColor, onAddActiveColo
               if (/^#?[a-f\d]{0,6}$/i.test(value)) setDraftHex(value.startsWith("#") ? value : `#${value}`);
             }}
           />
+          <div className={styles.lightnessControl}>
+            <label htmlFor="active-lightness">Lightness</label>
+            <input
+              id="active-lightness"
+              className={styles.lightnessRange}
+              type="range"
+              min={LIGHTNESS_MIN_PERCENT}
+              max={LIGHTNESS_MAX_PERCENT}
+              value={clamp(Math.round(activeHsl.l * 100), LIGHTNESS_MIN_PERCENT, LIGHTNESS_MAX_PERCENT)}
+              onChange={(event) => changeLightness(Number(event.target.value))}
+              style={{ background: `linear-gradient(90deg, #000000, ${activeHex}, #ffffff)` }}
+            />
+          </div>
           <button
             type="button"
             className={`${styles.iconButton} ${styles.squareIconButton}`}
@@ -131,19 +144,6 @@ export function ActiveColorPanel({ activeHex, canAddActiveColor, onAddActiveColo
             <span className={`${styles.toolIcon} ${copied ? styles.checkIcon : styles.copyIcon}`} aria-hidden="true" />
           </button>
         </div>
-        <div className={styles.lightnessControl}>
-          <label htmlFor="active-lightness">Lightness</label>
-          <input
-            id="active-lightness"
-            className={styles.lightnessRange}
-            type="range"
-            min={LIGHTNESS_MIN_PERCENT}
-            max={LIGHTNESS_MAX_PERCENT}
-            value={clamp(Math.round(activeHsl.l * 100), LIGHTNESS_MIN_PERCENT, LIGHTNESS_MAX_PERCENT)}
-            onChange={(event) => changeLightness(Number(event.target.value))}
-            style={{ background: `linear-gradient(90deg, #000000, ${activeHex}, #ffffff)` }}
-          />
-        </div>
       </div>
       <div className={styles.tonalButtons}>
         <button type="button" onClick={() => onRuleChange("tint")}>Tint</button>
@@ -153,3 +153,4 @@ export function ActiveColorPanel({ activeHex, canAddActiveColor, onAddActiveColo
     </div>
   );
 }
+
