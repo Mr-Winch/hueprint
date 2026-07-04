@@ -285,8 +285,8 @@ export function ColorHarmonyPicker({
         <ActiveColorPanel activeHex={activeHex} canAddActiveColor={!activeColorIsSaved} onAddActiveColor={() => addToPalette(activeGeneratedColor)} onColorChange={commitColor} onRuleChange={(nextRule) => { setPaletteRecipe("none"); setRule(nextRule); }} />
 
         <div className={styles.controlRow}>
-          <HarmonyRuleSelector value={paletteRecipe === "none" && !isTonalRule(rule) ? rule : lastHarmonyRule} onChange={selectHarmonyRule} />
-          <PaletteRecipeSelector value={paletteRecipe} onChange={selectPaletteRecipe} />
+          <HarmonyRuleSelector value={paletteRecipe === "none" && !isTonalRule(rule) ? rule : lastHarmonyRule} onChange={selectHarmonyRule} dimmed={paletteRecipe !== "none"} />
+          <PaletteRecipeSelector value={paletteRecipe} onChange={selectPaletteRecipe} dimmed={paletteRecipe === "none"} />
           <SwatchCountControl value={rule === "custom" ? customOffsets.length : swatchCount} min={minSwatches} max={maxSwatches} onChange={changeSwatchCount} />
         </div>
 
@@ -319,6 +319,7 @@ export function ColorHarmonyPicker({
     </section>
   );
 }
+
 
 
 

@@ -4,15 +4,16 @@ import { HarmonyRule, harmonyRuleLabels, harmonyRuleOrder } from "./colorHarmony
 type HarmonyRuleSelectorProps = {
   value: HarmonyRule;
   onChange: (rule: HarmonyRule) => void;
+  dimmed?: boolean;
 };
 
 const hiddenRuleNames: HarmonyRule[] = ["tint", "shade", "tone"];
 type VisibleHarmonyRule = Exclude<HarmonyRule, "tint" | "shade" | "tone">;
 const visibleHarmonyRules = harmonyRuleOrder.filter((rule): rule is VisibleHarmonyRule => !hiddenRuleNames.includes(rule));
 
-export function HarmonyRuleSelector({ value, onChange }: HarmonyRuleSelectorProps) {
+export function HarmonyRuleSelector({ value, onChange, dimmed = false }: HarmonyRuleSelectorProps) {
   return (
-    <div className={styles.field}>
+    <div className={`${styles.field} ${dimmed ? styles.dimmedField : ""}`}>
       <label htmlFor="harmony-rule">Harmony rule</label>
       <select
         id="harmony-rule"

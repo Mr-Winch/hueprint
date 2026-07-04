@@ -71,33 +71,24 @@ export function HarmonyOverlay({ colors, activeHex, rule, size = 240 }: HarmonyO
   const active = activeHex.toUpperCase();
   const activePoint = points.find((point) => point.color.hex.toUpperCase() === active) ?? points[0];
   const overlayPoints = rule === "complementary" ? uniqueHuePoints(points) : points;
-  const polygonPoints = overlayPoints.map((point) => `${point.x},${point.y}`).join(" ");
   const pairs = rule === "complementary" ? complementaryPairs(points, activePoint.hue) : [];
+  const connectorPairs = overlayPoints.flatMap((point, index) => {
+    const next = overlayPoints[index + 1] ?? (overlayPoints.length > 2 ? overlayPoints[0] : null);
+    return next ? [[point, next] as const] : [];
+  });
 
   return (
     <svg className={styles.overlay} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      {rule === "complementary" && pairs.length ? (
-        pairs.map(([start, end]) => (
-          <line
-            key={`${start.color.id}-${end.color.id}`}
-            x1={start.x}
-            y1={start.y}
-            x2={end.x}
-            y2={end.y}
-            className={styles.overlayLine}
-          />
-        ))
-      ) : overlayPoints.length === 2 ? (
+      {(rule === "complementary" && pairs.length ? pairs : connectorPairs).map(([start, end], index) => (
         <line
-          x1={overlayPoints[0].x}
-          y1={overlayPoints[0].y}
-          x2={overlayPoints[1].x}
-          y2={overlayPoints[1].y}
+          key={`${start.color.id}-${end.color.id}-${index}`}
+          x1={start.x}
+          y1={start.y}
+          x2={end.x}
+          y2={end.y}
           className={styles.overlayLine}
         />
-      ) : (
-        <polygon points={polygonPoints} className={styles.overlayLine} fill="none" />
-      )}
+      ))}
       {overlayPoints.map((point) => {
         if (point.color.hex.toUpperCase() === active) return null;
         return (
@@ -110,3 +101,4 @@ export function HarmonyOverlay({ colors, activeHex, rule, size = 240 }: HarmonyO
     </svg>
   );
 }
+

@@ -6,11 +6,12 @@ import { PaletteRecipe, paletteRecipeLabels, paletteRecipeOrder } from "./colorH
 type PaletteRecipeSelectorProps = {
   value: PaletteRecipe;
   onChange: (recipe: PaletteRecipe) => void;
+  dimmed?: boolean;
 };
 
-export function PaletteRecipeSelector({ value, onChange }: PaletteRecipeSelectorProps) {
+export function PaletteRecipeSelector({ value, onChange, dimmed = false }: PaletteRecipeSelectorProps) {
   return (
-    <div className={styles.field}>
+    <div className={`${styles.field} ${dimmed ? styles.dimmedField : ""}`}>
       <label htmlFor="palette-recipe">Palette recipe</label>
       <select
         id="palette-recipe"
@@ -27,3 +28,4 @@ export function PaletteRecipeSelector({ value, onChange }: PaletteRecipeSelector
     </div>
   );
 }
+
