@@ -19,20 +19,10 @@ type Point = {
   color: GeneratedColor;
 };
 
-type Connector = {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  key: string;
-};
-
 const LIGHTNESS_MIN = 0.08;
 const LIGHTNESS_MAX = 0.92;
 const WHEEL_RENDER_SIZE = 184;
 const WHEEL_RENDER_THICKNESS = 34;
-const OVERLAY_MARKER_RADIUS = 8.75;
-const CONNECTOR_INSET = 7.25;
 
 function hueDistance(a: number, b: number) {
   const diff = Math.abs(normalizeHue(a) - normalizeHue(b));
@@ -70,22 +60,8 @@ function recipeOverlayPoints(points: Point[], activePoint: Point) {
   });
 }
 
-function connectorBetween(start: Point, end: Point, index: number): Connector | null {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const distance = Math.hypot(dx, dy);
-  if (distance <= 2) return null;
-
-  const inset = Math.min(CONNECTOR_INSET, distance / 2 - 1);
-  const ux = dx / distance;
-  const uy = dy / distance;
-  return {
-    x1: start.x + ux * inset,
-    y1: start.y + uy * inset,
-    x2: end.x - ux * inset,
-    y2: end.y - uy * inset,
-    key: `${start.color.id}-${end.color.id}-${index}`,
-  };
+function connectorKey(start: Point, end: Point, index: number) {
+  return `${start.color.id}-${end.color.id}-${index}`;
 }
 
 function complementaryPairs(points: Point[], activeHue: number) {
@@ -116,19 +92,17 @@ export function HarmonyOverlay({ colors, activeHex, rule, recipeMode = false, si
     const next = overlayPoints[index + 1] ?? (overlayPoints.length > 2 ? overlayPoints[0] : null);
     return next ? [[point, next] as const] : [];
   });
-  const connectors = (pairs.length ? pairs : connectorPairs)
-    .map(([start, end], index) => connectorBetween(start, end, index))
-    .filter((connector): connector is Connector => connector != null);
+  const connectors = pairs.length ? pairs : connectorPairs;
 
   return (
     <svg className={styles.overlay} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      {connectors.map((connector) => (
+      {connectors.map(([start, end], index) => (
         <line
-          key={connector.key}
-          x1={connector.x1}
-          y1={connector.y1}
-          x2={connector.x2}
-          y2={connector.y2}
+          key={connectorKey(start, end, index)}
+          x1={start.x}
+          y1={start.y}
+          x2={end.x}
+          y2={end.y}
           className={styles.overlayLine}
         />
       ))}

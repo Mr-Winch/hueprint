@@ -35,7 +35,17 @@ export type PaletteRecipe =
   | "warmHospitality"
   | "highContrast"
   | "gradientFriendly"
-  | "monochromePlusAccent";
+  | "monochromePlusAccent"
+  | "pastelBloom"
+  | "nightMode"
+  | "clayEarth"
+  | "trustSignal"
+  | "quietMono"
+  | "duotonePoster"
+  | "retroPop"
+  | "botanicalFresh"
+  | "minimalAccent"
+  | "signalSystem";
 
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom" | "recipe";
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
@@ -123,6 +133,16 @@ export const paletteRecipeLabels: Record<PaletteRecipe, string> = {
   highContrast: "Sharp Contrast",
   gradientFriendly: "Smooth Ramp",
   monochromePlusAccent: "Mono Accent",
+  pastelBloom: "Pastel Bloom",
+  nightMode: "Night Mode",
+  clayEarth: "Clay Earth",
+  trustSignal: "Trust Signal",
+  quietMono: "Quiet Mono",
+  duotonePoster: "Duotone Poster",
+  retroPop: "Retro Pop",
+  botanicalFresh: "Botanical Fresh",
+  minimalAccent: "Minimal Accent",
+  signalSystem: "Signal System",
 };
 
 export function isPaletteRecipeSource(source: GeneratedColorSource): source is Exclude<PaletteRecipe, "none"> {
@@ -153,6 +173,16 @@ export const paletteRecipeOrder: PaletteRecipe[] = [
   "highContrast",
   "gradientFriendly",
   "monochromePlusAccent",
+  "pastelBloom",
+  "nightMode",
+  "clayEarth",
+  "trustSignal",
+  "quietMono",
+  "duotonePoster",
+  "retroPop",
+  "botanicalFresh",
+  "minimalAccent",
+  "signalSystem",
 ];
 
 export function colorSourceLabel(source: GeneratedColorSource): string {

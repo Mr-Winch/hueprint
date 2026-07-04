@@ -11,7 +11,7 @@ It includes a donut-style color wheel with radial lightness, visible harmony geo
 - React + TypeScript component: `<ColorHarmonyPicker />`
 - Donut wheel with hue by angle and lightness by radius
 - Harmony rules: monochromatic, analogous, complementary, split complementary, triadic, square, rectangle/tetradic, polygon/equidistant, tint, shade, tone, custom
-- Palette recipes generated from direct OKLCH anchor transforms, including Warm Spectrum, Signature Accent, Interface Kit, Luxe Neutral, Sharp Contrast, and more
+- Palette recipes generated from direct OKLCH anchor transforms, including Warm Spectrum, Signature Accent, Interface Kit, Pastel Bloom, Night Mode, Trust Signal, and more
 - SVG harmony geometry overlay
 - Generated swatch band with active marker
 - Active color HEX, RGB, CMYK, and HSL info
