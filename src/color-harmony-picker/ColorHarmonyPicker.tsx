@@ -75,6 +75,7 @@ export function ColorHarmonyPicker({
   minSwatches = 2,
   maxSwatches = 8,
   showGeometryOverlay = true,
+  theme = "light",
   className,
 }: ColorHarmonyPickerProps) {
   const [activeHex, setActiveHex] = useState(() => sanitizeHex(value));
@@ -138,6 +139,10 @@ export function ColorHarmonyPicker({
       return next;
     });
   }
+
+  const activeGeneratedColor = useMemo(() => generatedColors.find((color) => color.hex.toUpperCase() === activeHex.toUpperCase()) ?? makeGeneratedColorFromHex(rule, 0, activeHex, "anchor", fallbackHue), [activeHex, fallbackHue, generatedColors, rule]);
+
+  const activeColorIsSaved = savedPalette.some((color) => color.hex.toUpperCase() === activeHex.toUpperCase());
 
   function addToPalette(color: GeneratedColor) {
     setSavedPalette((current) => {
@@ -244,7 +249,7 @@ export function ColorHarmonyPicker({
   }
 
   return (
-    <section className={`${styles.picker} ${className ?? ""}`}>
+    <section className={`${styles.picker} ${theme === "dark" ? styles.dark : ""} ${className ?? ""}`}>
       <div className={styles.wheelColumn}>
         <div className={styles.wheelWrap}>
           <ColorHarmonyWheel color={activeHex} hue={activeHue} onChange={commitColor} />
@@ -254,14 +259,14 @@ export function ColorHarmonyPicker({
       </div>
 
       <div className={styles.controlColumn}>
-        <ActiveColorPanel activeHex={activeHex} onColorChange={commitColor} onRuleChange={setRule} />
+        <ActiveColorPanel activeHex={activeHex} canAddActiveColor={!activeColorIsSaved} onAddActiveColor={() => addToPalette(activeGeneratedColor)} onColorChange={commitColor} onRuleChange={setRule} />
 
         <div className={styles.controlRow}>
           <HarmonyRuleSelector value={isTonalRule(rule) ? lastHarmonyRule : rule} onChange={selectHarmonyRule} />
           <SwatchCountControl value={rule === "custom" ? customOffsets.length : swatchCount} min={minSwatches} max={maxSwatches} onChange={changeSwatchCount} />
         </div>
 
-        <GeneratedSwatches colors={generatedColors} activeHex={activeHex} onSelect={selectGeneratedColor} onAdd={addToPalette} onAddAll={addAllToPalette} />
+        <GeneratedSwatches colors={generatedColors} activeHex={activeHex} onSelect={selectGeneratedColor} onAddAll={addAllToPalette} />
 
         <div className={styles.paletteBlock}>
           <div className={styles.paletteHeader}>

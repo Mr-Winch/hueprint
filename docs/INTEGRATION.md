@@ -7,7 +7,8 @@
 3. Keep the component controlled through the `value` and `onChange` props.
 4. Use `onGeneratedColorsChange` if the host editor needs live generated colors.
 5. Use `onAddToPalette` if the host editor owns its own palette state.
-6. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
+6. Set `theme="dark"` when embedding in dark editor surfaces, otherwise omit it for light mode.
+7. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
 
 ## Example
 

@@ -22,11 +22,13 @@ const LIGHTNESS_MAX_PERCENT = 92;
 
 type ActiveColorPanelProps = {
   activeHex: string;
+  canAddActiveColor: boolean;
+  onAddActiveColor: () => void;
   onColorChange: (hex: string) => void;
   onRuleChange: (rule: HarmonyRule) => void;
 };
 
-export function ActiveColorPanel({ activeHex, onColorChange, onRuleChange }: ActiveColorPanelProps) {
+export function ActiveColorPanel({ activeHex, canAddActiveColor, onAddActiveColor, onColorChange, onRuleChange }: ActiveColorPanelProps) {
   const [draftHex, setDraftHex] = useState(activeHex);
   const [copied, setCopied] = useState(false);
   const [canPickFromScreen, setCanPickFromScreen] = useState(false);
@@ -44,7 +46,6 @@ export function ActiveColorPanel({ activeHex, onColorChange, onRuleChange }: Act
   function commitDraft() {
     onColorChange(sanitizeHex(draftHex, activeHex));
   }
-
 
   function changeLightness(nextLightness: number) {
     onColorChange(setHslLightness(activeHex, clamp(nextLightness, LIGHTNESS_MIN_PERCENT, LIGHTNESS_MAX_PERCENT) / 100, activeHsl.h));
@@ -98,6 +99,16 @@ export function ActiveColorPanel({ activeHex, onColorChange, onRuleChange }: Act
               if (/^#?[a-f\d]{0,6}$/i.test(value)) setDraftHex(value.startsWith("#") ? value : `#${value}`);
             }}
           />
+          <button
+            type="button"
+            className={`${styles.iconButton} ${styles.squareIconButton}`}
+            aria-label="Add active color to saved palette"
+            title="Add active color"
+            onClick={onAddActiveColor}
+            disabled={!canAddActiveColor}
+          >
+            <span className={`${styles.toolIcon} ${styles.plusIcon}`} aria-hidden="true" />
+          </button>
           <button
             type="button"
             className={`${styles.iconButton} ${styles.squareIconButton}`}

@@ -63,13 +63,14 @@ export interface ColorHarmonyPickerProps {
   minSwatches?: number;
   maxSwatches?: number;
   showGeometryOverlay?: boolean;
+  theme?: "light" | "dark";
   className?: string;
 }
 ```
 
 ## Styling
 
-The component is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by editing the CSS variables and class rules in that file. The current layout is compact so it can be embedded in editor side panels.
+The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by editing the CSS variables and class rules in that file. The current layout is compact so it can be embedded in editor side panels.
 
 ## Browser Notes
 

@@ -105,7 +105,7 @@
 .paletteBlock {
   display: grid;
   gap: 9px;
-  background: #ffffff;
+  background: var(--surface, #ffffff);
   border: 1px solid var(--border, #dbe2ea);
   border-radius: 5px;
   padding: 10px;
@@ -131,7 +131,7 @@
   min-height: 34px;
   border: 1px solid var(--border, #dbe2ea);
   border-radius: 5px;
-  background: #ffffff;
+  background: var(--surface, #ffffff);
   color: var(--text, #18202a);
   padding: 6px 9px;
   font-size: 13px;
@@ -196,7 +196,7 @@
   border: 1px solid var(--border, #dbe2ea);
   border-radius: 5px;
   padding: 3px;
-  background: #ffffff;
+  background: var(--surface, #ffffff);
 }
 
 .iconButton,
@@ -205,7 +205,7 @@
   min-height: 32px;
   border: 1px solid var(--border, #dbe2ea);
   border-radius: 5px;
-  background: #eef3f8;
+  background: var(--control-bg, #eef3f8);
   color: var(--text, #18202a);
   cursor: pointer;
   font-size: 13px;
@@ -228,7 +228,7 @@
 
 .swatchBandBlock {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(2, 34px);
+  grid-template-columns: minmax(0, 1fr) 34px;
   gap: 8px;
   align-items: center;
 }
@@ -240,7 +240,7 @@
   overflow: hidden;
   border: 1px solid rgba(24, 32, 42, 0.16);
   border-radius: 5px;
-  background: #ffffff;
+  background: var(--surface, #ffffff);
 }
 
 .swatchSegment {
@@ -264,7 +264,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #111820;
+  background: var(--strong, #111820);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.76);
   transform: translate(-50%, -50%);
 }
@@ -294,7 +294,7 @@
   min-height: 24px;
   border: 1px solid var(--border, #dbe2ea);
   border-radius: 4px;
-  background: #eef3f8;
+  background: var(--control-bg, #eef3f8);
   color: var(--text, #18202a);
   cursor: pointer;
   font-size: 11px;
@@ -306,7 +306,7 @@
   min-height: 24px;
   border: 1px solid var(--border, #dbe2ea);
   border-radius: 4px;
-  background: #eef3f8;
+  background: var(--control-bg, #eef3f8);
   color: var(--text, #18202a);
   cursor: pointer;
   font-size: 11px;
@@ -349,7 +349,7 @@
 
 
 .activePaletteColor {
-  box-shadow: 0 0 0 2px #111820;
+  box-shadow: 0 0 0 2px var(--strong, #111820);
 }
 
 .removePaletteColor {
@@ -362,8 +362,8 @@
   height: 15px;
   border: 1px solid rgba(17, 24, 32, 0.26);
   border-radius: 50%;
-  background: #ffffff;
-  color: #111820;
+  background: var(--surface, #ffffff);
+  color: var(--strong, #111820);
   cursor: pointer;
   font-size: 10px;
   line-height: 1;
@@ -483,7 +483,7 @@
 .copyIcon::after {
   left: 5px;
   top: 0;
-  background: #eef3f8;
+  background: var(--control-bg, #eef3f8);
 }
 
 .trashIcon::before {
@@ -599,7 +599,7 @@
 }
 
 .hexInputRow {
-  grid-template-columns: 36px minmax(0, 1fr) 34px 34px;
+  grid-template-columns: 36px minmax(0, 1fr) 34px 34px 34px;
 }
 
 .iconButton:disabled {
@@ -685,4 +685,109 @@
 .svgIcon path {
   fill: currentColor;
   stroke: none;
+}
+
+.dark {
+  --surface: #111827;
+  --border: #334155;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --control-bg: #1f2937;
+  --strong: #f8fafc;
+  color-scheme: dark;
+}
+
+.dark .wheel {
+  box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.14), 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+.dark .wheelHole {
+  box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.78);
+}
+
+.dark .hueMarker {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 1.5px rgba(248, 250, 252, 0.9), 0 4px 12px rgba(0, 0, 0, 0.32);
+}
+
+.dark .overlayLine {
+  stroke: rgba(226, 232, 240, 0.62);
+}
+
+.dark .overlayDotOuter {
+  stroke: rgba(248, 250, 252, 0.78);
+}
+
+.dark .overlayDot {
+  stroke: #0f172a;
+}
+
+.dark .activePanel,
+.dark .paletteBlock,
+.dark .select,
+.dark .hexInput,
+.dark .colorInput,
+.dark .swatchBand,
+.dark .removePaletteColor {
+  background: var(--surface);
+}
+
+.dark .activePanel,
+.dark .paletteBlock,
+.dark .select,
+.dark .hexInput,
+.dark .colorInput,
+.dark .swatchBand,
+.dark .paletteColor,
+.dark .removePaletteColor,
+.dark .paletteEmpty,
+.dark .iconButton,
+.dark .tonalButtons button,
+.dark .addBandColor,
+.dark .paletteTools button,
+.dark .customRuleButton {
+  border-color: var(--border);
+}
+
+.dark .iconButton,
+.dark .tonalButtons button,
+.dark .addBandColor,
+.dark .paletteTools button,
+.dark .customRuleButton {
+  background: var(--control-bg);
+  color: var(--text);
+}
+
+.dark .field label,
+.dark .paletteHeader,
+.dark .lightnessControl,
+.dark .paletteEmpty,
+.dark .colorInfo {
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.dark .colorInfo dd {
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.dark .copyIcon::after {
+  background: var(--control-bg);
+}
+
+.dark .activeSegment::after {
+  background: #f8fafc;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.8);
+}
+
+.dark .lightnessRange::-webkit-slider-thumb {
+  border-color: #0f172a;
+  background: #f8fafc;
+  box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.6);
+}
+
+.dark .lightnessRange::-moz-range-thumb {
+  border-color: #0f172a;
+  background: #f8fafc;
+  box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.6);
 }

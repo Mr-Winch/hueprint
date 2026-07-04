@@ -13,6 +13,7 @@ export type HarmonyRule =
   | "custom";
 
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom";
+export type ColorHarmonyTheme = "light" | "dark";
 
 export interface GeneratedColor {
   id: string;
@@ -38,6 +39,7 @@ export interface ColorHarmonyPickerProps {
   minSwatches?: number;
   maxSwatches?: number;
   showGeometryOverlay?: boolean;
+  theme?: ColorHarmonyTheme;
   className?: string;
 }
 
