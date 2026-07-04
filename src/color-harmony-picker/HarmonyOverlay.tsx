@@ -1,7 +1,7 @@
 import styles from "./ColorHarmonyPicker.module.css";
 import { polarToXY } from "./colorHarmony.geometry";
 import { clamp, hexToHsl, isTonalRule, normalizeHue } from "./colorHarmony.math";
-import { GeneratedColor, HarmonyRule } from "./colorHarmony.types";
+import { GeneratedColor, HarmonyRule, isPaletteRecipeSource } from "./colorHarmony.types";
 
 type HarmonyOverlayProps = {
   colors: GeneratedColor[];
@@ -13,8 +13,6 @@ type HarmonyOverlayProps = {
 type Point = {
   x: number;
   y: number;
-  lineX: number;
-  lineY: number;
   hue: number;
   color: GeneratedColor;
 };
@@ -37,11 +35,13 @@ function radiusFromLightness(size: number, lightness: number) {
   return innerRadius + (outerRadius - innerRadius) * t;
 }
 
-function pointForColor(size: number, color: GeneratedColor, geometryRadius: number): Point {
+function pointForColor(size: number, color: GeneratedColor): Point {
+  const recipeSource = isPaletteRecipeSource(color.sourceRule);
   const hsl = hexToHsl(color.hex, color.hue);
-  const markerPoint = polarToXY(size / 2, size / 2, radiusFromLightness(size, hsl.l), color.hue);
-  const linePoint = polarToXY(size / 2, size / 2, geometryRadius, color.hue);
-  return { ...markerPoint, lineX: linePoint.x, lineY: linePoint.y, hue: color.hue, color };
+  const hue = recipeSource && color.oklch ? color.oklch.h : color.hue;
+  const lightness = recipeSource && color.oklch ? color.oklch.l : hsl.l;
+  const point = polarToXY(size / 2, size / 2, radiusFromLightness(size, lightness), hue);
+  return { ...point, hue, color };
 }
 
 function uniqueHuePoints(points: Point[]) {
@@ -67,13 +67,11 @@ function complementaryPairs(points: Point[], activeHue: number) {
 export function HarmonyOverlay({ colors, activeHex, rule, size = 240 }: HarmonyOverlayProps) {
   if (isTonalRule(rule) || colors.length < 2) return null;
 
-  const activeHsl = hexToHsl(activeHex, colors[0]?.hue ?? 0);
-  const geometryRadius = radiusFromLightness(size, activeHsl.l);
-  const points = colors.map((color) => pointForColor(size, color, geometryRadius));
+  const points = colors.map((color) => pointForColor(size, color));
   const active = activeHex.toUpperCase();
   const activePoint = points.find((point) => point.color.hex.toUpperCase() === active) ?? points[0];
-  const uniquePoints = uniqueHuePoints(points);
-  const polygonPoints = uniquePoints.map((point) => `${point.lineX},${point.lineY}`).join(" ");
+  const overlayPoints = rule === "complementary" ? uniqueHuePoints(points) : points;
+  const polygonPoints = overlayPoints.map((point) => `${point.x},${point.y}`).join(" ");
   const pairs = rule === "complementary" ? complementaryPairs(points, activePoint.hue) : [];
 
   return (
@@ -82,25 +80,25 @@ export function HarmonyOverlay({ colors, activeHex, rule, size = 240 }: HarmonyO
         pairs.map(([start, end]) => (
           <line
             key={`${start.color.id}-${end.color.id}`}
-            x1={start.lineX}
-            y1={start.lineY}
-            x2={end.lineX}
-            y2={end.lineY}
+            x1={start.x}
+            y1={start.y}
+            x2={end.x}
+            y2={end.y}
             className={styles.overlayLine}
           />
         ))
-      ) : uniquePoints.length === 2 ? (
+      ) : overlayPoints.length === 2 ? (
         <line
-          x1={uniquePoints[0].lineX}
-          y1={uniquePoints[0].lineY}
-          x2={uniquePoints[1].lineX}
-          y2={uniquePoints[1].lineY}
+          x1={overlayPoints[0].x}
+          y1={overlayPoints[0].y}
+          x2={overlayPoints[1].x}
+          y2={overlayPoints[1].y}
           className={styles.overlayLine}
         />
       ) : (
         <polygon points={polygonPoints} className={styles.overlayLine} fill="none" />
       )}
-      {uniquePoints.map((point) => {
+      {overlayPoints.map((point) => {
         if (point.color.hex.toUpperCase() === active) return null;
         return (
           <g key={`${point.color.id}-marker`}>

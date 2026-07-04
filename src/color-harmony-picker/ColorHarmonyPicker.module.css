@@ -589,6 +589,22 @@
   left: 4px;
   top: 0;
 }
+
+.trashSvgIcon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.addAllSvgIcon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
 .checkIcon::before {
   content: "";
   position: absolute;
@@ -818,3 +834,4 @@
     grid-column: 1 / -1;
   }
 }
+

@@ -100,30 +100,34 @@ export const harmonyRuleOrder: HarmonyRule[] = [
 ];
 
 export const paletteRecipeLabels: Record<PaletteRecipe, string> = {
-  none: "None",
-  warmArc: "Warm Arc",
-  coolArc: "Cool Arc",
-  spotAccent: "Spot Accent",
-  editorialContrast: "Editorial Contrast",
-  brightSwitch: "Bright Switch",
-  softNatural: "Soft Natural",
-  neutralMatch: "Neutral Match",
-  tonalFriends: "Tonal Friends",
-  softDotAccent: "Soft Dot Accent",
-  threePointAccent: "Three-Point Accent",
-  dustAccent: "Dust Accent",
-  friendlyContrast: "Friendly Contrast",
-  seededShades: "Seeded Shades",
-  cleanUi: "Clean UI",
-  boldPop: "Bold Pop",
-  mutedEditorial: "Muted Editorial",
-  luxuryNeutral: "Luxury Neutral",
-  techDigital: "Tech Digital",
-  warmHospitality: "Warm Hospitality",
-  highContrast: "High Contrast",
-  gradientFriendly: "Gradient Friendly",
-  monochromePlusAccent: "Monochrome Plus Accent",
+  none: "No recipe",
+  warmArc: "Warm Brand Arc",
+  coolArc: "Cool Brand Arc",
+  spotAccent: "Anchor + Soft Neutrals + Accent",
+  editorialContrast: "Editorial Neutrals + Contrast Accents",
+  brightSwitch: "Bright Neutral + Switch Accent",
+  softNatural: "Soft Natural Neutrals",
+  neutralMatch: "Neutral Match + Cool Accent",
+  tonalFriends: "Anchor + Neutral Companions",
+  softDotAccent: "Soft Neutrals + Gentle Accent",
+  threePointAccent: "Three-Point Accent System",
+  dustAccent: "Dusty Editorial Accent",
+  friendlyContrast: "Friendly Contrast Pair",
+  seededShades: "Seeded Shades + Highlights",
+  cleanUi: "Clean UI Role Palette",
+  boldPop: "Bold Pop Accent Set",
+  mutedEditorial: "Muted Editorial System",
+  luxuryNeutral: "Luxury Neutral + Accent",
+  techDigital: "Tech Digital Contrast",
+  warmHospitality: "Warm Hospitality Palette",
+  highContrast: "High Contrast UI Roles",
+  gradientFriendly: "Gradient-Friendly Ramp",
+  monochromePlusAccent: "Monochrome + Opposite Accent",
 };
+
+export function isPaletteRecipeSource(source: GeneratedColorSource): source is Exclude<PaletteRecipe, "none"> {
+  return source in paletteRecipeLabels;
+}
 
 export const paletteRecipeOrder: PaletteRecipe[] = [
   "none",
@@ -154,3 +158,4 @@ export const paletteRecipeOrder: PaletteRecipe[] = [
 export function colorSourceLabel(source: GeneratedColorSource): string {
   return harmonyRuleLabels[source as HarmonyRule] ?? paletteRecipeLabels[source as PaletteRecipe] ?? source;
 }
+
