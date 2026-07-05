@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyboardEvent, PointerEvent, useEffect, useMemo, useRef } from "react";
+import { KeyboardEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ColorHarmonyPicker.module.css";
 import { clamp, hexToHsl, hslToHex, normalizeHue } from "./colorHarmony.math";
 
@@ -73,10 +73,11 @@ function pointFromPointer(element: HTMLElement, clientX: number, clientY: number
 export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
+  const [wheelMetrics, setWheelMetrics] = useState({ size: WHEEL_SIZE, thickness: WHEEL_THICKNESS });
   const currentHsl = hexToHsl(color, hue);
   const markerStyle = useMemo(() => {
     const angle = ((hue + 180) * Math.PI) / 180;
-    const thicknessPct = (WHEEL_THICKNESS / WHEEL_SIZE) * 100;
+    const thicknessPct = (wheelMetrics.thickness / wheelMetrics.size) * 100;
     const innerPct = 50 - thicknessPct;
     const radius = innerPct + thicknessPct * lightnessToRingT(currentHsl.l);
     return {
@@ -84,15 +85,31 @@ export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelPro
       top: `${(50 + radius * Math.sin(angle)).toFixed(4)}%`,
       backgroundColor: color,
     };
-  }, [color, currentHsl.l, hue]);
+  }, [color, currentHsl.l, hue, wheelMetrics.size, wheelMetrics.thickness]);
 
+  useEffect(() => {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+
+    function syncMetrics() {
+      if (!wheel) return;
+      const rect = wheel.getBoundingClientRect();
+      const size = Math.max(1, Math.round(rect.width || WHEEL_SIZE));
+      const thickness = Number.parseFloat(getComputedStyle(wheel).getPropertyValue("--wheel-thickness")) || WHEEL_THICKNESS;
+      setWheelMetrics((current) => (current.size === size && current.thickness === thickness ? current : { size, thickness }));
+    }
+
+    syncMetrics();
+    const observer = new ResizeObserver(syncMetrics);
+    observer.observe(wheel);
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     const canvas = canvasRef.current;
     const wheel = wheelRef.current;
     if (!canvas || !wheel) return;
 
-    const rect = wheel.getBoundingClientRect();
-    const cssSize = Math.max(1, Math.round(rect.width || WHEEL_SIZE));
+    const cssSize = wheelMetrics.size;
     const pixelRatio = window.devicePixelRatio || 1;
     const size = Math.round(cssSize * pixelRatio);
     canvas.width = size;
@@ -106,7 +123,7 @@ export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelPro
     const image = context.createImageData(size, size);
     const center = size / 2;
     const outerRadius = size / 2;
-    const thickness = (WHEEL_THICKNESS / WHEEL_SIZE) * size;
+    const thickness = Math.max(1, wheelMetrics.thickness * pixelRatio);
     const innerRadius = outerRadius - thickness;
     const edgeSoftness = Math.max(1, pixelRatio);
     const saturation = clamp(currentHsl.s, 0, 1);
@@ -139,7 +156,7 @@ export function ColorHarmonyWheel({ color, hue, onChange }: ColorHarmonyWheelPro
     }
 
     context.putImageData(image, 0, 0);
-  }, [currentHsl.s]);
+  }, [currentHsl.s, wheelMetrics.size, wheelMetrics.thickness]);
 
   function setColor(nextHue: number, nextLightness = currentHsl.l) {
     onChange(hslToHex({ ...currentHsl, h: normalizeHue(nextHue), l: clamp(nextLightness, LIGHTNESS_MIN, LIGHTNESS_MAX) }));

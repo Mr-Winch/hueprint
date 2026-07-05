@@ -21,7 +21,7 @@ body {
 }
 
 body:has(.demoShell[data-theme="dark"]) {
-  background: #0f172a;
+  background: #17181d;
   color: #e5e7eb;
 }
 
@@ -125,7 +125,7 @@ select {
 
 .demoShell[data-theme="dark"] .themeSwitch {
   border-color: #334155;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(23, 24, 29, 0.72);
 }
 
 .themeSwitch button {

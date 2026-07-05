@@ -28,23 +28,16 @@
 }
 
 .verticalCompact {
-  --wheel-size: 162px;
-  --wheel-thickness: 30px;
+  --wheel-size: 156px;
+  --wheel-thickness: 29px;
   --marker-size: 14px;
-  --swatch-band-height: 28px;
-  gap: 10px;
+  --swatch-band-height: 26px;
+  gap: 8px;
 }
 
 .horizontalCompact {
-  --wheel-size: 138px;
-  --wheel-thickness: 26px;
-  --marker-size: 14px;
-  --swatch-band-height: 28px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: flex-start;
-  max-width: 450px;
+  grid-template-columns: minmax(184px, 204px) minmax(300px, 450px);
+  max-width: 668px;
 }
 
 .vertical .wheelColumn,
@@ -52,39 +45,51 @@
   justify-items: center;
 }
 
-.horizontalCompact .wheelColumn {
-  flex: 0 0 var(--wheel-size);
-}
-
-.horizontalCompact .controlColumn {
-  flex: 1 1 260px;
-  min-width: min(100%, 260px);
-}
-
-.vertical .controlRow,
-.verticalCompact .controlRow,
-.horizontalCompact .controlRow,
-.vertical .swatchBandBlock,
-.verticalCompact .swatchBandBlock,
-.horizontalCompact .swatchBandBlock {
+.vertical .controlRow {
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
-.vertical .hexInputRow,
-.verticalCompact .hexInputRow,
-.horizontalCompact .hexInputRow {
-  grid-template-columns: 36px 92px repeat(3, 34px);
+.verticalCompact .controlRow {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.vertical .lightnessControl,
-.verticalCompact .lightnessControl,
-.horizontalCompact .lightnessControl {
+.verticalCompact .controlRow .field:nth-child(3) {
   grid-column: 1 / -1;
 }
 
-.vertical .activePanel,
-.vertical .paletteBlock,
+.verticalCompact .hexInputRow {
+  grid-template-columns: 30px 82px minmax(58px, 1fr) repeat(3, 28px);
+  gap: 5px;
+}
+
+.verticalCompact .colorInput {
+  width: 30px;
+  height: 28px;
+  padding: 2px;
+}
+
+.verticalCompact .hexInput,
+.verticalCompact .select {
+  min-height: 28px;
+  padding: 4px 7px;
+  font-size: 12px;
+}
+
+.verticalCompact .lightnessControl {
+  min-width: 0;
+}
+
+.verticalCompact .squareIconButton,
+.verticalCompact .iconButton,
+.verticalCompact .addBandColor {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+}
+
 .verticalCompact .activePanel,
 .verticalCompact .paletteBlock,
 .horizontalCompact .activePanel,
@@ -92,20 +97,40 @@
   padding: 8px;
 }
 
+.verticalCompact .activePanel,
+.verticalCompact .controlColumn,
+.horizontalCompact .controlColumn {
+  gap: 8px;
+}
+
 .verticalCompact .field,
 .horizontalCompact .field {
   gap: 4px;
 }
 
-.verticalCompact .tonalButtons,
-.horizontalCompact .tonalButtons {
+.verticalCompact .tonalButtons {
   gap: 5px;
+}
+
+.verticalCompact .tonalButtons button {
+  min-height: 24px;
 }
 
 .verticalCompact .paletteTools,
 .horizontalCompact .paletteTools {
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+@media (max-width: 520px) {
+  .horizontalCompact {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 450px;
+  }
+
+  .horizontalCompact .wheelColumn {
+    justify-items: center;
+  }
 }
 
 .wheelColumn,
@@ -497,31 +522,39 @@
     grid-template-columns: 1fr;
   }
 
-  .controlRow,
-  .swatchBandBlock {
+  .controlRow {
     grid-template-columns: 1fr;
+  }
+
+  .verticalCompact .controlRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .verticalCompact .controlRow .field:nth-child(3) {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 420px) {
   .horizontal,
-  .vertical {
+  .vertical,
+  .horizontalCompact {
     --wheel-size: min(184px, calc(100vw - 56px));
   }
 
   .verticalCompact {
-    --wheel-size: min(162px, calc(100vw - 56px));
+    --wheel-size: min(156px, calc(100vw - 56px));
   }
 
-  .horizontalCompact {
-    --wheel-size: min(138px, calc(100vw - 56px));
-  }
-
-  .hexInputRow {
+  .horizontal .hexInputRow,
+  .vertical .hexInputRow,
+  .horizontalCompact .hexInputRow {
     grid-template-columns: 36px 92px repeat(3, 34px);
   }
 
-  .lightnessControl {
+  .horizontal .lightnessControl,
+  .vertical .lightnessControl,
+  .horizontalCompact .lightnessControl {
     grid-column: 1 / -1;
   }
 }
@@ -831,7 +864,7 @@
 }
 
 .dark {
-  --surface: #111827;
+  --surface: #17181d;
   --border: #334155;
   --text: #e5e7eb;
   --muted: #94a3b8;
@@ -934,14 +967,3 @@
   background: #f8fafc;
   box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.6);
 }
-@media (max-width: 420px) {
-  .hexInputRow {
-    grid-template-columns: 36px 92px repeat(3, 34px);
-  }
-
-  .lightnessControl {
-    grid-column: 1 / -1;
-  }
-}
-
-
