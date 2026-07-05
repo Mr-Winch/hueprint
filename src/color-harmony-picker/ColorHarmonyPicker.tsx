@@ -13,8 +13,10 @@ import { SavedPaletteStrip } from "./SavedPaletteStrip";
 import { SwatchCountControl } from "./SwatchCountControl";
 import {
   clamp,
+  CustomHarmonyTransform,
   customHarmonyColors,
   generateHarmonyColors,
+  hexToOklch,
   hexToWheelHue,
   isTonalRule,
   makeGeneratedColorFromHex,
@@ -87,7 +89,11 @@ export function ColorHarmonyPicker({
   const [swatchCount, setSwatchCount] = useState(() => clamp(initialSwatchCount, minSwatches, maxSwatches));
   const [fallbackHue, setFallbackHue] = useState(() => hexToWheelHue(value));
   const [savedPalette, setSavedPalette] = useState<GeneratedColor[]>([]);
-  const [customOffsets, setCustomOffsets] = useState<number[]>([0, 30, 180]);
+  const [customTransforms, setCustomTransforms] = useState<CustomHarmonyTransform[]>([
+    { dL: 0, c: 1, dH: 0 },
+    { dL: 0, c: 1, dH: 30 },
+    { dL: 0, c: 1, dH: 180 },
+  ]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -105,9 +111,9 @@ export function ColorHarmonyPicker({
     if (rule === "tint") return generateTints(activeHex, swatchCount);
     if (rule === "shade") return generateShades(activeHex, swatchCount);
     if (rule === "tone") return generateTones(activeHex, swatchCount);
-    if (rule === "custom") return customHarmonyColors(activeHex, customOffsets, fallbackHue);
+    if (rule === "custom") return customHarmonyColors(activeHex, customTransforms, fallbackHue);
     return generateHarmonyColors(activeHex, rule, swatchCount, fallbackHue);
-  }, [activeHex, customOffsets, fallbackHue, paletteRecipe, rule, swatchCount]);
+  }, [activeHex, customTransforms, fallbackHue, paletteRecipe, rule, swatchCount]);
 
   useEffect(() => {
     onGeneratedColorsChange?.(generatedColors);
@@ -141,11 +147,11 @@ export function ColorHarmonyPicker({
     setSwatchCount(safeCount);
     if (rule !== "custom") return;
 
-    setCustomOffsets((current) => {
+    setCustomTransforms((current) => {
       if (safeCount <= current.length) return current.slice(0, safeCount);
       const next = [...current];
       const step = 360 / safeCount;
-      while (next.length < safeCount) next.push(normalizeHue(step * next.length));
+      while (next.length < safeCount) next.push({ dL: 0, c: 1, dH: normalizeHue(step * next.length) });
       return next;
     });
   }
@@ -183,34 +189,40 @@ export function ColorHarmonyPicker({
     return palette.find((color) => color.hex.toUpperCase() === activeHex.toUpperCase()) ?? palette[0];
   }
 
-  function customOffsetsFromPalette(palette: GeneratedColor[], anchorHue: number) {
-    const offsets = palette.slice(0, maxSwatches).map((color) => normalizeHue(hexToWheelHue(color.hex, anchorHue) - anchorHue));
-    while (offsets.length < minSwatches) {
-      offsets.push(normalizeHue((360 / minSwatches) * offsets.length));
+  function customTransformsFromPalette(palette: GeneratedColor[], anchorColor: GeneratedColor) {
+    const anchorOklch = anchorColor.oklch ?? hexToOklch(anchorColor.hex, activeHue);
+    const transforms = palette.slice(0, maxSwatches).map((color) => {
+      const oklch = color.oklch ?? hexToOklch(color.hex, anchorOklch.h);
+      return {
+        dL: oklch.l - anchorOklch.l,
+        c: anchorOklch.c < 0.001 ? 1 : oklch.c / anchorOklch.c,
+        dH: normalizeHue(oklch.h - anchorOklch.h),
+      };
+    });
+    while (transforms.length < minSwatches) {
+      transforms.push({ dL: 0, c: 1, dH: normalizeHue((360 / minSwatches) * transforms.length) });
     }
-    return offsets;
+    return transforms;
   }
 
   function syncCustomRuleToPalette(palette: GeneratedColor[]) {
     const anchorColor = customAnchorFromPalette(palette);
     if (!anchorColor) return;
-    const anchorHue = hexToWheelHue(anchorColor.hex, activeHue);
-    const offsets = customOffsetsFromPalette(palette, anchorHue);
+    const transforms = customTransformsFromPalette(palette, anchorColor);
     if (anchorColor.hex.toUpperCase() !== activeHex.toUpperCase()) commitColor(anchorColor.hex);
-    setCustomOffsets(offsets);
-    setSwatchCount(clamp(offsets.length, minSwatches, maxSwatches));
+    setCustomTransforms(transforms);
+    setSwatchCount(clamp(transforms.length, minSwatches, maxSwatches));
   }
 
   function applySavedPaletteAsCustomRule() {
     if (!savedPalette.length) return;
     const anchorColor = customAnchorFromPalette(savedPalette);
-    const anchorHue = hexToWheelHue(anchorColor.hex, activeHue);
-    const offsets = customOffsetsFromPalette(savedPalette, anchorHue);
+    const transforms = customTransformsFromPalette(savedPalette, anchorColor);
     if (anchorColor.hex.toUpperCase() !== activeHex.toUpperCase()) commitColor(anchorColor.hex);
-    setCustomOffsets(offsets);
+    setCustomTransforms(transforms);
     setLastHarmonyRule("custom");
     setRule("custom");
-    setSwatchCount(clamp(offsets.length, minSwatches, maxSwatches));
+    setSwatchCount(clamp(transforms.length, minSwatches, maxSwatches));
   }
 
   function reorderSavedPalette(fromIndex: number, toIndex: number) {
@@ -287,7 +299,7 @@ export function ColorHarmonyPicker({
         <div className={styles.controlRow}>
           <HarmonyRuleSelector value={paletteRecipe === "none" && !isTonalRule(rule) ? rule : lastHarmonyRule} onChange={selectHarmonyRule} dimmed={paletteRecipe !== "none"} />
           <PaletteRecipeSelector value={paletteRecipe} onChange={selectPaletteRecipe} dimmed={paletteRecipe === "none"} />
-          <SwatchCountControl value={rule === "custom" ? customOffsets.length : swatchCount} min={minSwatches} max={maxSwatches} onChange={changeSwatchCount} />
+          <SwatchCountControl value={rule === "custom" ? customTransforms.length : swatchCount} min={minSwatches} max={maxSwatches} onChange={changeSwatchCount} />
         </div>
 
         <GeneratedSwatches colors={generatedColors} activeHex={activeHex} onSelect={selectGeneratedColor} onAddAll={addAllToPalette} />

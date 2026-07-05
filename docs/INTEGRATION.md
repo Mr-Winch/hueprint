@@ -53,9 +53,9 @@ To remove one, delete the same ID from those places. The dropdown, native swatch
 
 ## Custom Harmony Rule
 
-The custom rule is geometric. It stores hue offsets from the active anchor hue. If a custom harmony was built from a blue palette and the active color changes to red, the same angular relationships are preserved around red.
+The custom rule is geometric and anchor-relative. It stores OKLCH transforms from the active anchor (`dL`, chroma multiplier, and `dH`) instead of fixed colors. If a custom harmony was built from a blue palette and the active color changes to red, the same angular, lightness, and chroma relationships are preserved around red.
 
-The built-in `Use palette` action derives a custom rule from the saved palette order. Reordering the saved palette changes the custom polygon geometry.
+The built-in `Use palette` action derives a custom rule from every saved palette color in order. Reordering the saved palette changes the custom polygon geometry and preserves each color as a relative transform.
 
 ## Import / Export Format
 

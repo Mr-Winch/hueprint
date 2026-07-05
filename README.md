@@ -17,7 +17,7 @@ It includes a donut-style color wheel with radial lightness, visible harmony geo
 - Active color HEX, RGB, CMYK, and HSL info
 - Native browser eyedropper support where available
 - Saved palette with select, remove, clear, drag reorder, import, and export
-- Custom harmony rules store hue offsets from the anchor color, not fixed colors
+- Custom harmony rules store OKLCH transforms from the anchor color, not fixed colors
 
 ## Install By Source Copy
 

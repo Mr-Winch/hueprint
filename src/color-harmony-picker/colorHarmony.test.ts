@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   analogousHues,
   complementaryHues,
+  customHarmonyColors,
   generateHarmonyColors,
   normalizeHue,
   polygonHues,
@@ -40,6 +41,17 @@ test("triadic expansion adds tonal variants instead of polygon points", () => {
   const colors = generateHarmonyColors("#3366FF", "triadic", 5);
   const hues = colors.map((color) => Math.round(color.hue));
   assert.deepEqual(hues, [225, 345, 105, 345, 105]);
+});
+
+test("custom harmony preserves palette lightness and chroma transforms", () => {
+  const colors = customHarmonyColors("#3366FF", [
+    { dL: 0, c: 1, dH: 0 },
+    { dL: 0.22, c: 0.35, dH: 0 },
+    { dL: -0.2, c: 0.65, dH: 0 },
+  ]);
+  assert.equal(colors.length, 3);
+  assert.equal(new Set(colors.map((color) => color.hex)).size, 3);
+  assert.deepEqual(colors.map((color) => color.sourceRule), ["custom", "custom", "custom"]);
 });
 
 test("tint generation uses the active input color", () => {

@@ -18,12 +18,23 @@ type Hsl = {
   l: number;
 };
 
+export type CustomHarmonyTransform = {
+  dL: number;
+  c: number;
+  dH: number;
+};
+
 export function normalizeHue(hue: number): number {
   return ((hue % 360) + 360) % 360;
 }
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function hueDistance(a: number, b: number) {
+  const diff = Math.abs(normalizeHue(a) - normalizeHue(b));
+  return Math.min(diff, 360 - diff);
 }
 
 export function lerp(start: number, end: number, t: number): number {
@@ -287,11 +298,16 @@ function colorsFromHues(rule: HarmonyRule, base: Hsl, hues: number[]): Generated
   });
 }
 
-export function customHarmonyColors(color: string, offsets: number[], fallbackHue = 0): GeneratedColor[] {
-  const base = hexToHsl(color, fallbackHue);
-  return offsets.map((offset, index) => {
-    const hue = normalizeHue(base.h + offset);
-    return colorFromHue("custom", index, base, hue, Math.abs(normalizeHue(offset)) < 0.001 ? "anchor" : "custom");
+export function customHarmonyColors(color: string, transforms: CustomHarmonyTransform[], fallbackHue = 0): GeneratedColor[] {
+  const anchor = hexToOklch(color, fallbackHue);
+  return transforms.map((transform, index) => {
+    const oklch = fitOklchToSrgb({
+      l: clamp(anchor.l + transform.dL, 0.08, 0.96),
+      c: clamp(anchor.c * transform.c, 0.02, 0.34),
+      h: normalizeHue(anchor.h + transform.dH),
+    });
+    const isAnchor = Math.abs(transform.dL) < 0.001 && Math.abs(transform.c - 1) < 0.001 && hueDistance(transform.dH, 0) < 0.001;
+    return makeGeneratedColor("custom", index, oklch, isAnchor ? "anchor" : "custom");
   });
 }
 export function generateHarmonyColors(color: string, rule: HarmonyRule, count: number, fallbackHue = 0): GeneratedColor[] {
