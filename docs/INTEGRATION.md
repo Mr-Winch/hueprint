@@ -6,11 +6,12 @@
 2. Import `ColorHarmonyPicker` from the copied folder's `index.ts`.
 3. Keep the component controlled through the `value` and `onChange` props.
 4. Use `onGeneratedColorsChange` if the host editor needs live generated colors.
-5. Use `onAddToPalette` if the host editor owns its own palette state.
-6. Set `theme="dark"` when embedding in dark editor surfaces, otherwise omit it for light mode.
-7. Choose the layout for the available panel width: `horizontal`, `vertical`, `verticalCompact`, or `horizontalCompact`.
-8. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
-9. Use CSS variables on the wrapper or edit `ColorHarmonyPicker.module.css` to align spacing, color, wheel size, overlay thickness, swatch height, and dark/light surfaces with the host UI.
+5. Use `savedPalette` with `onSavedPaletteChange` if the host editor should persist or centrally own saved palettes.
+6. Use `onAddToPalette` if the host editor also needs add-event hooks for analytics, toasts, or external palette stores.
+7. Set `theme="dark"` when embedding in dark editor surfaces, otherwise omit it for light mode.
+8. Choose the layout for the available panel width: `horizontal`, `vertical`, `verticalCompact`, or `horizontalCompact`.
+9. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
+10. Use CSS variables on the wrapper or edit `ColorHarmonyPicker.module.css` to align spacing, color, wheel size, overlay thickness, swatch height, and dark/light surfaces with the host UI.
 
 ## Example
 
@@ -23,16 +24,15 @@ import { ColorHarmonyPicker, GeneratedColor } from "@/components/color-harmony-p
 export function EditorColorPanel() {
   const [activeColor, setActiveColor] = useState("#2F80ED");
   const [generated, setGenerated] = useState<GeneratedColor[]>([]);
+  const [savedPalette, setSavedPalette] = useState<GeneratedColor[]>([]);
 
   return (
     <ColorHarmonyPicker
       value={activeColor}
       onChange={setActiveColor}
       onGeneratedColorsChange={setGenerated}
-      onAddToPalette={(color) => {
-        // Forward to the host app palette store here.
-        console.log(color.hex);
-      }}
+      savedPalette={savedPalette}
+      onSavedPaletteChange={setSavedPalette}
       initialRule="analogous"
       initialSwatchCount={5}
       layout="vertical"
@@ -40,6 +40,12 @@ export function EditorColorPanel() {
   );
 }
 ```
+
+## Saved Palette Persistence
+
+Hueprint supports both uncontrolled and controlled saved palettes. Pass `initialSavedPalette` to seed the built-in saved palette once, or pass `savedPalette` and `onSavedPaletteChange` to make the host app the source of truth. Controlled palettes can be persisted anywhere the host app chooses, including localStorage, IndexedDB, a project file, or a backend API.
+
+`onSavedPaletteChange` is fired when the user adds the active color, adds all generated colors, removes a swatch, clears the palette, imports a palette file, or reorders saved swatches by drag and drop.
 
 ## Layouts
 

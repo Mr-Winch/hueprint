@@ -60,6 +60,9 @@ export interface ColorHarmonyPickerProps {
   onChange?: (color: string) => void;
   onGeneratedColorsChange?: (colors: GeneratedColor[]) => void;
   onAddToPalette?: (color: GeneratedColor) => void;
+  savedPalette?: SavedPaletteInput[];
+  initialSavedPalette?: SavedPaletteInput[];
+  onSavedPaletteChange?: (colors: GeneratedColor[]) => void;
   initialRule?: HarmonyRule;
   initialSwatchCount?: number;
   minSwatches?: number;
@@ -76,6 +79,21 @@ export interface ColorHarmonyPickerProps {
 The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`.
 
 Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata beside the donut, `layout="verticalCompact"` for tighter narrow panels with the same side metadata, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers.
+
+## Palette Persistence
+
+Use `initialSavedPalette={['#2F80ED', '#40E1F1']}` to seed Hueprint's internal saved palette. Use `savedPalette` with `onSavedPaletteChange` when the host app should own persistence in localStorage, a backend, or an editor store. `savedPalette` accepts hex strings or full `GeneratedColor` objects.
+
+```tsx
+const [savedPalette, setSavedPalette] = useState<GeneratedColor[]>([]);
+
+<ColorHarmonyPicker
+  value={color}
+  onChange={setColor}
+  savedPalette={savedPalette}
+  onSavedPaletteChange={setSavedPalette}
+/>
+```
 
 ## Browser Notes
 

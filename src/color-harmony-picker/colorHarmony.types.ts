@@ -51,6 +51,7 @@ export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
 export type ColorHarmonyTheme = "light" | "dark";
 export type ColorHarmonyLayout = "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact";
+export type SavedPaletteInput = string | GeneratedColor;
 
 export interface GeneratedColor {
   id: string;
@@ -71,6 +72,9 @@ export interface ColorHarmonyPickerProps {
   onChange?: (color: string) => void;
   onGeneratedColorsChange?: (colors: GeneratedColor[]) => void;
   onAddToPalette?: (color: GeneratedColor) => void;
+  savedPalette?: SavedPaletteInput[];
+  initialSavedPalette?: SavedPaletteInput[];
+  onSavedPaletteChange?: (colors: GeneratedColor[]) => void;
   initialRule?: HarmonyRule;
   initialSwatchCount?: number;
   minSwatches?: number;

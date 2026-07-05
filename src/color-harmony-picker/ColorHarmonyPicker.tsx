@@ -25,13 +25,34 @@ import {
 } from "./colorHarmony.math";
 import { generatePaletteRecipeColors, paletteRecipeSize } from "./colorHarmony.recipes";
 import { generateShades, generateTints, generateTones } from "./colorHarmony.tonal";
-import { ColorHarmonyPickerProps, GeneratedColor, HarmonyRule, PaletteRecipe } from "./colorHarmony.types";
+import { ColorHarmonyPickerProps, GeneratedColor, HarmonyRule, PaletteRecipe, SavedPaletteInput } from "./colorHarmony.types";
 
 function paletteFileName() {
   const stamp = new Date().toISOString().slice(0, 10);
   return `color-harmony-palette-${stamp}.json`;
 }
 
+
+function normalizeSavedPalette(inputs: SavedPaletteInput[] | undefined, fallbackHue = 0, prefix = "saved"): GeneratedColor[] {
+  return (inputs ?? []).map((entry, index) => {
+    if (typeof entry === "string") {
+      const safeHex = sanitizeHex(entry);
+      return { ...makeGeneratedColorFromHex("custom", index, safeHex, "custom", fallbackHue), id: `${prefix}-${index}-${safeHex}` };
+    }
+
+    const safeHex = sanitizeHex(entry.hex);
+    const hue = entry.hue ?? hexToWheelHue(safeHex, fallbackHue);
+    return {
+      ...entry,
+      id: entry.id || `${prefix}-${index}-${safeHex}`,
+      hex: safeHex,
+      hue,
+      oklch: entry.oklch ?? hexToOklch(safeHex, hue),
+      role: entry.role ?? "custom",
+      sourceRule: entry.sourceRule ?? "custom",
+    };
+  });
+}
 function readPalettePayload(payload: unknown): string[] {
   const rawColors = Array.isArray(payload)
     ? payload
@@ -74,6 +95,9 @@ export function ColorHarmonyPicker({
   onChange,
   onGeneratedColorsChange,
   onAddToPalette,
+  savedPalette: savedPaletteInput,
+  initialSavedPalette,
+  onSavedPaletteChange,
   initialRule = "analogous",
   initialSwatchCount = 5,
   minSwatches = 2,
@@ -89,7 +113,9 @@ export function ColorHarmonyPicker({
   const [lastHarmonyRule, setLastHarmonyRule] = useState<HarmonyRule>(isTonalRule(initialRule) ? "analogous" : initialRule);
   const [swatchCount, setSwatchCount] = useState(() => clamp(initialSwatchCount, minSwatches, maxSwatches));
   const [fallbackHue, setFallbackHue] = useState(() => hexToWheelHue(value));
-  const [savedPalette, setSavedPalette] = useState<GeneratedColor[]>([]);
+  const [internalSavedPalette, setInternalSavedPalette] = useState<GeneratedColor[]>(() =>
+    normalizeSavedPalette(initialSavedPalette, hexToWheelHue(value), "initial-saved")
+  );
   const [customTransforms, setCustomTransforms] = useState<CustomHarmonyTransform[]>([
     { dL: 0, c: 1, dH: 0 },
     { dL: 0, c: 1, dH: 30 },
@@ -103,9 +129,15 @@ export function ColorHarmonyPicker({
     setActiveHex(sanitizeHex(value));
   }, [value]);
 
+  const savedPaletteIsControlled = savedPaletteInput !== undefined;
+  const controlledSavedPalette = useMemo(
+    () => (savedPaletteIsControlled ? normalizeSavedPalette(savedPaletteInput, fallbackHue, "controlled-saved") : null),
+    [fallbackHue, savedPaletteInput, savedPaletteIsControlled]
+  );
+  const savedPalette = controlledSavedPalette ?? internalSavedPalette;
+
   const activeHue = useMemo(() => hexToWheelHue(activeHex, fallbackHue), [activeHex, fallbackHue]);
   const swatchMax = rule === "custom" ? Math.max(maxSwatches, customTransforms.length, savedPalette.length) : maxSwatches;
-
   useEffect(() => {
     setFallbackHue(activeHue);
   }, [activeHue]);
@@ -181,26 +213,40 @@ export function ColorHarmonyPicker({
   const hideActiveMetadata = layout === "horizontalCompact";
   const layoutClass = styles[layout] ?? styles.horizontal;
 
+  function commitSavedPalette(nextPalette: GeneratedColor[]) {
+    if (!savedPaletteIsControlled) setInternalSavedPalette(nextPalette);
+    onSavedPaletteChange?.(nextPalette);
+  }
+
+  function updateSavedPalette(updater: (current: GeneratedColor[]) => GeneratedColor[]) {
+    const nextPalette = updater(savedPalette);
+    if (nextPalette !== savedPalette) commitSavedPalette(nextPalette);
+    return nextPalette;
+  }
+
   function addToPalette(color: GeneratedColor) {
-    setSavedPalette((current) => {
+    const nextColor = { ...color, id: `saved-${Date.now()}-${color.hex}` };
+    const next = updateSavedPalette((current) => {
       if (current.some((saved) => saved.hex === color.hex)) return current;
-      return [...current, { ...color, id: `saved-${Date.now()}-${color.hex}` }];
+      return [...current, nextColor];
     });
-    onAddToPalette?.(color);
+    if (next.includes(nextColor)) onAddToPalette?.(color);
   }
 
   function addAllToPalette(colors: GeneratedColor[]) {
     const stamp = Date.now();
-    setSavedPalette((current) => {
+    const added: GeneratedColor[] = [];
+    updateSavedPalette((current) => {
       const next = [...current];
       colors.forEach((color, index) => {
         if (!next.some((saved) => saved.hex === color.hex)) {
           next.push({ ...color, id: `saved-${stamp}-${index}-${color.hex}` });
-          onAddToPalette?.(color);
+          added.push(color);
         }
       });
-      return next;
+      return added.length ? next : current;
     });
+    added.forEach((color) => onAddToPalette?.(color));
   }
 
   function customAnchorFromPalette(palette: GeneratedColor[]) {
@@ -256,23 +302,20 @@ export function ColorHarmonyPicker({
   }
 
   function reorderSavedPalette(fromIndex: number, toIndex: number) {
-    setSavedPalette((current) => {
-      const next = reorderPalette(current, fromIndex, toIndex);
-      if (next !== current && rule === "custom") syncCustomRuleToPalette(next);
-      return next;
-    });
+    const next = updateSavedPalette((current) => reorderPalette(current, fromIndex, toIndex));
+    if (next !== savedPalette && rule === "custom") syncCustomRuleToPalette(next);
   }
 
   function removeSavedPaletteColor(id: string) {
-    setSavedPalette((current) => {
-      const next = current.filter((color) => color.id !== id);
-      if (rule === "custom" && next.length) syncCustomRuleToPalette(next);
-      return next;
+    const next = updateSavedPalette((current) => {
+      const updated = current.filter((color) => color.id !== id);
+      return updated.length === current.length ? current : updated;
     });
+    if (next !== savedPalette && rule === "custom" && next.length) syncCustomRuleToPalette(next);
   }
 
   function clearSavedPalette() {
-    setSavedPalette([]);
+    updateSavedPalette((current) => (current.length ? [] : current));
   }
 
   function exportPalette() {
@@ -299,17 +342,18 @@ export function ColorHarmonyPicker({
 
     const text = await file.text();
     const payload = JSON.parse(text) as unknown;
+    const stamp = Date.now();
     const imported = readPalettePayload(payload).map((hex, index) => {
       const safeHex = sanitizeHex(hex);
-      return { ...makeGeneratedColorFromHex("custom", index, safeHex, "custom"), id: `imported-${Date.now()}-${index}-${safeHex}` };
+      return { ...makeGeneratedColorFromHex("custom", index, safeHex, "custom", fallbackHue), id: `imported-${stamp}-${index}-${safeHex}` };
     });
 
-    setSavedPalette((current) => {
+    updateSavedPalette((current) => {
       const next = [...current];
       imported.forEach((color) => {
         if (!next.some((saved) => saved.hex === color.hex)) next.push(color);
       });
-      return next;
+      return next.length === current.length ? current : next;
     });
   }
 

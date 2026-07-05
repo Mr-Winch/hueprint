@@ -1,10 +1,28 @@
-import { useState } from "react";
-import { ColorHarmonyLayout, ColorHarmonyPicker, ColorHarmonyTheme } from "../src/color-harmony-picker";
+import { useEffect, useState } from "react";
+import { ColorHarmonyLayout, ColorHarmonyPicker, ColorHarmonyTheme, GeneratedColor } from "../src/color-harmony-picker";
+
+const savedPaletteStorageKey = "hueprint-demo-saved-palette";
+
+function readSavedPalette() {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = window.localStorage.getItem(savedPaletteStorageKey);
+    const parsed = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export function ColorHarmonyDemo() {
   const [activeColor, setActiveColor] = useState("#2F80ED");
   const [theme, setTheme] = useState<ColorHarmonyTheme>("light");
   const [layout, setLayout] = useState<ColorHarmonyLayout>("horizontal");
+  const [savedPalette, setSavedPalette] = useState<GeneratedColor[]>(readSavedPalette);
+
+  useEffect(() => {
+    window.localStorage.setItem(savedPaletteStorageKey, JSON.stringify(savedPalette));
+  }, [savedPalette]);
 
   return (
     <main className="demoShell" data-theme={theme}>
@@ -37,6 +55,8 @@ export function ColorHarmonyDemo() {
           onChange={setActiveColor}
           initialRule="analogous"
           initialSwatchCount={5}
+          savedPalette={savedPalette}
+          onSavedPaletteChange={setSavedPalette}
           theme={theme}
           layout={layout}
         />
