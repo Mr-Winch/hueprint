@@ -94,6 +94,8 @@ export function ColorHarmonyPicker({
     { dL: 0, c: 1, dH: 30 },
     { dL: 0, c: 1, dH: 180 },
   ]);
+  const [customExactPalette, setCustomExactPalette] = useState<GeneratedColor[] | null>(null);
+  const [customAnchorHex, setCustomAnchorHex] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,6 +103,7 @@ export function ColorHarmonyPicker({
   }, [value]);
 
   const activeHue = useMemo(() => hexToWheelHue(activeHex, fallbackHue), [activeHex, fallbackHue]);
+  const swatchMax = rule === "custom" ? Math.max(maxSwatches, customTransforms.length, savedPalette.length) : maxSwatches;
 
   useEffect(() => {
     setFallbackHue(activeHue);
@@ -111,9 +114,16 @@ export function ColorHarmonyPicker({
     if (rule === "tint") return generateTints(activeHex, swatchCount);
     if (rule === "shade") return generateShades(activeHex, swatchCount);
     if (rule === "tone") return generateTones(activeHex, swatchCount);
-    if (rule === "custom") return customHarmonyColors(activeHex, customTransforms, fallbackHue);
+    if (rule === "custom") {
+      const transformed = customHarmonyColors(activeHex, customTransforms, fallbackHue);
+      if (customExactPalette && customAnchorHex === activeHex.toUpperCase()) {
+        const exact = customExactPalette.slice(0, customTransforms.length);
+        return customTransforms.length > exact.length ? [...exact, ...transformed.slice(exact.length)] : exact;
+      }
+      return transformed;
+    }
     return generateHarmonyColors(activeHex, rule, swatchCount, fallbackHue);
-  }, [activeHex, customTransforms, fallbackHue, paletteRecipe, rule, swatchCount]);
+  }, [activeHex, customAnchorHex, customExactPalette, customTransforms, fallbackHue, paletteRecipe, rule, swatchCount]);
 
   useEffect(() => {
     onGeneratedColorsChange?.(generatedColors);
@@ -132,6 +142,8 @@ export function ColorHarmonyPicker({
   function selectHarmonyRule(nextRule: HarmonyRule) {
     const fixedCount = fixedSwatchCountForRule(nextRule, minSwatches, maxSwatches);
     setPaletteRecipe("none");
+    setCustomExactPalette(null);
+    setCustomAnchorHex(null);
     setLastHarmonyRule(nextRule);
     setRule(nextRule);
     if (fixedCount != null) setSwatchCount(fixedCount);
@@ -139,11 +151,14 @@ export function ColorHarmonyPicker({
 
   function selectPaletteRecipe(nextRecipe: PaletteRecipe) {
     setPaletteRecipe(nextRecipe);
+    setCustomExactPalette(null);
+    setCustomAnchorHex(null);
     const recipeCount = paletteRecipeSize(nextRecipe);
     if (recipeCount != null) setSwatchCount(clamp(recipeCount, minSwatches, maxSwatches));
   }
   function changeSwatchCount(nextCount: number) {
-    const safeCount = clamp(nextCount, minSwatches, maxSwatches);
+    const safeMax = rule === "custom" ? Math.max(maxSwatches, customTransforms.length, savedPalette.length, nextCount) : maxSwatches;
+    const safeCount = clamp(nextCount, minSwatches, safeMax);
     setSwatchCount(safeCount);
     if (rule !== "custom") return;
 
@@ -191,8 +206,8 @@ export function ColorHarmonyPicker({
 
   function customTransformsFromPalette(palette: GeneratedColor[], anchorColor: GeneratedColor) {
     const anchorOklch = anchorColor.oklch ?? hexToOklch(anchorColor.hex, activeHue);
-    const transforms = palette.slice(0, maxSwatches).map((color) => {
-      const oklch = color.oklch ?? hexToOklch(color.hex, anchorOklch.h);
+    const transforms = palette.map((color) => {
+      const oklch = hexToOklch(color.hex, anchorOklch.h);
       return {
         dL: oklch.l - anchorOklch.l,
         c: anchorOklch.c < 0.001 ? 1 : oklch.c / anchorOklch.c,
@@ -205,24 +220,36 @@ export function ColorHarmonyPicker({
     return transforms;
   }
 
+  function exactCustomColorsFromPalette(palette: GeneratedColor[], anchorColor: GeneratedColor) {
+    return palette.map((color, index) =>
+      makeGeneratedColorFromHex("custom", index, color.hex, color.id === anchorColor.id ? "anchor" : "custom", activeHue)
+    );
+  }
+
   function syncCustomRuleToPalette(palette: GeneratedColor[]) {
     const anchorColor = customAnchorFromPalette(palette);
     if (!anchorColor) return;
     const transforms = customTransformsFromPalette(palette, anchorColor);
+    const exactPalette = exactCustomColorsFromPalette(palette, anchorColor);
     if (anchorColor.hex.toUpperCase() !== activeHex.toUpperCase()) commitColor(anchorColor.hex);
     setCustomTransforms(transforms);
-    setSwatchCount(clamp(transforms.length, minSwatches, maxSwatches));
+    setCustomExactPalette(exactPalette);
+    setCustomAnchorHex(anchorColor.hex.toUpperCase());
+    setSwatchCount(Math.max(minSwatches, transforms.length));
   }
 
   function applySavedPaletteAsCustomRule() {
     if (!savedPalette.length) return;
     const anchorColor = customAnchorFromPalette(savedPalette);
     const transforms = customTransformsFromPalette(savedPalette, anchorColor);
+    const exactPalette = exactCustomColorsFromPalette(savedPalette, anchorColor);
     if (anchorColor.hex.toUpperCase() !== activeHex.toUpperCase()) commitColor(anchorColor.hex);
     setCustomTransforms(transforms);
+    setCustomExactPalette(exactPalette);
+    setCustomAnchorHex(anchorColor.hex.toUpperCase());
     setLastHarmonyRule("custom");
     setRule("custom");
-    setSwatchCount(clamp(transforms.length, minSwatches, maxSwatches));
+    setSwatchCount(Math.max(minSwatches, transforms.length));
   }
 
   function reorderSavedPalette(fromIndex: number, toIndex: number) {
@@ -299,7 +326,7 @@ export function ColorHarmonyPicker({
         <div className={styles.controlRow}>
           <HarmonyRuleSelector value={paletteRecipe === "none" && !isTonalRule(rule) ? rule : lastHarmonyRule} onChange={selectHarmonyRule} dimmed={paletteRecipe !== "none"} />
           <PaletteRecipeSelector value={paletteRecipe} onChange={selectPaletteRecipe} dimmed={paletteRecipe === "none"} />
-          <SwatchCountControl value={rule === "custom" ? customTransforms.length : swatchCount} min={minSwatches} max={maxSwatches} onChange={changeSwatchCount} />
+          <SwatchCountControl value={rule === "custom" ? customTransforms.length : swatchCount} min={minSwatches} max={swatchMax} onChange={changeSwatchCount} />
         </div>
 
         <GeneratedSwatches colors={generatedColors} activeHex={activeHex} onSelect={selectGeneratedColor} onAddAll={addAllToPalette} />
