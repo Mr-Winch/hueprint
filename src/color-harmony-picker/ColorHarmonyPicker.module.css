@@ -46,7 +46,7 @@
 }
 
 .vertical .controlRow {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(118px, 1fr) minmax(118px, 1fr) minmax(88px, 0.72fr);
   gap: 8px;
 }
 
