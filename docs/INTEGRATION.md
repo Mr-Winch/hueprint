@@ -43,7 +43,7 @@ export function EditorColorPanel() {
 
 ## Layouts
 
-`horizontal` is the default wide layout. Use `vertical` for 300-450px editor panels when the HEX/RGB/CMYK/HSL metadata should remain visible under the wheel. Use `verticalCompact` for the same panel range when the host UI already shows color metadata elsewhere. Use `horizontalCompact` when a side-by-side presentation is preferred; it wraps the controls under the wheel instead of overflowing when space gets tight.
+`horizontal` is the default wide layout. Use `vertical` for 300-450px editor panels when the HEX/RGB/CMYK/HSL metadata should sit beside the wheel. Use `verticalCompact` for the same panel range when the control needs to be tighter while keeping that side metadata. Use `horizontalCompact` when a side-by-side presentation is preferred; it wraps the controls under the wheel instead of overflowing when space gets tight.
 
 ## Palette Recipes
 

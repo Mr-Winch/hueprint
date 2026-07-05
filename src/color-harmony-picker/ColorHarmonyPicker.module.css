@@ -40,9 +40,18 @@
   max-width: 668px;
 }
 
-.vertical .wheelColumn,
+.vertical .wheelColumn {
+  grid-template-columns: var(--wheel-size) minmax(0, 104px);
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+}
+
 .verticalCompact .wheelColumn {
-  justify-items: center;
+  grid-template-columns: var(--wheel-size) minmax(0, 96px);
+  align-items: center;
+  justify-content: center;
+  column-gap: 8px;
 }
 
 .vertical .controlRow {
@@ -583,6 +592,23 @@
 
 .colorInfo dt::after {
   content: ": ";
+}
+
+
+.vertical .colorInfo,
+.verticalCompact .colorInfo {
+  justify-self: start;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+}
+
+.vertical .colorInfo {
+  font-size: 9px;
+}
+
+.verticalCompact .colorInfo {
+  font-size: 8.75px;
 }
 
 .colorInfo dd {

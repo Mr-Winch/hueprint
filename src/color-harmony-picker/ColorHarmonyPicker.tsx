@@ -178,7 +178,7 @@ export function ColorHarmonyPicker({
   }, [activeHex, fallbackHue, generatedColors, paletteRecipe, rule]);
 
   const activeColorIsSaved = savedPalette.some((color) => color.hex.toUpperCase() === activeHex.toUpperCase());
-  const hideActiveMetadata = layout === "verticalCompact" || layout === "horizontalCompact";
+  const hideActiveMetadata = layout === "horizontalCompact";
   const layoutClass = styles[layout] ?? styles.horizontal;
 
   function addToPalette(color: GeneratedColor) {

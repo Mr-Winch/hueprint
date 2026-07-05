@@ -75,7 +75,7 @@ export interface ColorHarmonyPickerProps {
 
 The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`.
 
-Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata, `layout="verticalCompact"` for narrow panels without metadata, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers.
+Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata beside the donut, `layout="verticalCompact"` for tighter narrow panels with the same side metadata, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers.
 
 ## Browser Notes
 
