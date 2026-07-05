@@ -50,6 +50,7 @@ export type PaletteRecipe =
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom" | "recipe";
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
 export type ColorHarmonyTheme = "light" | "dark";
+export type ColorHarmonyLayout = "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact";
 
 export interface GeneratedColor {
   id: string;
@@ -76,6 +77,7 @@ export interface ColorHarmonyPickerProps {
   maxSwatches?: number;
   showGeometryOverlay?: boolean;
   theme?: ColorHarmonyTheme;
+  layout?: ColorHarmonyLayout;
   className?: string;
 }
 

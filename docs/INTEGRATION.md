@@ -8,8 +8,9 @@
 4. Use `onGeneratedColorsChange` if the host editor needs live generated colors.
 5. Use `onAddToPalette` if the host editor owns its own palette state.
 6. Set `theme="dark"` when embedding in dark editor surfaces, otherwise omit it for light mode.
-7. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
-8. Use CSS variables on the wrapper or edit `ColorHarmonyPicker.module.css` to align spacing, color, wheel size, overlay thickness, swatch height, and dark/light surfaces with the host UI.
+7. Choose the layout for the available panel width: `horizontal`, `vertical`, `verticalCompact`, or `horizontalCompact`.
+8. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
+9. Use CSS variables on the wrapper or edit `ColorHarmonyPicker.module.css` to align spacing, color, wheel size, overlay thickness, swatch height, and dark/light surfaces with the host UI.
 
 ## Example
 
@@ -34,10 +35,15 @@ export function EditorColorPanel() {
       }}
       initialRule="analogous"
       initialSwatchCount={5}
+      layout="vertical"
     />
   );
 }
 ```
+
+## Layouts
+
+`horizontal` is the default wide layout. Use `vertical` for 300-450px editor panels when the HEX/RGB/CMYK/HSL metadata should remain visible under the wheel. Use `verticalCompact` for the same panel range when the host UI already shows color metadata elsewhere. Use `horizontalCompact` when a side-by-side presentation is preferred; it wraps the controls under the wheel instead of overflowing when space gets tight.
 
 ## Palette Recipes
 

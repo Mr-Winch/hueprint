@@ -80,6 +80,7 @@ export function ColorHarmonyPicker({
   maxSwatches = 8,
   showGeometryOverlay = true,
   theme = "light",
+  layout = "horizontal",
   className,
 }: ColorHarmonyPickerProps) {
   const [activeHex, setActiveHex] = useState(() => sanitizeHex(value));
@@ -177,6 +178,8 @@ export function ColorHarmonyPicker({
   }, [activeHex, fallbackHue, generatedColors, paletteRecipe, rule]);
 
   const activeColorIsSaved = savedPalette.some((color) => color.hex.toUpperCase() === activeHex.toUpperCase());
+  const hideActiveMetadata = layout === "verticalCompact" || layout === "horizontalCompact";
+  const layoutClass = styles[layout] ?? styles.horizontal;
 
   function addToPalette(color: GeneratedColor) {
     setSavedPalette((current) => {
@@ -311,13 +314,13 @@ export function ColorHarmonyPicker({
   }
 
   return (
-    <section className={`${styles.picker} ${theme === "dark" ? styles.dark : ""} ${className ?? ""}`}>
+    <section className={`${styles.picker} ${layoutClass} ${theme === "dark" ? styles.dark : ""} ${className ?? ""}`}>
       <div className={styles.wheelColumn}>
         <div className={styles.wheelWrap}>
           <ColorHarmonyWheel color={activeHex} hue={activeHue} onChange={commitColor} />
           {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={paletteRecipe === "none" ? rule : "custom"} recipeMode={paletteRecipe !== "none"} /> : null}
         </div>
-        <ActiveColorInfo hex={activeHex} />
+        {hideActiveMetadata ? null : <ActiveColorInfo hex={activeHex} />}
       </div>
 
       <div className={styles.controlColumn}>

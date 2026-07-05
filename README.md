@@ -18,6 +18,7 @@ It includes a donut-style color wheel with radial lightness, visible harmony geo
 - Native browser eyedropper support where available
 - Saved palette with select, remove, clear, drag reorder, import, and export
 - Custom harmony rules store OKLCH transforms from the anchor color, not fixed colors
+- Four layout modes for wide surfaces and narrow editor panels
 
 ## Install By Source Copy
 
@@ -65,13 +66,16 @@ export interface ColorHarmonyPickerProps {
   maxSwatches?: number;
   showGeometryOverlay?: boolean;
   theme?: "light" | "dark";
+  layout?: "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact";
   className?: string;
 }
 ```
 
 ## Styling
 
-The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`. The current layout is compact so it can be embedded in editor side panels.
+The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`.
+
+Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata, `layout="verticalCompact"` for narrow panels without metadata, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers.
 
 ## Browser Notes
 

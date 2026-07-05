@@ -10,12 +10,109 @@
   gap: 14px;
   align-items: start;
   width: 100%;
+  min-width: 0;
+}
+.horizontal {
+  max-width: none;
+}
+
+.vertical,
+.verticalCompact {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 450px;
+}
+
+.vertical {
+  --wheel-size: 184px;
+  --wheel-thickness: 34px;
+}
+
+.verticalCompact {
+  --wheel-size: 162px;
+  --wheel-thickness: 30px;
+  --marker-size: 14px;
+  --swatch-band-height: 28px;
+  gap: 10px;
+}
+
+.horizontalCompact {
+  --wheel-size: 138px;
+  --wheel-thickness: 26px;
+  --marker-size: 14px;
+  --swatch-band-height: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 450px;
+}
+
+.vertical .wheelColumn,
+.verticalCompact .wheelColumn {
+  justify-items: center;
+}
+
+.horizontalCompact .wheelColumn {
+  flex: 0 0 var(--wheel-size);
+}
+
+.horizontalCompact .controlColumn {
+  flex: 1 1 260px;
+  min-width: min(100%, 260px);
+}
+
+.vertical .controlRow,
+.verticalCompact .controlRow,
+.horizontalCompact .controlRow,
+.vertical .swatchBandBlock,
+.verticalCompact .swatchBandBlock,
+.horizontalCompact .swatchBandBlock {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.vertical .hexInputRow,
+.verticalCompact .hexInputRow,
+.horizontalCompact .hexInputRow {
+  grid-template-columns: 36px 92px repeat(3, 34px);
+}
+
+.vertical .lightnessControl,
+.verticalCompact .lightnessControl,
+.horizontalCompact .lightnessControl {
+  grid-column: 1 / -1;
+}
+
+.vertical .activePanel,
+.vertical .paletteBlock,
+.verticalCompact .activePanel,
+.verticalCompact .paletteBlock,
+.horizontalCompact .activePanel,
+.horizontalCompact .paletteBlock {
+  padding: 8px;
+}
+
+.verticalCompact .field,
+.horizontalCompact .field {
+  gap: 4px;
+}
+
+.verticalCompact .tonalButtons,
+.horizontalCompact .tonalButtons {
+  gap: 5px;
+}
+
+.verticalCompact .paletteTools,
+.horizontalCompact .paletteTools {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .wheelColumn,
 .controlColumn {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 .wheelWrap {
@@ -192,6 +289,7 @@
 
 .range {
   width: 100%;
+  min-width: 0;
   accent-color: var(--accent, #1f5f8b);
 }
 
@@ -406,8 +504,17 @@
 }
 
 @media (max-width: 420px) {
-  .picker {
+  .horizontal,
+  .vertical {
     --wheel-size: min(184px, calc(100vw - 56px));
+  }
+
+  .verticalCompact {
+    --wheel-size: min(162px, calc(100vw - 56px));
+  }
+
+  .horizontalCompact {
+    --wheel-size: min(138px, calc(100vw - 56px));
   }
 
   .hexInputRow {

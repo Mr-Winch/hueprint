@@ -102,6 +102,13 @@ select {
   color: #cbd5e1;
 }
 
+.demoSwitches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .themeSwitch {
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -110,6 +117,10 @@ select {
   border: 1px solid #d6dce5;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.layoutSwitch {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .demoShell[data-theme="dark"] .themeSwitch {
@@ -148,8 +159,12 @@ select {
   overflow-x: auto;
 }
 
-.demoSurface > * {
+.demoSurface[data-layout="horizontal"] > * {
   min-width: 720px;
+}
+
+.demoSurface:not([data-layout="horizontal"]) > * {
+  min-width: 0;
 }
 
 @media (max-width: 780px) {
@@ -163,8 +178,11 @@ select {
     flex-direction: column;
   }
 
+  .demoSwitches {
+    justify-content: flex-start;
+  }
+
   .demoSurface > * {
     min-width: 0;
   }
 }
-
