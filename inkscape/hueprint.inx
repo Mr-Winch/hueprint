@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>HuePrint Palette</name>
+  <id>io.github.mr-winch.hueprint</id>
+  <param name="base_color" type="color" gui-text="Base color">0x2F80EDff</param>
+  <param name="harmony" type="optiongroup" appearance="combo" gui-text="Harmony">
+    <option value="monochromatic">Monochromatic</option><option value="analogous">Analogous</option>
+    <option value="complementary">Complementary</option><option value="split_complementary">Split complementary</option>
+    <option value="triadic">Triadic</option><option value="square">Square</option>
+    <option value="rectangle_tetradic">Rectangle / tetradic</option><option value="polygon">Polygon / equidistant</option>
+    <option value="tint">Tint</option><option value="shade">Shade</option><option value="tone">Tone</option>
+  </param>
+  <param name="count" type="int" min="2" max="8" gui-text="Swatches">5</param>
+  <param name="target" type="optiongroup" appearance="combo" gui-text="Apply to selection"><option value="fill">Fill</option><option value="stroke">Stroke</option></param>
+  <param name="create_swatches" type="bool" gui-text="Create swatches on canvas">true</param>
+  <param name="swatch_size" type="float" min="1" max="100" gui-text="Swatch size (mm)">18</param>
+  <param name="gap" type="float" min="0" max="50" gui-text="Swatch gap (mm)">2</param>
+  <label appearance="wrapped">Colors selected objects in selection order and optionally creates a labeled palette on the current layer.</label>
+  <effect needs-live-preview="true"><object-type>all</object-type><effects-menu><submenu name="Color" /></effects-menu></effect>
+  <script><command location="inx" interpreter="python">hueprint.py</command></script>
+</inkscape-extension>
