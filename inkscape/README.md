@@ -1,67 +1,63 @@
 # HuePrint for Inkscape
 
-A native Inkscape 1.2+ effect extension based on HuePrint's color-harmony engine.
+HuePrint is a color-harmony extension for Inkscape 1.2 or newer.
 
-## Install in Inkscape
+## Easiest installation (recommended)
 
-HuePrint requires Inkscape 1.2 or newer. You do not need to install Python or Python packages because Inkscape includes the extension runtime.
+You do not need to program anything or install Python.
 
-### 1. Find the correct extensions folder
+1. Download [`HuePrint-Inkscape.zip`](download/HuePrint-Inkscape.zip). Do **not** unpack it.
+2. Open Inkscape.
+3. Open **Extensions → Manage Extensions**.
+4. Choose **Install Packages**.
+5. Click the small folder/disk button and select `HuePrint-Inkscape.zip`.
+6. Close every Inkscape window, then reopen Inkscape.
+7. Open **Extensions → Color → HuePrint Palette**.
 
-Open Inkscape and go to **Edit → Preferences → System**. Copy the path shown next to **User extensions**. Use that path, especially for Microsoft Store, Homebrew, Flatpak, or Snap installations.
+That is all. If your copy of Inkscape does not have **Manage Extensions**, use the Windows installer below.
 
-### 2. Copy the extension
+## Windows: double-click installer
 
-Download or clone this branch. Copy the `inkscape` folder into the **User extensions** folder and rename the copied folder to `hueprint`. These files must be directly inside it:
+1. Download [`HuePrint-Windows.zip`](download/HuePrint-Windows.zip).
+2. Right-click the downloaded ZIP and choose **Extract All**.
+3. Open the extracted folder.
+4. Double-click **Install HuePrint.cmd**.
+5. When it says installation is complete, close the installer.
+6. Close and reopen Inkscape.
+7. Open **Extensions → Color → HuePrint Palette**.
+
+Windows may show a security warning because the installer is not digitally signed. You can choose **More info → Run anyway**, or use the recommended Inkscape installation method above.
+
+## Using HuePrint
+
+1. Select objects if you want to recolor them.
+2. Open **Extensions → Color → HuePrint Palette**.
+3. Pick a base color and a harmony.
+4. Choose how many colors you want.
+5. Click **Apply**.
+
+HuePrint can recolor the fill or outline of selected objects and can create a strip of color swatches on the page.
+
+## If HuePrint does not appear
+
+- Make sure you fully closed and reopened Inkscape after installing.
+- Look under **Extensions → Color**, not the Fill and Stroke panel.
+- Use Inkscape 1.2 or newer.
+- If the ZIP method reports an error, extract `HuePrint-Windows.zip` and use the double-click installer.
+
+## Manual installation (advanced)
+
+In Inkscape, open **Edit → Preferences → System** and find **User extensions**. Create a folder named `hueprint` there and copy these files into it:
 
 ```text
-hueprint/
-├── hueprint.inx
-├── hueprint.py
-└── hueprint_palette.py
+hueprint.inx
+hueprint.py
+hueprint_palette.py
 ```
 
-The README, installer, and test file are not required by Inkscape.
+Restart Inkscape afterward.
 
-#### Windows automatic install
-
-Open PowerShell in the repository root and run:
-
-```powershell
-.\inkscape\install.ps1
-```
-
-This uses `%APPDATA%\inkscape\extensions\hueprint`. If Inkscape shows a different **User extensions** path, pass it explicitly:
-
-```powershell
-.\inkscape\install.ps1 -Destination "C:\path\shown\by\Inkscape\hueprint"
-```
-
-If PowerShell blocks local scripts:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\inkscape\install.ps1
-```
-
-### 3. Restart and verify
-
-Close every Inkscape window and reopen it. HuePrint should appear under **Extensions → Color → HuePrint Palette**.
-
-If it is missing, confirm `hueprint.inx` is directly inside the copied folder—not inside another nested `inkscape` folder—and recheck the **User extensions** path.
-
-## Use
-
-1. Select objects if you want HuePrint to recolor them.
-2. Open **Extensions → Color → HuePrint Palette**.
-3. Choose the base color, harmony, and swatch count.
-4. Choose **Fill** or **Stroke**.
-5. Optionally create a palette strip and enable **Live preview**.
-6. Click **Apply**.
-
-Selected objects are colored in selection order. If there are more objects than colors, the palette repeats.
-
-## Test
+## Developer test
 
 ```bash
 python -m unittest discover -s inkscape -p "test_*.py"
