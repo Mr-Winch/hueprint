@@ -11,7 +11,7 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gtk
 
 from hueprint_palette import generate_palette, hex_to_hls, hls_to_hex, sanitize_hex
-from hueprint_recipes import RECIPES, generate_recipe
+from hueprint_recipes import RECIPES, generate_recipe, hex_to_oklch
 
 HARMONIES = [
     ("monochromatic", "Monochromatic"), ("analogous", "Analogous"),
@@ -95,7 +95,7 @@ class HuePrintDialog(Gtk.Dialog):
         root.pack_start(left,True,True,0); root.pack_start(right,False,False,0)
         self.wheel=ColorWheel(self); left.pack_start(self.wheel,True,True,0)
         self.swatches=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=5); left.pack_start(self.swatches,False,False,0)
-        self.info=Gtk.Label(); self.info.set_xalign(0); left.pack_start(self.info,False,False,0)
+        self.info=Gtk.Label(); self.info.set_xalign(0); self.info.set_selectable(True); left.pack_start(self.info,False,False,0)
         buttons=Gtk.Box(spacing=6); left.pack_start(buttons,False,False,0)
         add=Gtk.Button(label="Save generated palette"); add.connect("clicked",self.save_generated); buttons.pack_start(add,False,False,0)
         imp=Gtk.Button(label="Import"); imp.connect("clicked",self.import_palette); buttons.pack_start(imp,False,False,0)
@@ -106,6 +106,7 @@ class HuePrintDialog(Gtk.Dialog):
         title=Gtk.Label(); title.set_markup("<span size='x-large' weight='bold'>HuePrint</span>\nColor harmony studio for Inkscape"); title.set_xalign(0); right.pack_start(title,False,False,6)
         self.color_entry=Gtk.Entry(); self.color_entry.set_text(self.color); self.color_entry.connect("activate",self.entry_changed)
         color_row=self._row("Active color",self.color_entry); choose=Gtk.ColorButton(rgba=_rgba(self.color)); choose.connect("color-set",self.color_chosen); color_row.pack_start(choose,False,False,0); self.color_button=choose
+        right.pack_start(color_row,False,False,0)
         self.harmony=Gtk.ComboBoxText(); [self.harmony.append(i,label) for i,label in HARMONIES]; self.harmony.set_active_id("analogous"); self.harmony.connect("changed",self.control_changed); right.pack_start(self._row("Harmony",self.harmony),False,False,0)
         self.count=Gtk.SpinButton.new_with_range(2,8,1); self.count.set_value(5); self.count.connect("value-changed",self.control_changed); right.pack_start(self._row("Swatches",self.count),False,False,0)
         self.recipe=Gtk.ComboBoxText(); [self.recipe.append(i,data[0]) for i,data in RECIPES.items()]; self.recipe.set_active_id("none"); self.recipe.connect("changed",self.control_changed); right.pack_start(self._row("Palette recipe",self.recipe),False,False,0)
@@ -133,7 +134,14 @@ class HuePrintDialog(Gtk.Dialog):
         colors=self.generated_colors()
         for color in colors: self.swatches.pack_start(self._swatch(color,54,True),True,True,0)
         h,l,s=hex_to_hls(self.color); r,g,b=[int(self.color[i:i+2],16) for i in (1,3,5)]
-        self.info.set_text(f"{self.color}    RGB {r}, {g}, {b}    HSL {round(h)}°, {round(s*100)}%, {round(l*100)}%")
+        rn,gn,bn=r/255,g/255,b/255; k=1-max(rn,gn,bn)
+        if k >= .999: c=m=y=0
+        else: c=(1-rn-k)/(1-k); m=(1-gn-k)/(1-k); y=(1-bn-k)/(1-k)
+        ok_l,ok_c,ok_h=hex_to_oklch(self.color)
+        self.info.set_markup(
+            f"<b>Active color details</b>\n"
+            f"HEX  {self.color}     RGB  {r}, {g}, {b}     CMYK  {round(c*100)}%, {round(m*100)}%, {round(y*100)}%, {round(k*100)}%\n"
+            f"HSL  {round(h)}°, {round(s*100)}%, {round(l*100)}%     OKLCH  {ok_l:.3f}, {ok_c:.3f}, {round(ok_h)}°")
         self.swatches.show_all(); self.wheel.queue_draw(); self._render_saved()
     def _swatch(self,color,height,clickable=False):
         event=Gtk.EventBox(); event.set_tooltip_text(color)
