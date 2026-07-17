@@ -1,5 +1,5 @@
 """HuePrint GTK interface: responsive metadata, collision-safe geometry, palettes."""
-import colorsys, json, math, os, xml.etree.ElementTree as ET
+import colorsys, json, math, os, random, xml.etree.ElementTree as ET
 from pathlib import Path
 import gi
 gi.require_version("Gtk","3.0"); gi.require_version("Gdk","3.0"); gi.require_version("GdkPixbuf","2.0")
@@ -42,6 +42,7 @@ SVG_ICONS = {
  "check":"<path d='M5 12.5l4.2 4.2L19 7' fill='none'/>",
  "add":"<path d='M12 5v14M5 12h14' fill='none'/>",
  "minus":"<path d='M5 12h14' fill='none'/>",
+ "random":"<path d='M4 7h3c4 0 5 10 9 10h4M16 13l4 4-4 4M4 17h3c1.8 0 3-2 4-4M13 7h7M16 3l4 4-4 4' fill='none'/>",
  "palette":"<path d='M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 0-3.6h-1a1.8 1.8 0 0 1 0-3.6H16A5 5 0 0 0 21 9c0-3.3-4-6-9-6z' fill='none'/><circle cx='8' cy='8' r='1'/><circle cx='12' cy='6.5' r='1'/><circle cx='16' cy='8.5' r='1'/>",
  "import":"<path d='M12 3v12M7 10l5 5 5-5M4 20h16' fill='none'/>",
  "export":"<path d='M12 17V5M7 10l5-5 5 5M4 20h16' fill='none'/>",
@@ -86,7 +87,7 @@ class RecipeBrowser(Gtk.MenuButton):
         filters=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=4); group=None; self.filter_buttons={}
         for filter_id in self.FILTERS:
             button=Gtk.RadioButton.new_with_label_from_widget(group,CATEGORY_LABELS.get(filter_id,"All")); group=group or button; button.set_mode(False); button.connect("toggled",self.filter_changed,filter_id); filters.pack_start(button,False,False,0); self.filter_buttons[filter_id]=button
-        self.filter_buttons["all"].set_active(True); outer.pack_start(filters,False,False,0)
+        self.filter_buttons["all"].set_active(True); random_button=owner._icon_button("random","Generate a random base color and palette recipe",self.random_palette,28); filters.pack_start(random_button,False,False,0); outer.pack_start(filters,False,False,0)
         scroll=Gtk.ScrolledWindow(); scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC); scroll.set_min_content_width(740); scroll.set_max_content_width(760); scroll.set_propagate_natural_width(True); scroll.set_min_content_height(500); scroll.set_max_content_height(560)
         content=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10); content.set_border_width(2)
         manual_box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=4); manual_title=Gtk.Label(); manual_title.set_markup("<span weight='bold'>Manual</span>"); manual_title.set_xalign(0); manual_box.pack_start(manual_title,False,False,0); manual_box.pack_start(self.make_card("none",compact=True),False,False,0); content.pack_start(manual_box,False,False,0)
@@ -145,6 +146,8 @@ class RecipeBrowser(Gtk.MenuButton):
     def connect_changed(self,callback):self.callbacks.append(callback)
     def filter_changed(self,button,filter_id):
         if button.get_active():self.current_filter=filter_id; self.apply_filter()
+    def random_palette(self,*_args):
+        chooser=random.SystemRandom(); recipe_id=chooser.choice([item.id for item in RECIPE_METADATA if item.id!="none"]); self.set_active_id(recipe_id); self.owner.set_color("#%06X"%chooser.randrange(0x1000000)); self.get_popover().popdown()
     def apply_filter(self):
         current=getattr(self,"current_filter","all")
         for category,section in self.sections.items():section.set_visible(current=="all" or current==category)
@@ -230,23 +233,24 @@ class ColorWheel(Gtk.DrawingArea):
 
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — RC1",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        super().__init__(title="HuePrint © — Version 1",flags=0); self.set_default_size(1,900); self.set_resizable(True)
         self.add_button("Cancel",Gtk.ResponseType.CANCEL); self.add_button("Apply",Gtk.ResponseType.APPLY)
-        self.color="#2F80ED"; self.saved=self._load_saved(); self.updating_lightness=False; self.icon_buttons=[]; self.hairline_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
+        self.color="#2F80ED"; self.saved=self._load_saved(); self.updating_lightness=False; self.icon_buttons=[]; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
         self._build(); self.refresh()
     def described_combo(self,items,wrap=0):return DescribedChooser(items,wrap or 1)
     def _build(self):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
-        title=Gtk.Label(); title.set_markup("<span line_height='0.95'><span size='28000' weight='bold' foreground='#FFFFFF'>HuePrint ©</span>\n<span size='small'>Color harmony studio · RC1 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
+        title=Gtk.Label(); title.set_markup("<span line_height='0.95'><span size='28000' weight='bold' foreground='#FFFFFF'>HuePrint ©</span>\n<span size='small'>Color harmony studio · Version 1 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
         self.wheel=ColorWheel(self); workspace.pack_start(self.wheel,True,True,0)
         controls=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10); controls.set_size_request(470,-1); controls.set_valign(Gtk.Align.CENTER); workspace.pack_start(controls,False,False,0)
         active=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=5); self.active_swatch=Gtk.DrawingArea(); self.active_swatch.set_size_request(36,32); self.active_swatch.connect("draw",self.draw_active_swatch); active.pack_start(self.active_swatch,False,False,0)
-        self.color_entry=Gtk.Entry(); self.color_entry.set_width_chars(8); self.color_entry.set_text(self.color); self.color_entry.connect("activate",self.entry_changed); active.pack_start(self.color_entry,True,True,0)
-        lightness_label=Gtk.Label(label="L"); lightness_label.set_tooltip_text("Lightness"); active.pack_start(lightness_label,False,False,0); self.lightness=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,8,92,1); self.lightness.set_draw_value(False); self.lightness.set_size_request(92,-1); self.lightness.set_tooltip_text("Active color lightness"); self.lightness.set_value(hex_to_hls(self.color)[1]*100); self.lightness.connect("value-changed",self.lightness_changed); active.pack_start(self.lightness,False,False,0)
+        self.color_entry=Gtk.Entry(); self.color_entry.set_width_chars(7); self.color_entry.set_max_width_chars(7); self.color_entry.set_size_request(82,-1); self.color_entry.set_text(self.color); self.color_entry.connect("activate",self.entry_changed); active.pack_start(self.color_entry,False,False,0)
+        lightness_label=Gtk.Label(label="L"); lightness_label.set_tooltip_text("Lightness"); active.pack_start(lightness_label,False,False,0); self.lightness=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,8,92,1); self.lightness.set_name("hueprint-lightness"); self.lightness.get_style_context().add_provider(self.lightness_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); self.lightness.set_draw_value(False); self.lightness.set_size_request(170,-1); self.lightness.set_hexpand(True); self.lightness.set_tooltip_text("Active color lightness"); self.lightness.set_value(hex_to_hls(self.color)[1]*100); self.lightness.connect("value-changed",self.lightness_changed); active.pack_start(self.lightness,True,True,0)
+        self.add_active_button=self._icon_button("add","Add active color to Saved Palette",self.add_active); active.pack_start(self.add_active_button,False,False,0)
         self.color_button=self._icon_button("dropper","Pick a color anywhere on the active screen",self.start_screen_pick); active.pack_start(self.color_button,False,False,0)
         self.copy_button=self._icon_button("copy","Copy active color",self.copy_color); active.pack_start(self.copy_button,False,False,0); controls.pack_start(self._row("Active Color",active,17363),False,False,0)
         selectors=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
@@ -268,7 +272,10 @@ class HuePrintDialog(Gtk.Dialog):
     def _row(self,label,widget,size=14840):
         box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='{size}' weight='bold' foreground='#FFFFFF'>{label}</span>"); text.set_xalign(0); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
     def _icon_button(self,icon,tooltip,handler,size=32):
-        button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); _set_icon(button,icon,16 if size>=30 else 13); button.set_tooltip_text(tooltip); button.connect("clicked",handler); self.icon_buttons.append(button); return button
+        button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); button.set_relief(Gtk.ReliefStyle.NONE if size<=24 else Gtk.ReliefStyle.NORMAL)
+        if size<=24:
+            context=button.get_style_context(); context.add_class("hueprint-mini-icon"); context.add_provider(self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        _set_icon(button,icon,16 if size>=30 else 13); button.set_tooltip_text(tooltip); button.connect("clicked",handler); self.icon_buttons.append(button); return button
     def _hairline(self,top,bottom,table=False):
         separator=Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL); separator.set_margin_top(top); separator.set_margin_bottom(bottom); context=separator.get_style_context(); context.add_class("hueprint-table-hairline" if table else "hueprint-section-hairline"); context.add_provider(self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); return separator
     def dark_mode(self): return self.theme_toggle.get_active()
@@ -277,10 +284,10 @@ class HuePrintDialog(Gtk.Dialog):
     def theme_changed(self,*_args):
         dark=self.dark_mode(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",dark)
-        css=".hueprint-section-hairline { background-color: rgba(255,255,255,0.42); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(255,255,255,0.17); min-height: 1px; }" if dark else ".hueprint-section-hairline { background-color: rgba(20,30,45,0.34); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(20,30,45,0.13); min-height: 1px; }"; self.hairline_provider.load_from_data(css.encode("utf-8"))
+        css=".hueprint-section-hairline { background-color: rgba(255,255,255,0.42); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(255,255,255,0.17); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }" if dark else ".hueprint-section-hairline { background-color: rgba(20,30,45,0.34); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(20,30,45,0.13); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"; self.hairline_provider.load_from_data(css.encode("utf-8"))
         _set_icon(self.theme_toggle,"sun" if dark else "moon"); self.theme_toggle.set_tooltip_text("Switch to light mode" if dark else "Switch to dark mode")
         for button in self.icon_buttons:_set_icon(button,button.hueprint_icon,button.hueprint_icon_size)
-        self.wheel.queue_draw()
+        self.update_lightness_gradient(); self.wheel.queue_draw()
     def recipe_active(self): return self.recipe.get_active_id() not in (None,"none")
     def rule_id(self): return self.harmony.get_active_id() or "analogous"
     def generated_colors(self):
@@ -297,10 +304,13 @@ class HuePrintDialog(Gtk.Dialog):
         if hasattr(self,"recipe") and self.recipe_active():self.recipe.set_active_id("none")
         else:self.refresh()
     def control_changed(self,*_args):self.refresh()
+    def update_lightness_gradient(self):
+        if not hasattr(self,"lightness"):return
+        hue,_light,saturation=hex_to_hls(self.color); stops=[hls_to_hex(hue,value,saturation) for value in (.08,.28,.50,.72,.92)]; css="#hueprint-lightness trough { min-height: 7px; background-image: linear-gradient(to right, %s); } #hueprint-lightness highlight { background-color: transparent; background-image: none; }"%", ".join(stops); self.lightness_provider.load_from_data(css.encode("utf-8"))
     def set_color(self,color):
         self.color=sanitize_hex(color); self.color_entry.set_text(self.color); self.updating_lightness=True
         if hasattr(self,"lightness"):self.lightness.set_value(hex_to_hls(self.color)[1]*100)
-        self.updating_lightness=False; _set_icon(self.copy_button,"copy"); self.copy_button.set_tooltip_text("Copy active color"); self.active_swatch.queue_draw(); self.refresh()
+        self.updating_lightness=False; self.update_lightness_gradient(); _set_icon(self.copy_button,"copy"); self.copy_button.set_tooltip_text("Copy active color"); self.active_swatch.queue_draw(); self.refresh()
     def lightness_changed(self,scale):
         if self.updating_lightness:return
         hue,_light,saturation=hex_to_hls(self.color); self.set_color(hls_to_hex(hue,scale.get_value()/100,saturation))
@@ -339,14 +349,16 @@ class HuePrintDialog(Gtk.Dialog):
         ok_l,ok_c,ok_h=hex_to_oklch(color)
         return {"HEX":color,"RGB":f"{r}\n{g}\n{b}","CMYK":f"{round(c*100)}%\n{round(m*100)}%\n{round(y*100)}%\n{round(k*100)}%","HSL":f"{round(h)}°\n{round(s*100)}%\n{round(l*100)}%","OKLCH":f"{ok_l:.3f}\n{ok_c:.3f}\n{round(ok_h)}°"}
     def _table_label(self,markup,align=1):
-        label=Gtk.Label(); label.set_markup(f"<span line_height='0.95'>{markup}</span>"); label.set_xalign(align); label.set_yalign(0); label.set_hexpand(True); label.set_halign(Gtk.Align.FILL)
+        label=Gtk.Label(); label.set_markup(f"<span line_height='0.85'>{markup}</span>"); label.set_xalign(align); label.set_yalign(0); label.set_hexpand(True); label.set_halign(Gtk.Align.FILL)
         if align>=.99:label.set_justify(Gtk.Justification.RIGHT)
         layout=label.get_layout()
-        if hasattr(layout,"set_line_spacing"):layout.set_line_spacing(.95)
+        if hasattr(layout,"set_line_spacing"):layout.set_line_spacing(.85)
         return label
     def render_metadata(self,colors):
         for child in self.metadata_grid.get_children():self.metadata_grid.remove(child)
-        columns=[("Active",self.color)]+[(str(i+1),color) for i,color in enumerate(colors)]; channel={"HEX":"","RGB":"R\nG\nB","CMYK":"C\nM\nY\nK","HSL":"H\nS\nL","OKLCH":"L\nC\nH"}; total=len(columns)+2
+        other_colors=list(colors); active_index=next((i for i,color in enumerate(other_colors) if color.upper()==self.color.upper()),0)
+        if other_colors:other_colors.pop(active_index)
+        generated_columns=[(str(i),color) for i,color in enumerate(other_colors,start=2)]; columns=[("Active",self.color)]+generated_columns; channel={"HEX":"","RGB":"R\nG\nB","CMYK":"C\nM\nY\nK","HSL":"H\nS\nL","OKLCH":"L\nC\nH"}; total=len(columns)+2
         for col,title in enumerate(("Format","Parts")):
             heading=self._table_label(f"<span size='large' weight='bold'>{title}</span>"); heading.set_yalign(1); heading.set_margin_bottom(6); heading.set_margin_end(16 if col==1 else 0); self.metadata_grid.attach(heading,col,1,1,1)
         for col,(name,color) in enumerate(columns,2):
@@ -354,7 +366,7 @@ class HuePrintDialog(Gtk.Dialog):
             header=self._table_label(f"<span size='14840' weight='bold'{foreground}>{name}</span>",1); header.set_size_request(53,-1); header.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(header,col,0,1,1)
             swatch=self._color_widget(color,30,self.set_color); swatch.set_margin_top(5); swatch.set_margin_bottom(6); swatch.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(swatch,col,1,1,1)
         for index,kind in enumerate(("HEX","RGB","CMYK","HSL","OKLCH")):
-            separator=self._hairline(6,6,table=True); self.metadata_grid.attach(separator,0,2+index*2,total,1)
+            separator=self._hairline(4,4,table=True); self.metadata_grid.attach(separator,0,2+index*2,total,1)
             row=3+index*2; self.metadata_grid.attach(self._table_label(f"<span size='large' weight='bold'>{kind}</span>"),0,row,1,1)
             parts=self._table_label(f"<span size='medium' weight='bold'>{channel[kind]}</span>"); parts.set_margin_end(16); self.metadata_grid.attach(parts,1,row,1,1)
             for col,(_name,color) in enumerate(columns,2):
