@@ -74,8 +74,13 @@ def oklch_to_hex(color):
         rgb = _raw_rgb((L,max(.02,low),h))
     return "#" + "".join(f"{round(clamp(v,0,1)*255):02X}" for v in rgb)
 
-def generate_recipe(base_color, recipe_id):
-    transforms = RECIPES.get(recipe_id, RECIPES["none"])[1]
+def generate_recipe(base_color, recipe_id, count=None):
+    transforms = list(RECIPES.get(recipe_id, RECIPES["none"])[1])
     if not transforms: return []
+    if count is not None:
+        count = int(clamp(count, 2, 8))
+        original = list(transforms)
+        while len(transforms) < count: transforms.append(original[len(transforms) % len(original)])
+        transforms = transforms[:count]
     L, c, h = hex_to_oklch(base_color)
     return [oklch_to_hex((L+dL, c*scale, h+dH)) for dL, scale, dH in transforms]
