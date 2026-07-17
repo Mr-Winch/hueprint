@@ -32,10 +32,10 @@ Windows may warn that the installer is not digitally signed. Choose **More info 
 1. Select objects if you want HuePrint to recolor them.
 2. Open **Extensions → Color → HuePrint © RC1**.
 3. Click or drag around the color donut, or use the eyedropper button to sample any visible screen color.
-4. Choose a harmony or one of the palette recipes.
+4. Choose a harmony, or open **Palette recipe** to browse live previews by Tonal, Accent, Spectrum, Contrast, or Systems.
 5. Click generated swatches to make them active, or save them to your palette.
 6. Use the import and export icon buttons to exchange JSON palettes; hover over any icon to see its purpose.
-7. Choose whether colors apply to fills or strokes, then click **Apply to Inkscape**.
+7. Choose whether colors apply to fills or strokes, then click **Apply**.
 
 HuePrint can also create a labeled palette strip on the current Inkscape layer.
 
@@ -55,6 +55,7 @@ hueprint.inx
 hueprint.py
 hueprint_palette.py
 hueprint_recipes.py
+hueprint_recipe_metadata.py
 hueprint_gui.py
 hueprint_gui_v2.py
 ```

@@ -7,10 +7,10 @@ echo.
 echo  HuePrint for Inkscape
 echo  ---------------------
 echo.
-for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_gui.py hueprint_gui_v2.py) do if not exist "%SOURCE%%%F" goto missing
+for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_gui.py hueprint_gui_v2.py) do if not exist "%SOURCE%%%F" goto missing
 if not exist "%TARGET%" mkdir "%TARGET%"
 if errorlevel 1 goto failed
-for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_gui.py hueprint_gui_v2.py) do (
+for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_gui.py hueprint_gui_v2.py) do (
   copy /Y "%SOURCE%%%F" "%TARGET%\%%F" >nul
   if errorlevel 1 goto failed
 )
