@@ -12,7 +12,7 @@ You do not need to program anything or install Python.
 4. Choose **Install Packages**.
 5. Click the folder/disk button and select `HuePrint-Inkscape.zip`.
 6. Close every Inkscape window, then reopen Inkscape.
-7. Open **Extensions → Color → HuePrint**.
+7. Open **Extensions → Color → HuePrint ©**.
 
 ## Windows: double-click installer
 
@@ -23,14 +23,14 @@ If **Manage Extensions** is unavailable:
 3. Open the extracted folder.
 4. Double-click **Install HuePrint.cmd**.
 5. Close and reopen Inkscape.
-6. Open **Extensions → Color → HuePrint**.
+6. Open **Extensions → Color → HuePrint ©**.
 
 Windows may warn that the installer is not digitally signed. Choose **More info → Run anyway**, or use Inkscape's package installer above.
 
 ## Using HuePrint
 
 1. Select objects if you want HuePrint to recolor them.
-2. Open **Extensions → Color → HuePrint**.
+2. Open **Extensions → Color → HuePrint ©**.
 3. Click or drag around the color donut to select a hue and lightness.
 4. Choose a harmony or one of the palette recipes.
 5. Click generated swatches to make them active, or save them to your palette.
