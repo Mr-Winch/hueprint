@@ -2,7 +2,7 @@
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
   <name>HuePrint</name>
   <id>io.github.mr-winch.hueprint</id>
-  <effect needs-live-preview="false" implements-custom-gui="true" show-stderr="true">
+  <effect needs-live-preview="false" implements-custom-gui="true" show-stderr="false">
     <object-type>all</object-type>
     <effects-menu><submenu name="Color" /></effects-menu>
   </effect>

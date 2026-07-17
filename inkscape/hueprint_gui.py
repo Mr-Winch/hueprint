@@ -136,7 +136,12 @@ class HuePrintDialog(Gtk.Dialog):
         self.info.set_text(f"{self.color}    RGB {r}, {g}, {b}    HSL {round(h)}°, {round(s*100)}%, {round(l*100)}%")
         self.swatches.show_all(); self.wheel.queue_draw(); self._render_saved()
     def _swatch(self,color,height,clickable=False):
-        event=Gtk.EventBox(); event.set_size_request(38,height); event.override_background_color(Gtk.StateFlags.NORMAL,_rgba(color)); event.set_tooltip_text(color)
+        event=Gtk.EventBox(); event.set_tooltip_text(color)
+        area=Gtk.DrawingArea(); area.set_size_request(38,height)
+        red,green,blue=[int(color[index:index+2],16)/255 for index in (1,3,5)]
+        def draw_swatch(widget,cr):
+            cr.set_source_rgb(red,green,blue); cr.rectangle(0,0,widget.get_allocated_width(),widget.get_allocated_height()); cr.fill(); return False
+        area.connect("draw",draw_swatch); event.add(area)
         if clickable: event.connect("button-press-event",lambda *_: self.set_color(color))
         return event
     def _render_saved(self):
