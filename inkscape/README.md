@@ -56,6 +56,7 @@ hueprint.py
 hueprint_palette.py
 hueprint_recipes.py
 hueprint_gui.py
+hueprint_gui_v2.py
 ```
 
 Restart Inkscape afterward.

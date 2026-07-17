@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Full HuePrint color harmony studio for Inkscape."""
 import inkex
-from hueprint_gui import Gtk, HuePrintDialog
+from hueprint_gui_v2 import Gtk, HuePrintDialog
 
 class HuePrint(inkex.EffectExtension):
     def effect(self):
