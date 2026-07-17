@@ -1,6 +1,6 @@
 # HuePrint for Inkscape
 
-HuePrint is a visual color-harmony studio for Inkscape 1.4 or newer. It includes the interactive color donut, harmony geometry, all HuePrint palette recipes, saved colors, and JSON import/export.
+HuePrint RC1 is a visual color-harmony studio for Inkscape 1.4 or newer. It includes the interactive color donut, harmony geometry, all HuePrint palette recipes, saved colors, and JSON import/export.
 
 ## Easiest installation (recommended)
 
@@ -12,7 +12,7 @@ You do not need to program anything or install Python.
 4. Choose **Install Packages**.
 5. Click the folder/disk button and select `HuePrint-Inkscape.zip`.
 6. Close every Inkscape window, then reopen Inkscape.
-7. Open **Extensions → Color → HuePrint ©**.
+7. Open **Extensions → Color → HuePrint © RC1**.
 
 ## Windows: double-click installer
 
@@ -23,18 +23,18 @@ If **Manage Extensions** is unavailable:
 3. Open the extracted folder.
 4. Double-click **Install HuePrint.cmd**.
 5. Close and reopen Inkscape.
-6. Open **Extensions → Color → HuePrint ©**.
+6. Open **Extensions → Color → HuePrint © RC1**.
 
 Windows may warn that the installer is not digitally signed. Choose **More info → Run anyway**, or use Inkscape's package installer above.
 
 ## Using HuePrint
 
 1. Select objects if you want HuePrint to recolor them.
-2. Open **Extensions → Color → HuePrint ©**.
-3. Click or drag around the color donut to select a hue and lightness.
+2. Open **Extensions → Color → HuePrint © RC1**.
+3. Click or drag around the color donut, or use the eyedropper button to sample any visible screen color.
 4. Choose a harmony or one of the palette recipes.
 5. Click generated swatches to make them active, or save them to your palette.
-6. Use **Import** and **Export** to exchange JSON palettes.
+6. Use the import and export icon buttons to exchange JSON palettes; hover over any icon to see its purpose.
 7. Choose whether colors apply to fills or strokes, then click **Apply to Inkscape**.
 
 HuePrint can also create a labeled palette strip on the current Inkscape layer.
