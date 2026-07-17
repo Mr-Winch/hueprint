@@ -1,5 +1,5 @@
 """HuePrint GTK interface: responsive metadata, collision-safe geometry, palettes."""
-import colorsys, json, math, os
+import colorsys, json, math, os, xml.etree.ElementTree as ET
 from pathlib import Path
 import gi
 gi.require_version("Gtk","3.0"); gi.require_version("Gdk","3.0"); gi.require_version("GdkPixbuf","2.0")
@@ -34,6 +34,13 @@ def _rgba(value):
 def _palette_path():
     root=Path(os.environ.get("APPDATA",Path.home()/".config"))/"inkscape"; root.mkdir(parents=True,exist_ok=True)
     return root/"hueprint-palettes.json"
+def _inkscape_prefers_dark():
+    try:
+        preferences=Path(os.environ.get("APPDATA",Path.home()/".config"))/"inkscape"/"preferences.xml"
+        theme=ET.parse(preferences).getroot().find(".//*[@id='theme']")
+        if theme is not None:return theme.get("preferDarkTheme",theme.get("darkTheme","0"))=="1"
+    except (OSError,ET.ParseError):pass
+    settings=Gtk.Settings.get_default(); return bool(settings and settings.get_property("gtk-application-prefer-dark-theme"))
 def _clamp(value,low=0,high=1): return min(high,max(low,value))
 def _distance(a,b): return math.hypot(a[0]-b[0],a[1]-b[1])
 
@@ -66,7 +73,7 @@ class DescribedChooser(Gtk.MenuButton):
         grid=Gtk.Grid(); grid.set_row_spacing(3); grid.set_column_spacing(3); grid.set_border_width(6)
         for index,(item_id,label,description) in enumerate(items):
             button=Gtk.Button(label=label); button.set_relief(Gtk.ReliefStyle.NONE); button.set_tooltip_text(description); button.connect("clicked",self.select,item_id); grid.attach(button,index%columns,index//columns,1,1)
-        scroll.add(grid); popover.add(scroll); self.set_popover(popover); popover.show_all()
+        scroll.add(grid); popover.add(scroll); self.set_popover(popover); popover.show_all(); popover.hide()
     def select(self,_button,item_id): self.set_active_id(item_id); self.get_popover().popdown()
     def set_active_id(self,item_id):
         if item_id not in self.items:return False
@@ -120,13 +127,13 @@ class ColorWheel(Gtk.DrawingArea):
         points=self.resolve_collisions(raw,cx,cy,inner,outer)
         fg=(.96,.96,.98) if self.owner.dark_mode() else (.08,.09,.12); outline=(.08,.09,.12) if self.owner.dark_mode() else (.98,.98,.98); connectors=self.connectors(points)
         cr.set_line_cap(1)
-        for color,width,alpha in ((outline,4,.76),(fg,1.7,1)):
+        for color,width,alpha in ((outline,3.4,.76),(fg,1.45,1)):
             cr.set_source_rgba(*color,alpha); cr.set_line_width(width)
             for start,end in connectors: cr.move_to(start["x"],start["y"]); cr.line_to(end["x"],end["y"]); cr.stroke()
         active=self.owner.active_point_index([p["color"] for p in points])
         for index,point in enumerate(points):
-            radius=11 if index==active else 8; red,green,blue=[int(point["color"][i:i+2],16)/255 for i in (1,3,5)]
-            cr.set_source_rgb(*fg); cr.arc(point["x"],point["y"],radius+2,0,2*math.pi); cr.fill()
+            radius=11 if index==active else 6.8; red,green,blue=[int(point["color"][i:i+2],16)/255 for i in (1,3,5)]
+            border=2 if index==active else 1.7; cr.set_source_rgb(*fg); cr.arc(point["x"],point["y"],radius+border,0,2*math.pi); cr.fill()
             cr.set_source_rgb(red,green,blue); cr.arc(point["x"],point["y"],radius,0,2*math.pi); cr.fill()
         return False
     def _set(self,event):
@@ -143,16 +150,18 @@ class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
         super().__init__(title="HuePrint © — RC1",flags=0); self.set_default_size(1180,900); self.set_resizable(True)
         self.add_button("Cancel",Gtk.ResponseType.CANCEL); self.add_button("Apply to Inkscape",Gtk.ResponseType.APPLY)
-        self.color="#2F80ED"; self.saved=self._load_saved(); self._build(); self.refresh()
+        self.color="#2F80ED"; self.saved=self._load_saved(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
+        if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
+        self._build(); self.refresh()
     def described_combo(self,items,wrap=0):return DescribedChooser(items,wrap or 1)
     def _build(self):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
-        title=Gtk.Label(); title.set_markup("<span size='28000' weight='bold'>HuePrint ©</span>\n<span size='small'>Color harmony studio · RC1 · © 2026 Winton Diaz Dauhajre</span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
-        self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); _set_icon(self.theme_toggle,"moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
+        title=Gtk.Label(); title.set_markup("<span size='28000' weight='bold' foreground='#FFFFFF'>HuePrint ©</span>\n<span size='small' foreground='#FFFFFF'>Color harmony studio · RC1 · © 2026 Winton Diaz Dauhajre</span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
+        self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
         self.wheel=ColorWheel(self); workspace.pack_start(self.wheel,True,True,0)
-        controls=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10); controls.set_size_request(470,-1); workspace.pack_start(controls,False,False,0)
+        controls=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=10); controls.set_size_request(470,-1); controls.set_valign(Gtk.Align.CENTER); workspace.pack_start(controls,False,False,0)
         active=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=5); self.active_swatch=Gtk.DrawingArea(); self.active_swatch.set_size_request(36,32); self.active_swatch.connect("draw",self.draw_active_swatch); active.pack_start(self.active_swatch,False,False,0)
         self.color_entry=Gtk.Entry(); self.color_entry.set_width_chars(8); self.color_entry.set_text(self.color); self.color_entry.connect("activate",self.entry_changed); active.pack_start(self.color_entry,True,True,0)
         self.color_button=self._icon_button("dropper","Pick a color anywhere on the active screen",self.start_screen_pick); active.pack_start(self.color_button,False,False,0)
@@ -163,17 +172,19 @@ class HuePrintDialog(Gtk.Dialog):
         self.target=Gtk.ComboBoxText(); self.target.append("fill","Fill selected objects"); self.target.append("stroke","Stroke selected objects"); self.target.set_active_id("fill"); controls.pack_start(self._row("Apply Colors To",self.target),False,False,0)
         self.create=Gtk.CheckButton(label="Create palette swatches on canvas"); self.create.set_active(True); controls.pack_start(self.create,False,False,0)
         tip=Gtk.Label(label="Hover over any harmony or recipe for its description. Drag the donut to change hue and lightness."); tip.set_line_wrap(True); tip.set_xalign(0); controls.pack_start(tip,False,False,6)
-        swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_header.set_margin_top(22); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='large' weight='bold'>Swatches</span>"); swatch_title.set_xalign(0); swatch_header.pack_start(swatch_title,False,False,0)
-        self.count=Gtk.SpinButton.new_with_range(2,8,1); self.count.set_size_request(72,30); self.count.set_value(5); self.count.connect("value-changed",self.control_changed); swatch_header.pack_start(self.count,False,False,0); root.pack_start(swatch_header,False,False,0)
+        swatch_separator=Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL); swatch_separator.set_margin_top(14); swatch_separator.set_margin_bottom(8); root.pack_start(swatch_separator,False,False,0)
+        swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='14840' weight='bold' foreground='#FFFFFF'>Swatches</span>"); swatch_title.set_xalign(0); swatch_header.pack_start(swatch_title,False,False,0)
+        self.count=Gtk.SpinButton.new_with_range(2,8,1); self.count.set_size_request(72,30); self.count.set_value(5); self.count.connect("value-changed",self.control_changed); swatch_header.pack_end(self.count,False,False,0); root.pack_start(swatch_header,False,False,0)
         self.metadata_grid=Gtk.Grid(); self.metadata_grid.set_row_spacing(0); self.metadata_grid.set_column_spacing(5); self.metadata_grid.set_column_homogeneous(True); root.pack_start(self.metadata_grid,False,False,0)
-        saved_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); saved_title=Gtk.Label(); saved_title.set_markup("<span size='large' weight='bold'>Saved Palette</span>"); saved_title.set_xalign(0); saved_header.pack_start(saved_title,True,True,0)
+        saved_separator=Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL); saved_separator.set_margin_top(12); saved_separator.set_margin_bottom(8); root.pack_start(saved_separator,False,False,0)
+        saved_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); saved_title=Gtk.Label(); saved_title.set_markup("<span size='14840' weight='bold' foreground='#FFFFFF'>Saved Palette</span>"); saved_title.set_xalign(0); saved_header.pack_start(saved_title,True,True,0)
         for icon,tooltip,handler in (("add","Add active color",self.add_active),("palette","Add generated swatches",self.save_generated),("import","Import palette",self.import_palette),("export","Export palette",self.export_palette),("trash","Clear saved palette",self.clear_saved)):
             saved_header.pack_start(self._icon_button(icon,tooltip,handler),False,False,0)
         root.pack_start(saved_header,False,False,0)
         self.saved_box=Gtk.FlowBox(); self.saved_box.set_selection_mode(Gtk.SelectionMode.NONE); self.saved_box.set_column_spacing(5); self.saved_box.set_row_spacing(5); self.saved_box.set_min_children_per_line(8); self.saved_box.set_max_children_per_line(8); self.saved_box.set_homogeneous(True); root.pack_start(self.saved_box,False,False,0)
-        self.theme_changed(); self.show_all()
+        self.show_all(); self.harmony.get_popover().hide(); self.recipe.get_popover().hide(); self.theme_changed()
     def _row(self,label,widget):
-        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='large' weight='bold'>{label}</span>"); text.set_xalign(0); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
+        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='14840' weight='bold' foreground='#FFFFFF'>{label}</span>"); text.set_xalign(0); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
     def _icon_button(self,icon,tooltip,handler,size=32):
         button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); _set_icon(button,icon,16 if size>=30 else 13); button.set_tooltip_text(tooltip); button.connect("clicked",handler); return button
     def dark_mode(self): return self.theme_toggle.get_active()
@@ -246,7 +257,8 @@ class HuePrintDialog(Gtk.Dialog):
         for col,title in enumerate(("Format","Parts")):
             self.metadata_grid.attach(self._table_label(f"<span size='large' weight='bold'>{title}</span>"),col,0,1,1)
         for col,(name,color) in enumerate(columns,2):
-            header=self._table_label(f"<span size='large' weight='bold'>{name}</span>",.5); header.set_size_request(53,-1); self.metadata_grid.attach(header,col,0,1,1)
+            foreground=" foreground='#FFFFFF'" if name=="Active" else ""
+            header=self._table_label(f"<span size='14840' weight='bold'{foreground}>{name}</span>",1); header.set_size_request(53,-1); self.metadata_grid.attach(header,col,0,1,1)
             swatch=self._color_widget(color,30,self.set_color); swatch.set_margin_top(5); swatch.set_margin_bottom(6); self.metadata_grid.attach(swatch,col,1,1,1)
         for index,kind in enumerate(("HEX","RGB","CMYK","HSL","OKLCH")):
             separator=Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL); separator.set_margin_top(6); separator.set_margin_bottom(6); self.metadata_grid.attach(separator,0,2+index*2,total,1)
