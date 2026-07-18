@@ -1,6 +1,6 @@
 # HuePrint for Inkscape
 
-HuePrint Version 1 is a visual color-harmony studio for Inkscape 1.4 or newer. It includes the interactive color donut, harmony geometry, all HuePrint palette recipes, saved colors, and JSON import/export.
+HuePrint 1.1 is a visual color-harmony studio for Inkscape 1.4 or newer. It includes the interactive color donut, harmony geometry, all 53 HuePrint palette recipes, saved colors, and JSON import/export.
 
 ## Easiest installation (recommended)
 
@@ -12,7 +12,7 @@ You do not need to program anything or install Python.
 4. Choose **Install Packages**.
 5. Click the folder/disk button and select `HuePrint-Inkscape.zip`.
 6. Close every Inkscape window, then reopen Inkscape.
-7. Open **Extensions → Color → HuePrint © Version 1**.
+7. Open **Extensions → Color → HuePrint © 1.1**.
 
 ## Windows: double-click installer
 
@@ -23,16 +23,16 @@ If **Manage Extensions** is unavailable:
 3. Open the extracted folder.
 4. Double-click **Install HuePrint.cmd**.
 5. Close and reopen Inkscape.
-6. Open **Extensions → Color → HuePrint © Version 1**.
+6. Open **Extensions → Color → HuePrint © 1.1**.
 
 Windows may warn that the installer is not digitally signed. Choose **More info → Run anyway**, or use Inkscape's package installer above.
 
 ## Using HuePrint
 
 1. Select objects if you want HuePrint to recolor them.
-2. Open **Extensions → Color → HuePrint © Version 1**.
-3. Click or drag around the color donut, enter a hex color, use the gradient lightness slider, or use the eyedropper to sample any visible screen color.
-4. Choose a harmony, or open **Palette recipe** to browse Tonal, Accent, Spectrum, Contrast, and Systems recipes. Use the shuffle button after Systems for a random palette.
+2. Open **Extensions → Color → HuePrint © 1.1**.
+3. Click or drag around the color donut, enter a hex color, use the gradient lightness slider, or use the eyedropper to sample any visible screen color with a live preview tile.
+4. Choose a harmony, or open **Palette recipe** to browse Tonal, Accent, Spectrum, Contrast, Systems, Vibrant, Harmony, Dark & Luminous, and Temperature recipes. Use **Randomize** for a validated variation from the active category.
 5. Click the **+** beside Active Color to save it, or use the palette button in Saved Palette to save every generated swatch.
 6. Use the import and export icon buttons to exchange JSON palettes; hover over any icon to see its purpose.
 7. Choose whether colors apply to fills or strokes, then click **Apply**.

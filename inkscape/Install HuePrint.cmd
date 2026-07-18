@@ -18,7 +18,7 @@ echo  Installation complete!
 echo.
 echo  1. Close every Inkscape window.
 echo  2. Reopen Inkscape.
-echo  3. Choose Extensions ^> Color ^> HuePrint Version 1.
+echo  3. Choose Extensions ^> Color ^> HuePrint 1.1.
 echo.
 echo  Installed in:
 echo  %TARGET%

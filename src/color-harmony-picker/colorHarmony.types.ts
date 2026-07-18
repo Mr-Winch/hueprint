@@ -45,7 +45,27 @@ export type PaletteRecipe =
   | "retroPop"
   | "botanicalFresh"
   | "minimalAccent"
-  | "signalSystem";
+  | "signalSystem"
+  | "richTonal"
+  | "brightAccentPair"
+  | "vividArc"
+  | "vividCounterpoint"
+  | "lightInterfaceSignals"
+  | "categoricalFive"
+  | "vividAnalogous"
+  | "chromaticBurst"
+  | "vividTriad"
+  | "directComplement"
+  | "splitComplement"
+  | "doubleComplement"
+  | "complementaryBridge"
+  | "midnightComplement"
+  | "darkWarmSignals"
+  | "darkCoolSignals"
+  | "neonTriad"
+  | "warmAccents"
+  | "coolAccents"
+  | "warmCoolSplit";
 
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom" | "recipe";
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
@@ -149,6 +169,26 @@ export const paletteRecipeLabels: Record<PaletteRecipe, string> = {
   botanicalFresh: "Botanical Fresh",
   minimalAccent: "Minimal Accent",
   signalSystem: "Signal System",
+  richTonal: "Rich Tonal",
+  brightAccentPair: "Bright Accent Pair",
+  vividArc: "Vivid Arc",
+  vividCounterpoint: "Vivid Counterpoint",
+  lightInterfaceSignals: "Light Interface Signals",
+  categoricalFive: "Categorical Five",
+  vividAnalogous: "Vivid Analogous",
+  chromaticBurst: "Chromatic Burst",
+  vividTriad: "Vivid Triad",
+  directComplement: "Direct Complement",
+  splitComplement: "Split Complement",
+  doubleComplement: "Double Complement",
+  complementaryBridge: "Complementary Bridge",
+  midnightComplement: "Midnight Complement",
+  darkWarmSignals: "Dark Warm Signals",
+  darkCoolSignals: "Dark Cool Signals",
+  neonTriad: "Neon Triad",
+  warmAccents: "Warm Accents",
+  coolAccents: "Cool Accents",
+  warmCoolSplit: "Warm–Cool Split",
 };
 
 export function isPaletteRecipeSource(source: GeneratedColorSource): source is Exclude<PaletteRecipe, "none"> {
@@ -189,6 +229,26 @@ export const paletteRecipeOrder: PaletteRecipe[] = [
   "botanicalFresh",
   "minimalAccent",
   "signalSystem",
+  "richTonal",
+  "brightAccentPair",
+  "vividArc",
+  "vividCounterpoint",
+  "lightInterfaceSignals",
+  "categoricalFive",
+  "vividAnalogous",
+  "chromaticBurst",
+  "vividTriad",
+  "directComplement",
+  "splitComplement",
+  "doubleComplement",
+  "complementaryBridge",
+  "midnightComplement",
+  "darkWarmSignals",
+  "darkCoolSignals",
+  "neonTriad",
+  "warmAccents",
+  "coolAccents",
+  "warmCoolSplit",
 ];
 
 export function colorSourceLabel(source: GeneratedColorSource): string {
