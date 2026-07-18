@@ -45,7 +45,7 @@ SVG_ICONS = {
  "random":"<path d='M4 7h3c4 0 5 10 9 10h4M16 13l4 4-4 4M4 17h3c1.8 0 3-2 4-4M13 7h7M16 3l4 4-4 4' fill='none'/>",
  "palette":"<path d='M12 3a9 9 0 1 0 0 18h1.2a1.8 1.8 0 0 0 0-3.6h-1a1.8 1.8 0 0 1 0-3.6H16A5 5 0 0 0 21 9c0-3.3-4-6-9-6z' fill='none'/><circle cx='8' cy='8' r='1'/><circle cx='12' cy='6.5' r='1'/><circle cx='16' cy='8.5' r='1'/>",
  "import":"<path d='M12 3v12M7 10l5 5 5-5M4 20h16' fill='none'/>",
- "use":"<rect x='4' y='5' width='4' height='4' rx='1' fill='none'/><rect x='10' y='5' width='4' height='4' rx='1' fill='none'/><rect x='16' y='5' width='4' height='4' rx='1' fill='none'/><path d='M12 11v9M8 16l4 4 4-4' fill='none'/>",
+ "use":"<rect x='4' y='15' width='4' height='4' rx='1' fill='none'/><rect x='10' y='15' width='4' height='4' rx='1' fill='none'/><rect x='16' y='15' width='4' height='4' rx='1' fill='none'/><path d='M12 13V4M8 8l4-4 4 4' fill='none'/>",
  "export":"<path d='M12 17V5M7 10l5-5 5 5M4 20h16' fill='none'/>",
  "trash":"<path d='M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 10v7M14 10v7' fill='none'/>",
  "left":"<path d='M15 5l-7 7 7 7' fill='none'/>",
@@ -55,7 +55,7 @@ SVG_ICONS = {
  "sun":"<circle cx='12' cy='12' r='4' fill='none'/><path d='M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4' fill='none'/>",
 }
 def _svg_image(name,size=17):
-    settings=Gtk.Settings.get_default(); dark=bool(settings and settings.get_property("gtk-application-prefer-dark-theme")); stroke="#A9D4FF" if dark else "#245D91"
+    settings=Gtk.Settings.get_default(); dark=bool(settings and settings.get_property("gtk-application-prefer-dark-theme")); stroke="#A9D4FF" if dark else "#FFFFFF"
     body=SVG_ICONS[name]; svg=f"<svg xmlns='http://www.w3.org/2000/svg' width='{size}' height='{size}' viewBox='0 0 24 24'><g stroke='{stroke}' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>{body}</g></svg>"
     loader=GdkPixbuf.PixbufLoader.new_with_type("svg"); loader.set_size(size,size); loader.write(svg.encode("utf-8")); loader.close()
     return Gtk.Image.new_from_pixbuf(loader.get_pixbuf())
@@ -263,7 +263,7 @@ class PickerHud(Gtk.DrawingArea):
 
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — 1.1.2",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        super().__init__(title="HuePrint © — 1.1.3",flags=0); self.set_default_size(1,900); self.set_resizable(True)
         self.add_button("Cancel",Gtk.ResponseType.CANCEL); self.add_button("Apply",Gtk.ResponseType.APPLY)
         self.color="#2F80ED"; self.saved=self._load_saved(); self.custom_palette=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
@@ -273,7 +273,9 @@ class HuePrintDialog(Gtk.Dialog):
     def _build(self):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
-        title=Gtk.Label(); title.set_markup("<span line_height='0.95'><span size='28000' weight='bold' foreground='#FFFFFF'>HuePrint ©</span>\n<span size='small'>Color harmony studio · 1.1.2 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
+        title_box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=0); self.main_title=Gtk.Label(); self.main_title.set_markup("<span size='28000' weight='bold'>HuePrint ©</span>"); self.main_title.set_xalign(0); self.main_title.get_style_context().add_class("hueprint-title"); title_box.pack_start(self.main_title,False,False,0)
+        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='small'>Color harmony studio · 1.1.3 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
+        header.pack_start(title_box,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
         self.wheel=ColorWheel(self); workspace.pack_start(self.wheel,True,True,0)
@@ -290,18 +292,18 @@ class HuePrintDialog(Gtk.Dialog):
         self.target=Gtk.ComboBoxText(); self.target.append("fill","Fill selected objects"); self.target.append("stroke","Stroke selected objects"); self.target.set_active_id("fill"); controls.pack_start(self._row("Apply Colors To",self.target),False,False,0)
         self.create=Gtk.CheckButton(label="Create palette swatches on canvas"); self.create.set_active(True); controls.pack_start(self.create,False,False,0)
         swatch_separator=self._hairline(14,8); root.pack_start(swatch_separator,False,False,0)
-        swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='17363' weight='bold' foreground='#FFFFFF'>Swatches</span>"); swatch_title.set_xalign(0); swatch_header.pack_start(swatch_title,False,False,0)
+        swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='17363' weight='bold'>Swatches</span>"); swatch_title.set_xalign(0); swatch_title.get_style_context().add_class("hueprint-title"); swatch_header.pack_start(swatch_title,False,False,0)
         self.count=CompactCount(self,2,16,5); self.count.connect_changed(self.control_changed); swatch_header.pack_end(self.count,False,False,0); root.pack_start(swatch_header,False,False,0)
         self.metadata_grid=Gtk.Grid(); self.metadata_grid.set_row_spacing(0); self.metadata_grid.set_column_spacing(7); self.metadata_grid.set_column_homogeneous(True); root.pack_start(self.metadata_grid,False,False,0)
         saved_separator=self._hairline(12,8); root.pack_start(saved_separator,False,False,0)
-        saved_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); saved_title=Gtk.Label(); saved_title.set_markup("<span size='17363' weight='bold' foreground='#FFFFFF'>Saved Palette</span>"); saved_title.set_xalign(0); saved_header.pack_start(saved_title,True,True,0)
+        saved_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); saved_title=Gtk.Label(); saved_title.set_markup("<span size='17363' weight='bold'>Saved Palette</span>"); saved_title.set_xalign(0); saved_title.get_style_context().add_class("hueprint-title"); saved_header.pack_start(saved_title,True,True,0)
         for icon,tooltip,handler in (("use","Use saved colors as current palette",self.use_saved_palette),("add","Add active color",self.add_active),("palette","Add current swatches to Saved Palette",self.save_generated),("import","Import saved palette",self.import_palette),("export","Export saved palette for Inkscape",self.export_palette),("trash","Clear saved palette",self.clear_saved)):
             saved_header.pack_start(self._icon_button(icon,tooltip,handler),False,False,0)
         root.pack_start(saved_header,False,False,0)
         self.saved_box=Gtk.FlowBox(); self.saved_box.set_selection_mode(Gtk.SelectionMode.NONE); self.saved_box.set_column_spacing(5); self.saved_box.set_row_spacing(5); self.saved_box.set_min_children_per_line(8); self.saved_box.set_max_children_per_line(8); self.saved_box.set_homogeneous(True); root.pack_start(self.saved_box,False,False,0)
         self.show_all(); self.theme_changed()
     def _row(self,label,widget,size=14840):
-        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='{size}' weight='bold' foreground='#FFFFFF'>{label}</span>"); text.set_xalign(0); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
+        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='{size}' weight='bold'>{label}</span>"); text.set_xalign(0); text.get_style_context().add_class("hueprint-title"); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
     def _icon_button(self,icon,tooltip,handler,size=32):
         button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); button.set_relief(Gtk.ReliefStyle.NONE if size<=24 else Gtk.ReliefStyle.NORMAL)
         if size<=24:
@@ -315,7 +317,13 @@ class HuePrintDialog(Gtk.Dialog):
     def theme_changed(self,*_args):
         dark=self.dark_mode(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",dark)
-        css=".hueprint-section-hairline { background-color: rgba(255,255,255,0.42); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(255,255,255,0.17); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }" if dark else ".hueprint-section-hairline { background-color: rgba(20,30,45,0.34); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(20,30,45,0.13); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"; self.hairline_provider.load_from_data(css.encode("utf-8"))
+        if dark:
+            css=".hueprint-title, .hueprint-active-heading { color: #FFFFFF; } .hueprint-section-hairline { background-color: rgba(255,255,255,0.42); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(255,255,255,0.17); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"
+        else:
+            css=".hueprint-title, .hueprint-active-heading { color: #090909; } button { color: #FFFFFF; background-image: none; background-color: #292929; border-color: #111111; text-shadow: none; box-shadow: none; } button label { color: #FFFFFF; } button:hover { background-color: #383838; } button:active, button:checked { background-color: #151515; } button:disabled { color: #B8B8B8; background-color: #505050; } .hueprint-section-hairline { background-color: rgba(20,30,45,0.34); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(20,30,45,0.13); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"
+        self.hairline_provider.load_from_data(css.encode("utf-8"))
+        if not getattr(self,"theme_provider_registered",False):
+            Gtk.StyleContext.add_provider_for_screen(self.get_screen(),self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); self.theme_provider_registered=True
         _set_icon(self.theme_toggle,"sun" if dark else "moon"); self.theme_toggle.set_tooltip_text("Switch to light mode" if dark else "Switch to dark mode")
         for button in self.icon_buttons:_set_icon(button,button.hueprint_icon,button.hueprint_icon_size)
         self.update_lightness_gradient(); self.wheel.queue_draw()
@@ -464,8 +472,9 @@ class HuePrintDialog(Gtk.Dialog):
         for col,title in enumerate(("Format","Parts")):
             heading=self._table_label(f"<span size='large' weight='bold'>{title}</span>"); heading.set_yalign(1); heading.set_margin_bottom(6); heading.set_margin_end(16 if col==1 else 0); self.metadata_grid.attach(heading,col,1,1,1)
         for col,(name,color) in enumerate(columns,2):
-            foreground=" foreground='#FFFFFF'" if name=="Active" else ""
-            header=self._table_label(f"<span size='14840' weight='bold'{foreground}>{name}</span>",1); header.set_size_request(53,-1); header.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(header,col,0,1,1)
+            header=self._table_label(f"<span size='14840' weight='bold'>{name}</span>",1)
+            if name=="Active":header.get_style_context().add_class("hueprint-active-heading")
+            header.set_size_request(53,-1); header.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(header,col,0,1,1)
             swatch=self._color_widget(color,30,self.set_color); swatch.set_margin_top(5); swatch.set_margin_bottom(6); swatch.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(swatch,col,1,1,1)
         for index,kind in enumerate(("HEX","RGB","CMYK","HSL","OKLCH")):
             separator=self._hairline(4,4,table=True); self.metadata_grid.attach(separator,0,2+index*2,total,1)

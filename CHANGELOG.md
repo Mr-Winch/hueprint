@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3 — 2026-07-18
+
+- Made HuePrint and section titles black in light mode while retaining white titles in dark mode.
+- Standardized every light-theme button on the same dark-gray surface with white text and SVG icons.
+- Flipped the Use saved colors as current palette icon so its arrow points upward toward Swatches.
+
 ## 1.1.2 — 2026-07-17
 
 - Made a screen-picker click close the overlay immediately and commit the sampled pixel as Active Color.
