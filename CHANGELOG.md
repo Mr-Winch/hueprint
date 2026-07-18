@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.2 — 2026-07-17
+
+- Made a screen-picker click close the overlay immediately and commit the sampled pixel as Active Color.
+- Added Use saved colors as current palette, preserving the complete saved order for Apply and canvas swatches.
+- Increased generated palettes from 8 to 16 swatches and allowed saved-derived current palettes to exceed that limit.
+- Automatically widens the window for larger current palettes while keeping every swatch in the metadata table.
+- Changed Saved Palette export to Inkscape-compatible GIMP Palette (GPL) files and added GPL/JSON import support.
+
 ## 1.1.1 — 2026-07-17
 
 - Replaced GTK's implicit menu-button behavior with explicit, reliable popover controls for Harmony and Palette recipe.

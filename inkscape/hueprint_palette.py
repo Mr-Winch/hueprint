@@ -1,5 +1,6 @@
 """Dependency-free HuePrint color harmony generation."""
 import colorsys
+import json
 import re
 
 DEFAULT_COLOR = "#2F80ED"
@@ -24,16 +25,16 @@ def hls_to_hex(hue, lightness, saturation):
     return "#" + "".join(f"{round(channel * 255):02X}" for channel in rgb)
 
 def harmony_hues(anchor, rule, count):
-    count = int(clamp(count, 2, 8))
+    count = int(clamp(count, 2, 16))
     if rule == "analogous":
         width = 60 if count <= 3 else 80
         return [normalize_hue(anchor - width / 2 + width * i / (count - 1)) for i in range(count)]
     if rule == "complementary":
         patterns = {2:[0,180],3:[-15,0,180],4:[-15,15,165,195],5:[-15,0,15,180,0],6:[-20,0,20,160,180,200]}
-        return [normalize_hue(anchor + x) for x in patterns[min(count, 6)]]
+        pattern=patterns[min(count,6)]; return [normalize_hue(anchor+pattern[i%len(pattern)]) for i in range(count)]
     if rule == "split_complementary":
         patterns = {3:[0,150,210],4:[-20,0,150,210],5:[-20,0,20,150,210],6:[-20,0,20,150,180,210]}
-        return [normalize_hue(anchor + x) for x in patterns[int(clamp(count, 3, 6))]]
+        pattern=patterns[int(clamp(count,3,6))]; return [normalize_hue(anchor+pattern[i%len(pattern)]) for i in range(count)]
     if rule == "triadic": return [normalize_hue(anchor + (i % 3) * 120) for i in range(count)]
     if rule == "square": return [normalize_hue(anchor + (i % 4) * 90) for i in range(count)]
     if rule == "rectangle_tetradic":
@@ -43,7 +44,7 @@ def harmony_hues(anchor, rule, count):
     return [normalize_hue(anchor)] * count
 
 def generate_palette(base_color, rule, count):
-    count = int(clamp(count, 2, 8))
+    count = int(clamp(count, 2, 16))
     hue, lightness, saturation = hex_to_hls(sanitize_hex(base_color))
     if rule in {"monochromatic", "tint", "shade", "tone"}:
         result = []
@@ -69,3 +70,35 @@ def generate_palette(base_color, rule, count):
         if rule == "complementary" and count == 5 and i == 4: next_s *= .18
         result.append(hls_to_hex(next_hue, next_l, next_s))
     return result
+def palette_to_gpl(colors, name="HuePrint Saved Palette", columns=8):
+    safe = [sanitize_hex(color, "") for color in colors if isinstance(color, str)]
+    safe = [color for color in safe if color]
+    lines = ["GIMP Palette", f"Name: {name}", f"Columns: {max(1, min(64, int(columns)))}", "#"]
+    for index, color in enumerate(safe, 1):
+        red, green, blue = [int(color[offset:offset + 2], 16) for offset in (1, 3, 5)]
+        lines.append(f"{red:3d} {green:3d} {blue:3d}\tHuePrint {index:02d} {color}")
+    return "\n".join(lines) + "\n"
+
+def palette_from_text(text):
+    if not isinstance(text, str): return []
+    if text.lstrip().startswith("GIMP Palette"):
+        colors = []
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or stripped.startswith(("GIMP Palette", "Name:", "Columns:")): continue
+            match = re.match(r"^(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})(?:\s+.*)?$", stripped)
+            if not match: continue
+            red, green, blue = [int(channel) for channel in match.groups()]
+            if all(0 <= channel <= 255 for channel in (red, green, blue)):
+                colors.append(f"#{red:02X}{green:02X}{blue:02X}")
+        return colors
+    payload = json.loads(text)
+    values = payload.get("colors", payload) if isinstance(payload, dict) else payload
+    if not isinstance(values, list): return []
+    colors = []
+    for item in values:
+        value = item.get("hex") if isinstance(item, dict) else item
+        if not isinstance(value, str): continue
+        color = sanitize_hex(value, "")
+        if color: colors.append(color)
+    return colors
