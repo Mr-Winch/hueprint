@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1 — 2026-07-17
+
+- Replaced GTK's implicit menu-button behavior with explicit, reliable popover controls for Harmony and Palette recipe.
+- Restored pointer selection in both chooser popovers.
+- Released the lightness slider's keyboard focus when a drag ends so it does not remain selected.
+
 ## 1.1.0 — 2026-07-17
 
 - Expanded the palette catalog from 33 to 53 entries with Vibrant, Harmony, Dark & Luminous, and Temperature categories.

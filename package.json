@@ -1,6 +1,6 @@
 {
   "name": "hueprint",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Reusable React color harmony picker component with wheel geometry, OKLCH palette recipes, tonal generation, and palette import/export.",
   "license": "MIT",
   "type": "module",

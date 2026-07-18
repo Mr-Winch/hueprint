@@ -61,14 +61,18 @@ def _svg_image(name,size=17):
 def _set_icon(button,name,size=17):
     button.hueprint_icon=name; button.hueprint_icon_size=size; button.set_image(_svg_image(name,size)); button.set_always_show_image(True)
 
-class DescribedChooser(Gtk.MenuButton):
+class DescribedChooser(Gtk.Button):
     def __init__(self,items,columns=1):
         super().__init__(); self.items={item[0]:item for item in items}; self.active_id=None; self.callbacks=[]
         self.label=Gtk.Label(); self.add(self.label); popover=Gtk.Popover.new(self); scroll=Gtk.ScrolledWindow(); scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC); rows=math.ceil(len(items)/columns); scroll.set_min_content_height(min(420,rows*40+18)); scroll.set_max_content_height(420); scroll.set_min_content_width(270 if columns==1 else 520); scroll.set_propagate_natural_height(True)
         grid=Gtk.Grid(); grid.set_row_spacing(3); grid.set_column_spacing(3); grid.set_border_width(6)
         for index,(item_id,label,description) in enumerate(items):
             button=Gtk.Button(label=label); button.set_relief(Gtk.ReliefStyle.NONE); button.set_tooltip_text(description); button.connect("clicked",self.select,item_id); grid.attach(button,index%columns,index//columns,1,1)
-        scroll.add(grid); popover.add(scroll); self.set_popover(popover); popover.show_all(); popover.hide()
+        scroll.add(grid); popover.add(scroll); self.popover=popover; self.connect("clicked",self.open_popover); scroll.show_all()
+    def get_popover(self):return self.popover
+    def open_popover(self,*_args):
+        if self.popover.get_visible():self.popover.popdown()
+        else:self.popover.show_all(); self.popover.popup()
     def select(self,_button,item_id): self.set_active_id(item_id); self.get_popover().popdown()
     def set_active_id(self,item_id):
         if item_id not in self.items:return False
@@ -78,7 +82,7 @@ class DescribedChooser(Gtk.MenuButton):
         return True
     def get_active_id(self):return self.active_id
     def connect_changed(self,callback):self.callbacks.append(callback)
-class RecipeBrowser(Gtk.MenuButton):
+class RecipeBrowser(Gtk.Button):
     FILTERS = ("all", "tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature")
     def __init__(self,owner):
         super().__init__(); self.owner=owner; self.active_id=None; self.callbacks=[]; self.buttons={}; self.indicators={}; self.previews={}; self.preview_cache={}; self.sections={}; self.syncing=False
@@ -95,7 +99,11 @@ class RecipeBrowser(Gtk.MenuButton):
             grid=Gtk.FlowBox(); grid.set_selection_mode(Gtk.SelectionMode.NONE); grid.set_column_spacing(6); grid.set_row_spacing(6); grid.set_min_children_per_line(1); grid.set_max_children_per_line(3); grid.set_homogeneous(True)
             for recipe_id in RECIPE_IDS_BY_CATEGORY[category]:grid.add(self.make_card(recipe_id))
             section.pack_start(grid,False,False,0); content.pack_start(section,False,False,0); self.sections[category]=section
-        scroll.add(content); outer.pack_start(scroll,True,True,0); popover.add(outer); self.set_popover(popover); popover.show_all(); popover.hide(); self.set_active_id("none"); self.refresh_previews()
+        scroll.add(content); outer.pack_start(scroll,True,True,0); popover.add(outer); self.popover=popover; self.connect("clicked",self.open_popover); outer.show_all(); self.set_active_id("none"); self.refresh_previews()
+    def get_popover(self):return self.popover
+    def open_popover(self,*_args):
+        if self.popover.get_visible():self.popover.popdown()
+        else:self.popover.show_all(); self.apply_filter(); self.popover.popup()
     def make_card(self,recipe_id,compact=False):
         meta=RECIPE_METADATA_BY_ID[recipe_id]; button=Gtk.ToggleButton(); button.set_relief(Gtk.ReliefStyle.NORMAL); button.set_hexpand(True); button.set_size_request(220,82 if compact else 142); button.connect("clicked",self.select,recipe_id)
         character=GLib.markup_escape_text(meta.character); description=GLib.markup_escape_text(meta.description); button.set_tooltip_markup(f"<span line_height='0.95'><span size='large' weight='bold'>{character}</span>\n<span size='small'>{description}</span></span>")
@@ -123,9 +131,8 @@ class RecipeBrowser(Gtk.MenuButton):
                     area=Gtk.DrawingArea(); area.set_size_request(12,18); area.hueprint_color=color; area.connect("draw",self.draw_preview); preview.pack_start(area,True,True,0)
             else:
                 for area,color in zip(children,colors):area.hueprint_color=color; area.queue_draw()
-        self.get_popover().show_all(); self.apply_filter()
+        self.get_popover().get_child().show_all(); self.apply_filter()
         for item_id,indicator in self.indicators.items():indicator.set_visible(item_id==self.active_id)
-        self.get_popover().hide()
     @staticmethod
     def draw_preview(area,cr):
         color=Gdk.RGBA(); color.parse(area.hueprint_color); cr.set_source_rgba(color.red,color.green,color.blue,1); cr.rectangle(0,0,area.get_allocated_width(),area.get_allocated_height()); cr.fill(); return False
@@ -255,7 +262,7 @@ class PickerHud(Gtk.DrawingArea):
 
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — 1.1",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        super().__init__(title="HuePrint © — 1.1.1",flags=0); self.set_default_size(1,900); self.set_resizable(True)
         self.add_button("Cancel",Gtk.ResponseType.CANCEL); self.add_button("Apply",Gtk.ResponseType.APPLY)
         self.color="#2F80ED"; self.saved=self._load_saved(); self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
@@ -265,7 +272,7 @@ class HuePrintDialog(Gtk.Dialog):
     def _build(self):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
-        title=Gtk.Label(); title.set_markup("<span line_height='0.95'><span size='28000' weight='bold' foreground='#FFFFFF'>HuePrint ©</span>\n<span size='small'>Color harmony studio · 1.1 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
+        title=Gtk.Label(); title.set_markup("<span line_height='0.95'><span size='28000' weight='bold' foreground='#FFFFFF'>HuePrint ©</span>\n<span size='small'>Color harmony studio · 1.1.1 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); title.set_xalign(0); header.pack_start(title,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
         self.wheel=ColorWheel(self); workspace.pack_start(self.wheel,True,True,0)
@@ -291,7 +298,7 @@ class HuePrintDialog(Gtk.Dialog):
             saved_header.pack_start(self._icon_button(icon,tooltip,handler),False,False,0)
         root.pack_start(saved_header,False,False,0)
         self.saved_box=Gtk.FlowBox(); self.saved_box.set_selection_mode(Gtk.SelectionMode.NONE); self.saved_box.set_column_spacing(5); self.saved_box.set_row_spacing(5); self.saved_box.set_min_children_per_line(8); self.saved_box.set_max_children_per_line(8); self.saved_box.set_homogeneous(True); root.pack_start(self.saved_box,False,False,0)
-        self.show_all(); self.harmony.get_popover().hide(); self.recipe.get_popover().hide(); self.theme_changed()
+        self.show_all(); self.theme_changed()
     def _row(self,label,widget,size=14840):
         box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='{size}' weight='bold' foreground='#FFFFFF'>{label}</span>"); text.set_xalign(0); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
     def _icon_button(self,icon,tooltip,handler,size=32):
@@ -366,7 +373,7 @@ class HuePrintDialog(Gtk.Dialog):
         self.clear_random_palette()
         hue,_light,saturation=hex_to_hls(self.color); self.color=hls_to_hex(hue,scale.get_value()/100,saturation); self.color_entry.set_text(self.color); self.update_lightness_gradient(); _set_icon(self.copy_button,"copy"); self.copy_button.set_tooltip_text("Copy active color"); self.active_swatch.queue_draw(); self.wheel.queue_draw(); self.cancel_lightness_refresh(); self.lightness_refresh_id=GLib.timeout_add(40,self.finish_lightness_refresh)
     def lightness_released(self,*_args):
-        self.cancel_lightness_refresh(); self.refresh(); return False
+        self.cancel_lightness_refresh(); self.refresh(); self.set_focus(None); return False
     def entry_changed(self,entry):self.set_color(entry.get_text())
     def picker_sample(self,x_root,y_root):
         snapshot=self.picker_snapshot; origin_x,origin_y=self.picker_origin; x=max(0,min(snapshot.get_width()-1,round(x_root-origin_x))); y=max(0,min(snapshot.get_height()-1,round(y_root-origin_y))); pixels=bytes(snapshot.get_pixels()); offset=y*snapshot.get_rowstride()+x*snapshot.get_n_channels(); return "#%02X%02X%02X"%(pixels[offset],pixels[offset+1],pixels[offset+2])
