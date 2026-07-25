@@ -1,14 +1,5 @@
 # Changelog
 
-## 1.1.5 — 2026-07-25
-
-- Replaced the broken GTK root-window picker on Windows with native virtual-screen capture, including HiDPI and multi-monitor coordinate scaling.
-- Moved Apply beside independent Fill, Stroke, and Create swatches on canvas options while enforcing at least one selected action.
-- Rebuilt Harmony as a visual chooser with generated color previews, names, descriptions, and selected-state indicators.
-- Restyled light-theme buttons and SVG icons with light surfaces and dark foregrounds.
-- Increased the subtitle text size and adopted the official color wheel terminology.
-- Synchronized the HTML palette recipe names with the extension and grouped all recipes by their current categories.
-
 ## 1.1.4 — 2026-07-18
 
 - Prepared a clean, versioned package for submission to the Inkscape Extensions Gallery.

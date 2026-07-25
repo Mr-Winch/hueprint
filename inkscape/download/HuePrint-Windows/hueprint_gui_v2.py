@@ -1,7 +1,5 @@
 """HuePrint GTK interface: responsive metadata, collision-safe geometry, palettes."""
-import colorsys, ctypes, json, math, os, random, sys, xml.etree.ElementTree as ET
-from ctypes import wintypes
-import cairo
+import colorsys, json, math, os, random, xml.etree.ElementTree as ET
 from pathlib import Path
 import gi
 gi.require_version("Gtk","3.0"); gi.require_version("Gdk","3.0"); gi.require_version("GdkPixbuf","2.0")
@@ -36,42 +34,6 @@ def _inkscape_prefers_dark():
         if theme is not None:return theme.get("preferDarkTheme",theme.get("darkTheme","0"))=="1"
     except (OSError,ET.ParseError):pass
     settings=Gtk.Settings.get_default(); return bool(settings and settings.get_property("gtk-application-prefer-dark-theme"))
-def _windows_screen_snapshot():
-    user32=ctypes.WinDLL("user32",use_last_error=True); gdi32=ctypes.WinDLL("gdi32",use_last_error=True)
-    user32.GetDC.argtypes=[wintypes.HWND]; user32.GetDC.restype=wintypes.HDC; user32.ReleaseDC.argtypes=[wintypes.HWND,wintypes.HDC]
-    gdi32.CreateCompatibleDC.argtypes=[wintypes.HDC]; gdi32.CreateCompatibleDC.restype=wintypes.HDC; gdi32.CreateCompatibleBitmap.argtypes=[wintypes.HDC,ctypes.c_int,ctypes.c_int]; gdi32.CreateCompatibleBitmap.restype=wintypes.HBITMAP
-    gdi32.SelectObject.argtypes=[wintypes.HDC,wintypes.HGDIOBJ]; gdi32.SelectObject.restype=wintypes.HGDIOBJ; gdi32.DeleteObject.argtypes=[wintypes.HGDIOBJ]; gdi32.DeleteDC.argtypes=[wintypes.HDC]
-    gdi32.BitBlt.argtypes=[wintypes.HDC,ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int,wintypes.HDC,ctypes.c_int,ctypes.c_int,wintypes.DWORD]
-    class BitmapInfoHeader(ctypes.Structure):
-        _fields_=[("biSize",wintypes.DWORD),("biWidth",wintypes.LONG),("biHeight",wintypes.LONG),("biPlanes",wintypes.WORD),("biBitCount",wintypes.WORD),("biCompression",wintypes.DWORD),("biSizeImage",wintypes.DWORD),("biXPelsPerMeter",wintypes.LONG),("biYPelsPerMeter",wintypes.LONG),("biClrUsed",wintypes.DWORD),("biClrImportant",wintypes.DWORD)]
-    class BitmapInfo(ctypes.Structure):_fields_=[("bmiHeader",BitmapInfoHeader),("bmiColors",wintypes.DWORD*3)]
-    gdi32.GetDIBits.argtypes=[wintypes.HDC,wintypes.HBITMAP,wintypes.UINT,wintypes.UINT,ctypes.c_void_p,ctypes.POINTER(BitmapInfo),wintypes.UINT]
-    root_x=user32.GetSystemMetrics(76); root_y=user32.GetSystemMetrics(77); width=user32.GetSystemMetrics(78); height=user32.GetSystemMetrics(79)
-    if width<=0 or height<=0:raise OSError("Windows returned an empty virtual screen")
-    screen_dc=user32.GetDC(None); memory_dc=gdi32.CreateCompatibleDC(screen_dc); bitmap=gdi32.CreateCompatibleBitmap(screen_dc,width,height); previous=gdi32.SelectObject(memory_dc,bitmap)
-    try:
-        if not gdi32.BitBlt(memory_dc,0,0,width,height,screen_dc,root_x,root_y,0x40CC0020):raise ctypes.WinError(ctypes.get_last_error())
-        info=BitmapInfo(); info.bmiHeader.biSize=ctypes.sizeof(BitmapInfoHeader); info.bmiHeader.biWidth=width; info.bmiHeader.biHeight=-height; info.bmiHeader.biPlanes=1; info.bmiHeader.biBitCount=32; info.bmiHeader.biCompression=0
-        data=bytearray(width*height*4); buffer=(ctypes.c_ubyte*len(data)).from_buffer(data)
-        if gdi32.GetDIBits(memory_dc,bitmap,0,height,buffer,ctypes.byref(info),0)!=height:raise ctypes.WinError(ctypes.get_last_error())
-        data[3::4]=b"\xff"*(width*height); surface=cairo.ImageSurface.create_for_data(data,cairo.FORMAT_ARGB32,width,height,width*4); snapshot=Gdk.pixbuf_get_from_surface(surface,0,0,width,height)
-        if snapshot is None:raise OSError("GTK could not convert the Windows screen capture")
-        return snapshot,(root_x,root_y,width,height)
-    finally:
-        if previous:gdi32.SelectObject(memory_dc,previous)
-        if bitmap:gdi32.DeleteObject(bitmap)
-        if memory_dc:gdi32.DeleteDC(memory_dc)
-        if screen_dc:user32.ReleaseDC(None,screen_dc)
-def _screen_snapshot():
-    if sys.platform.startswith("win"):return _windows_screen_snapshot()
-    root=Gdk.get_default_root_window()
-    if root is None:return None,None
-    geometry=root.get_geometry()
-    if hasattr(geometry,"x"):root_x,root_y,width,height=geometry.x,geometry.y,geometry.width,geometry.height
-    else:root_x,root_y,width,height=geometry[:4]
-    snapshot=Gdk.pixbuf_get_from_window(root,root_x,root_y,width,height)
-    if snapshot is None:return None,None
-    return snapshot,(root_x,root_y,width,height)
 def _clamp(value,low=0,high=1): return min(high,max(low,value))
 def _distance(a,b): return math.hypot(a[0]-b[0],a[1]-b[1])
 
@@ -94,7 +56,7 @@ SVG_ICONS = {
  "sun":"<circle cx='12' cy='12' r='4' fill='none'/><path d='M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4' fill='none'/>",
 }
 def _svg_image(name,size=17):
-    settings=Gtk.Settings.get_default(); dark=bool(settings and settings.get_property("gtk-application-prefer-dark-theme")); stroke="#D7E9FF" if dark else "#20242B"
+    settings=Gtk.Settings.get_default(); dark=bool(settings and settings.get_property("gtk-application-prefer-dark-theme")); stroke="#A9D4FF" if dark else "#FFFFFF"
     body=SVG_ICONS[name]; svg=f"<svg xmlns='http://www.w3.org/2000/svg' width='{size}' height='{size}' viewBox='0 0 24 24'><g stroke='{stroke}' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>{body}</g></svg>"
     loader=GdkPixbuf.PixbufLoader.new_with_type("svg"); loader.set_size(size,size); loader.write(svg.encode("utf-8")); loader.close()
     return Gtk.Image.new_from_pixbuf(loader.get_pixbuf())
@@ -117,59 +79,6 @@ class DescribedChooser(Gtk.Button):
     def set_active_id(self,item_id):
         if item_id not in self.items:return False
         changed=item_id!=self.active_id; self.active_id=item_id; self.label.set_text(self.items[item_id][1])
-        if changed:
-            for callback in self.callbacks:callback(self)
-        return True
-    def get_active_id(self):return self.active_id
-    def connect_changed(self,callback):self.callbacks.append(callback)
-class HarmonyBrowser(Gtk.Button):
-    PREVIEW_COUNTS = {"monochromatic":5,"analogous":5,"complementary":2,"split_complementary":3,"triadic":3,"square":4,"rectangle_tetradic":4,"polygon":5,"tint":5,"shade":5,"tone":5}
-    def __init__(self,owner):
-        super().__init__(); self.owner=owner; self.items={item[0]:item for item in HARMONIES}; self.active_id=None; self.callbacks=[]; self.buttons={}; self.indicators={}; self.previews={}; self.preview_cache={}; self.syncing=False
-        self.label=Gtk.Label(); self.add(self.label); popover=Gtk.Popover.new(self); outer=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); outer.set_border_width(10)
-        support=Gtk.Label(label="Choose a geometric relationship for colors generated from the active color."); support.set_xalign(0); outer.pack_start(support,False,False,0)
-        scroll=Gtk.ScrolledWindow(); scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC); scroll.set_min_content_width(570); scroll.set_max_content_width(590); scroll.set_min_content_height(430); scroll.set_max_content_height(500); scroll.set_propagate_natural_width(True)
-        grid=Gtk.FlowBox(); grid.set_selection_mode(Gtk.SelectionMode.NONE); grid.set_column_spacing(6); grid.set_row_spacing(6); grid.set_min_children_per_line(2); grid.set_max_children_per_line(2); grid.set_homogeneous(True)
-        for item in HARMONIES:grid.add(self.make_card(item))
-        scroll.add(grid); outer.pack_start(scroll,True,True,0); popover.add(outer); self.popover=popover; self.connect("clicked",self.open_popover); outer.show_all(); self.set_active_id("analogous"); self.refresh_previews()
-    def get_popover(self):return self.popover
-    def open_popover(self,*_args):
-        if self.popover.get_visible():self.popover.popdown()
-        else:self.refresh_previews(); self.popover.show_all(); self.popover.popup()
-    def make_card(self,item):
-        item_id,label,description=item; button=Gtk.ToggleButton(); button.set_relief(Gtk.ReliefStyle.NORMAL); button.set_hexpand(True); button.set_size_request(270,96); button.connect("clicked",self.select,item_id); button.set_tooltip_text(description)
-        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=5); preview=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=1); preview.set_homogeneous(True); box.pack_start(preview,False,False,0); self.previews[item_id]=preview
-        heading=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=4); name=Gtk.Label(); name.set_markup(f"<span weight='bold'>{GLib.markup_escape_text(label)}</span>"); name.set_xalign(0); heading.pack_start(name,True,True,0); indicator=Gtk.Label(label="✓"); heading.pack_end(indicator,False,False,0); box.pack_start(heading,False,False,0); self.indicators[item_id]=indicator
-        detail=Gtk.Label(label=description); detail.set_xalign(0); detail.set_line_wrap(True); detail.set_max_width_chars(42); box.pack_start(detail,False,False,0); button.add(box); self.buttons[item_id]=button; return button
-    def preview_colors(self,item_id):
-        key=(self.owner.color,item_id)
-        if key not in self.preview_cache:
-            self.preview_cache[key]=generate_palette(self.owner.color,item_id,self.PREVIEW_COUNTS[item_id])
-            if len(self.preview_cache)>96:self.preview_cache={key:self.preview_cache[key]}
-        return self.preview_cache[key]
-    def refresh_previews(self):
-        for item_id,preview in self.previews.items():
-            colors=self.preview_colors(item_id); children=preview.get_children()
-            if len(children)!=len(colors):
-                for child in children:preview.remove(child)
-                for color in colors:
-                    area=Gtk.DrawingArea(); area.set_size_request(12,18); area.hueprint_color=color; area.connect("draw",self.draw_preview); preview.pack_start(area,True,True,0)
-            else:
-                for area,color in zip(children,colors):area.hueprint_color=color; area.queue_draw()
-        self.get_popover().get_child().show_all()
-        for item_id,indicator in self.indicators.items():indicator.set_visible(item_id==self.active_id)
-    @staticmethod
-    def draw_preview(area,cr):
-        color=Gdk.RGBA(); color.parse(area.hueprint_color); cr.set_source_rgba(color.red,color.green,color.blue,1); cr.rectangle(0,0,area.get_allocated_width(),area.get_allocated_height()); cr.fill(); return False
-    def select(self,_button,item_id):
-        if self.syncing:return
-        self.set_active_id(item_id); self.get_popover().popdown()
-    def set_active_id(self,item_id):
-        if item_id not in self.items:return False
-        changed=item_id!=self.active_id; self.active_id=item_id; self.label.set_text(self.items[item_id][1]); self.syncing=True
-        try:
-            for option_id,button in self.buttons.items():button.set_active(option_id==item_id); self.indicators[option_id].set_visible(option_id==item_id)
-        finally:self.syncing=False
         if changed:
             for callback in self.callbacks:callback(self)
         return True
@@ -355,9 +264,9 @@ class PickerHud(Gtk.DrawingArea):
 
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — 1.1.5",flags=0); self.set_default_size(1,900); self.set_resizable(True)
-        self.add_button("Cancel",Gtk.ResponseType.CANCEL)
-        self.color="#2F80ED"; self.saved=self._load_saved(); self.custom_palette=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.picker_overlay=None; self.picker_pending=False; self.picker_seat=None; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
+        super().__init__(title="HuePrint © — 1.1.4",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        self.add_button("Cancel",Gtk.ResponseType.CANCEL); self.add_button("Apply",Gtk.ResponseType.APPLY)
+        self.color="#2F80ED"; self.saved=self._load_saved(); self.custom_palette=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
         self.connect("key-press-event",self.history_key)
         self._build(); self.refresh()
@@ -366,7 +275,7 @@ class HuePrintDialog(Gtk.Dialog):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
         title_box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=0); self.main_title=Gtk.Label(); self.main_title.set_markup("<span size='28000' weight='bold'>HuePrint ©</span>"); self.main_title.set_xalign(0); self.main_title.get_style_context().add_class("hueprint-title"); title_box.pack_start(self.main_title,False,False,0)
-        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony studio · 1.1.5 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony or recipe for details. Drag the color wheel to change hue and lightness.</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
+        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='small'>Color harmony studio · 1.1.4 · © 2026 Winton Diaz Dauhajre</span>\n<span size='small'>Hover over any harmony or recipe for details. Drag the donut to change hue and lightness.</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
         header.pack_start(title_box,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
@@ -379,12 +288,10 @@ class HuePrintDialog(Gtk.Dialog):
         self.color_button=self._icon_button("dropper","Pick a color anywhere on the active screen",self.start_screen_pick); active.pack_start(self.color_button,False,False,0)
         self.copy_button=self._icon_button("copy","Copy active color",self.copy_color); active.pack_start(self.copy_button,False,False,0); controls.pack_start(self._row("Active Color",active,17363),False,False,0)
         selectors=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
-        self.harmony=HarmonyBrowser(self); self.harmony.set_hexpand(True); self.harmony.connect_changed(self.harmony_changed); selectors.pack_start(self._row("Harmony",self.harmony),True,True,0)
+        self.harmony=self.described_combo(HARMONIES); self.harmony.set_hexpand(True); self.harmony.set_active_id("analogous"); self.harmony.connect_changed(self.harmony_changed); selectors.pack_start(self._row("Harmony",self.harmony),True,True,0)
         self.recipe=RecipeBrowser(self); self.recipe.set_hexpand(True); self.recipe.connect_changed(self.control_changed); selectors.pack_start(self._row("Palette recipe",self.recipe),True,True,0); controls.pack_start(selectors,False,False,0)
-        apply_line=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=10); self.apply_fill=Gtk.CheckButton(label="Fill"); self.apply_fill.set_active(True); apply_line.pack_start(self.apply_fill,False,False,0)
-        self.apply_stroke=Gtk.CheckButton(label="Stroke"); apply_line.pack_start(self.apply_stroke,False,False,0); self.create=Gtk.CheckButton(label="Create swatches on canvas"); self.create.set_active(True); apply_line.pack_start(self.create,False,False,0)
-        for option in (self.apply_fill,self.apply_stroke,self.create):option.connect("toggled",self.application_option_toggled)
-        self.apply_button=Gtk.Button(label="Apply"); self.apply_button.set_tooltip_text("Apply every selected action"); self.apply_button.connect("clicked",lambda *_:self.response(Gtk.ResponseType.APPLY)); apply_line.pack_end(self.apply_button,False,False,0); controls.pack_start(self._row("Apply Colors To",apply_line),False,False,0)
+        self.target=Gtk.ComboBoxText(); self.target.append("fill","Fill selected objects"); self.target.append("stroke","Stroke selected objects"); self.target.set_active_id("fill"); controls.pack_start(self._row("Apply Colors To",self.target),False,False,0)
+        self.create=Gtk.CheckButton(label="Create palette swatches on canvas"); self.create.set_active(True); controls.pack_start(self.create,False,False,0)
         swatch_separator=self._hairline(14,8); root.pack_start(swatch_separator,False,False,0)
         swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='17363' weight='bold'>Swatches</span>"); swatch_title.set_xalign(0); swatch_title.get_style_context().add_class("hueprint-title"); swatch_header.pack_start(swatch_title,False,False,0)
         self.count=CompactCount(self,2,16,5); self.count.connect_changed(self.control_changed); swatch_header.pack_end(self.count,False,False,0); root.pack_start(swatch_header,False,False,0)
@@ -398,9 +305,6 @@ class HuePrintDialog(Gtk.Dialog):
         self.show_all(); self.theme_changed()
     def _row(self,label,widget,size=14840):
         box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=3); text=Gtk.Label(); text.set_markup(f"<span size='{size}' weight='bold'>{label}</span>"); text.set_xalign(0); text.get_style_context().add_class("hueprint-title"); box.pack_start(text,False,False,0); box.pack_start(widget,False,False,0); return box
-    def application_option_toggled(self,button):
-        options=(self.apply_fill,self.apply_stroke,self.create)
-        if not any(option.get_active() for option in options):button.set_active(True)
     def _icon_button(self,icon,tooltip,handler,size=32):
         button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); button.set_relief(Gtk.ReliefStyle.NONE if size<=24 else Gtk.ReliefStyle.NORMAL)
         if size<=24:
@@ -417,7 +321,7 @@ class HuePrintDialog(Gtk.Dialog):
         if dark:
             css=".hueprint-title, .hueprint-active-heading { color: #FFFFFF; } .hueprint-section-hairline { background-color: rgba(255,255,255,0.42); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(255,255,255,0.17); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"
         else:
-            css=".hueprint-title, .hueprint-active-heading { color: #090909; } button { color: #171A1F; background-image: none; background-color: #F4F5F7; border-color: #C8CDD4; text-shadow: none; box-shadow: none; } button label { color: #171A1F; } button:hover { background-color: #E7E9ED; } button:active, button:checked { background-color: #DCE1E7; border-color: #AEB5BF; } button:disabled { color: #8B929C; background-color: #ECEEF1; } .hueprint-section-hairline { background-color: rgba(20,30,45,0.34); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(20,30,45,0.13); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"
+            css=".hueprint-title, .hueprint-active-heading { color: #090909; } button { color: #FFFFFF; background-image: none; background-color: #292929; border-color: #111111; text-shadow: none; box-shadow: none; } button label { color: #FFFFFF; } button:hover { background-color: #383838; } button:active, button:checked { background-color: #151515; } button:disabled { color: #B8B8B8; background-color: #505050; } .hueprint-section-hairline { background-color: rgba(20,30,45,0.34); min-height: 1px; } .hueprint-table-hairline { background-color: rgba(20,30,45,0.13); min-height: 1px; } .hueprint-mini-icon { padding: 0; min-width: 20px; min-height: 20px; }"
         self.hairline_provider.load_from_data(css.encode("utf-8"))
         if not getattr(self,"theme_provider_registered",False):
             Gtk.StyleContext.add_provider_for_screen(self.get_screen(),self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); self.theme_provider_registered=True
@@ -511,44 +415,32 @@ class HuePrintDialog(Gtk.Dialog):
         self.cancel_lightness_refresh(); self.refresh(); self.set_focus(None); return False
     def entry_changed(self,entry):self.set_color(entry.get_text())
     def picker_sample(self,x_root,y_root):
-        snapshot=self.picker_snapshot; origin_x,origin_y,width,height=self.picker_bounds; scale_x=snapshot.get_width()/max(1,width); scale_y=snapshot.get_height()/max(1,height); x=max(0,min(snapshot.get_width()-1,round((x_root-origin_x)*scale_x))); y=max(0,min(snapshot.get_height()-1,round((y_root-origin_y)*scale_y))); pixels=bytes(snapshot.get_pixels()); offset=y*snapshot.get_rowstride()+x*snapshot.get_n_channels(); return "#%02X%02X%02X"%(pixels[offset],pixels[offset+1],pixels[offset+2])
+        snapshot=self.picker_snapshot; origin_x,origin_y=self.picker_origin; x=max(0,min(snapshot.get_width()-1,round(x_root-origin_x))); y=max(0,min(snapshot.get_height()-1,round(y_root-origin_y))); pixels=bytes(snapshot.get_pixels()); offset=y*snapshot.get_rowstride()+x*snapshot.get_n_channels(); return "#%02X%02X%02X"%(pixels[offset],pixels[offset+1],pixels[offset+2])
     def start_screen_pick(self,*_args):
-        if self.picker_overlay is not None or self.picker_pending:return
-        self.picker_pending=True; self.color_button.set_sensitive(False); self.hide(); display=Gdk.Display.get_default()
-        if display:display.flush()
-        GLib.timeout_add(140,self.open_screen_picker)
-    def open_screen_picker(self):
-        try:snapshot,bounds=_screen_snapshot()
-        except (OSError,TypeError,GLib.Error):snapshot,bounds=None,None
-        if snapshot is None or bounds is None:self.restore_after_picker(); return False
-        root_x,root_y,width,height=bounds
-        overlay=Gtk.Window(type=Gtk.WindowType.TOPLEVEL); self.picker_overlay=overlay; self.picker_snapshot=snapshot; self.picker_bounds=(root_x,root_y,width,height); overlay.set_screen(self.get_screen()); overlay.set_decorated(False); overlay.set_keep_above(True); overlay.set_skip_taskbar_hint(True); overlay.set_skip_pager_hint(True); overlay.set_accept_focus(True); overlay.set_resizable(False); overlay.set_type_hint(Gdk.WindowTypeHint.SPLASHSCREEN); overlay.add_events(Gdk.EventMask.KEY_PRESS_MASK)
-        overlay.connect("key-press-event",self.cancel_screen_pick); display_snapshot=snapshot
-        if snapshot.get_width()!=width or snapshot.get_height()!=height:display_snapshot=snapshot.scale_simple(width,height,GdkPixbuf.InterpType.BILINEAR)
-        stack=Gtk.Overlay(); stack.add(Gtk.Image.new_from_pixbuf(display_snapshot)); self.picker_hud=PickerHud(self,width,height); stack.add_overlay(self.picker_hud)
+        if getattr(self,"picker_overlay",None):return
+        root=Gdk.get_default_root_window(); root_x=root_y=0; width,height=root.get_width(),root.get_height(); snapshot=Gdk.pixbuf_get_from_window(root,root_x,root_y,width,height)
+        if not snapshot:return
+        overlay=Gtk.Window(type=Gtk.WindowType.POPUP); self.picker_overlay=overlay; self.picker_snapshot=snapshot; self.picker_origin=(root_x,root_y); overlay.set_screen(self.get_screen()); overlay.set_decorated(False); overlay.set_keep_above(True); overlay.set_accept_focus(True); overlay.set_resizable(False); overlay.add_events(Gdk.EventMask.KEY_PRESS_MASK)
+        overlay.connect("key-press-event",self.cancel_screen_pick); stack=Gtk.Overlay(); stack.add(Gtk.Image.new_from_pixbuf(snapshot)); self.picker_hud=PickerHud(self,width,height); stack.add_overlay(self.picker_hud)
         if hasattr(stack,"set_overlay_pass_through"):stack.set_overlay_pass_through(self.picker_hud,True)
         event_surface=Gtk.EventBox(); event_surface.set_visible_window(False); event_surface.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK); event_surface.connect("button-press-event",self.finish_screen_pick); event_surface.connect("motion-notify-event",self.update_screen_pick); event_surface.add(stack)
-        overlay.add(event_surface); overlay.move(root_x,root_y); overlay.resize(width,height); overlay.show_all(); overlay.grab_add(); overlay.grab_focus(); cursor=Gdk.Cursor.new_from_name(Gdk.Display.get_default(),"crosshair")
-        if overlay.get_window():overlay.get_window().set_cursor(cursor)
-        display=Gdk.Display.get_default(); self.picker_seat=display.get_default_seat() if display else None
-        if self.picker_seat and overlay.get_window():
-            try:self.picker_seat.grab(overlay.get_window(),Gdk.SeatCapabilities.ALL_POINTING,True,cursor,None,None,None)
-            except (TypeError,GLib.Error):self.picker_seat=None
-        center_x,center_y=width/2,height/2; self.picker_hud.update_sample(center_x,center_y,self.picker_sample(center_x+root_x,center_y+root_y)); self.picker_pending=False; return False
+        overlay.add(event_surface); overlay.move(root_x,root_y); overlay.resize(width,height); center_x,center_y=width/2,height/2; self.picker_hud.update_sample(center_x,center_y,self.picker_sample(center_x+root_x,center_y+root_y)); overlay.show_all(); overlay.grab_add(); overlay.grab_focus()
+        if overlay.get_window():overlay.get_window().set_cursor(Gdk.Cursor.new_from_name(Gdk.Display.get_default(),"crosshair"))
     def update_screen_pick(self,_overlay,event):
-        color=self.picker_sample(event.x_root,event.y_root); origin_x,origin_y,_,_=self.picker_bounds; self.picker_hud.update_sample(event.x_root-origin_x,event.y_root-origin_y,color); return True
+        color=self.picker_sample(event.x_root,event.y_root); origin_x,origin_y=self.picker_origin; self.picker_hud.update_sample(event.x_root-origin_x,event.y_root-origin_y,color); return True
     def close_screen_picker(self):
-        overlay=self.picker_overlay
-        if self.picker_seat is not None:self.picker_seat.ungrab()
+        overlay=getattr(self,"picker_overlay",None)
         if overlay is not None:
-            overlay.hide(); overlay.grab_remove(); overlay.destroy()
-        self.picker_overlay=None; self.picker_snapshot=None; self.picker_hud=None; self.picker_seat=None
+            overlay.hide()
+            overlay.grab_remove()
+            overlay.destroy()
+        self.picker_overlay=None; self.picker_snapshot=None; self.picker_hud=None
     def finish_screen_pick(self,_overlay,event):
         color=self.picker_sample(event.x_root,event.y_root); self.close_screen_picker(); self.set_color(color); GLib.idle_add(self.restore_after_picker); return True
     def cancel_screen_pick(self,_overlay,event):
         if event.keyval==Gdk.KEY_Escape:self.close_screen_picker(); GLib.idle_add(self.restore_after_picker); return True
         return False
-    def restore_after_picker(self):self.picker_pending=False; self.color_button.set_sensitive(True); self.show_all(); self.present(); return False
+    def restore_after_picker(self):self.present(); return False
     def copy_color(self,*_args):
         Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(self.color,-1); _set_icon(self.copy_button,"check"); self.copy_button.set_tooltip_text("Color copied")
     def draw_active_swatch(self,widget,cr):
@@ -560,7 +452,7 @@ class HuePrintDialog(Gtk.Dialog):
         return event
     def refresh(self):
         if not hasattr(self,"metadata_grid"):return
-        colors=self.generated_colors(); self.harmony.refresh_previews(); self.recipe.refresh_previews(); self.render_metadata(colors); self.render_saved(); self.wheel.queue_draw()
+        colors=self.generated_colors(); self.recipe.refresh_previews(); self.render_metadata(colors); self.render_saved(); self.wheel.queue_draw()
     def _metadata(self,color):
         h,l,s=hex_to_hls(color); r,g,b=[int(color[i:i+2],16) for i in (1,3,5)]; rn,gn,bn=r/255,g/255,b/255; k=1-max(rn,gn,bn)
         c=m=y=0 if k>=.999 else None

@@ -11,8 +11,9 @@ import {
   splitComplementaryHues,
   squareHues,
 } from "./colorHarmony.math";
-import { generatePaletteRecipeColors, paletteRecipeSize, randomizePaletteRecipeColors, resolveRecipeTransform } from "./colorHarmony.recipes";
+import { generatePaletteRecipeColors, paletteRecipeSize, randomizePaletteRecipeColors, recipeCategories, resolveRecipeTransform } from "./colorHarmony.recipes";
 import { generateTints } from "./colorHarmony.tonal";
+import { paletteRecipeOrder } from "./colorHarmony.types";
 
 test("normalizes hue angles into [0, 360)", () => {
   assert.equal(normalizeHue(-30), 330);
@@ -93,4 +94,12 @@ test("randomized recipes are seeded, preserve the base, and identify their sourc
   assert.ok(first.colors.includes("#7F7F7F"));
   assert.equal(first.sourceRecipeId, "vividAnalogous");
   assert.equal(first.sourceCategory, "vibrant");
+});
+
+test("every HTML palette recipe is present once and assigned to a current category", () => {
+  const recipes = paletteRecipeOrder.filter((recipe) => recipe !== "none");
+  assert.equal(recipes.length, 52);
+  assert.equal(new Set(recipes).size, recipes.length);
+  assert.equal(Object.keys(recipeCategories).length, recipes.length);
+  assert.ok(recipes.every((recipe) => Boolean(recipeCategories[recipe])));
 });

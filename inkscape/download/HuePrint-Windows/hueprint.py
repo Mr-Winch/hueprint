@@ -12,11 +12,7 @@ class HuePrint(inkex.EffectExtension):
             return
         colors = dialog.generated_colors()
         for index, element in enumerate(self.svg.selection.values()):
-            color = colors[index % len(colors)]
-            if dialog.apply_fill.get_active():
-                element.style["fill"] = color
-            if dialog.apply_stroke.get_active():
-                element.style["stroke"] = color
+            element.style[dialog.target.get_active_id()] = colors[index % len(colors)]
         if dialog.create.get_active():
             self._create_swatches(colors, dialog.rule_id())
         dialog.destroy()

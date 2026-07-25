@@ -1,6 +1,6 @@
 # HuePrint for Inkscape
 
-HuePrint 1.1.5 is a visual color-harmony studio for Inkscape 1.4.x. It includes the interactive color wheel, harmony geometry, all 53 HuePrint palette recipes, saved colors, JSON/GPL import, and Inkscape-compatible GPL export.
+HuePrint 1.1.4 is a visual color-harmony studio for Inkscape 1.4.x. It includes the interactive color donut, harmony geometry, all 53 HuePrint palette recipes, saved colors, JSON/GPL import, and Inkscape-compatible GPL export.
 
 Tested with Inkscape 1.4.4 on Windows. Author: Winton Diaz Dauhajre ([Mr-Winch](https://github.com/Mr-Winch)). License: MIT.
 
@@ -14,7 +14,7 @@ You do not need to program anything or install Python.
 4. Choose **Install Packages**.
 5. Click the folder/disk button and select `HuePrint-Inkscape.zip`.
 6. Close every Inkscape window, then reopen Inkscape.
-7. Open **Extensions → Color → HuePrint © 1.1.5**.
+7. Open **Extensions → Color → HuePrint © 1.1.4**.
 
 ## Windows: double-click installer
 
@@ -25,20 +25,20 @@ If **Manage Extensions** is unavailable:
 3. Open the extracted folder.
 4. Double-click **Install HuePrint.cmd**.
 5. Close and reopen Inkscape.
-6. Open **Extensions → Color → HuePrint © 1.1.5**.
+6. Open **Extensions → Color → HuePrint © 1.1.4**.
 
 Windows may warn that the installer is not digitally signed. Choose **More info → Run anyway**, or use Inkscape's package installer above.
 
 ## Using HuePrint
 
 1. Select objects if you want HuePrint to recolor them.
-2. Open **Extensions → Color → HuePrint © 1.1.5**.
-3. Click or drag around the color wheel, enter a hex color, use the gradient lightness slider, or use the eyedropper to sample any visible screen color with a live preview tile.
+2. Open **Extensions → Color → HuePrint © 1.1.4**.
+3. Click or drag around the color donut, enter a hex color, use the gradient lightness slider, or use the eyedropper to sample any visible screen color with a live preview tile.
 4. Choose a harmony, or open **Palette recipe** to browse Tonal, Accent, Spectrum, Contrast, Systems, Vibrant, Harmony, Dark & Luminous, and Temperature recipes. Use **Randomize** for a validated variation from the active category.
 5. Click the **+** beside Active Color to save it, or use the palette button in Saved Palette to save every generated swatch.
 6. Click **Use saved colors as current palette** to make the complete Saved Palette current. HuePrint widens automatically for larger palettes.
 7. Import saved palettes from JSON or GPL files, or export the Saved Palette as an Inkscape-compatible GPL file.
-8. Select any combination of **Fill**, **Stroke**, and **Create swatches on canvas**, then click **Apply**. HuePrint always keeps at least one action selected.
+8. Choose whether colors apply to fills or strokes, then click **Apply**.
 
 HuePrint can also create a labeled palette strip on the current Inkscape layer.
 
