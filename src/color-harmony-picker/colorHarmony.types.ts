@@ -45,7 +45,45 @@ export type PaletteRecipe =
   | "retroPop"
   | "botanicalFresh"
   | "minimalAccent"
-  | "signalSystem";
+  | "signalSystem"
+  | "richTonal"
+  | "brightAccentPair"
+  | "vividArc"
+  | "vividCounterpoint"
+  | "lightInterfaceSignals"
+  | "categoricalFive"
+  | "vividAnalogous"
+  | "chromaticBurst"
+  | "vividTriad"
+  | "directComplement"
+  | "splitComplement"
+  | "doubleComplement"
+  | "complementaryBridge"
+  | "midnightComplement"
+  | "darkWarmSignals"
+  | "darkCoolSignals"
+  | "neonTriad"
+  | "warmAccents"
+  | "coolAccents"
+  | "warmCoolSplit"
+  | "backgroundPop"
+  | "darkBackdropPunch"
+  | "lightBackdropPunch"
+  | "electricForeground"
+  | "posterOnColor"
+  | "spotlightContrast"
+  | "acidCabaret"
+  | "tropicalVoltage"
+  | "ultravioletCitrus"
+  | "coralCobaltClash"
+  | "cyberBazaar"
+  | "carnivalClash"
+  | "semanticCore"
+  | "semanticLight"
+  | "semanticDark"
+  | "financialSignals"
+  | "dataStates"
+  | "editorialStates";
 
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom" | "recipe";
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
@@ -117,38 +155,76 @@ export const harmonyRuleOrder: HarmonyRule[] = [
 
 export const paletteRecipeLabels: Record<PaletteRecipe, string> = {
   none: "No recipe",
-  warmArc: "Warm Spectrum",
-  coolArc: "Cool Spectrum",
-  spotAccent: "Signature Accent",
-  editorialContrast: "Magazine Contrast",
-  brightSwitch: "Bright Pivot",
-  softNatural: "Organic Soft",
-  neutralMatch: "Balanced Accent",
-  tonalFriends: "Tonal Core",
-  softDotAccent: "Soft Accent Pair",
-  threePointAccent: "Triad Accent",
-  dustAccent: "Dusty Accent",
-  friendlyContrast: "Friendly Pop",
-  seededShades: "Brand Shades",
-  cleanUi: "Interface Kit",
-  boldPop: "Pop System",
-  mutedEditorial: "Quiet Editorial",
-  luxuryNeutral: "Luxe Neutral",
-  techDigital: "Digital Pulse",
-  warmHospitality: "Welcoming Warmth",
+  warmArc: "Expansive Spectrum",
+  coolArc: "Cohesive Spectrum",
+  spotAccent: "Focused Accent",
+  editorialContrast: "Editorial Hierarchy",
+  brightSwitch: "Vivid Pivot",
+  softNatural: "Gentle Harmony",
+  neutralMatch: "Structured Accent",
+  tonalFriends: "Essential Tonal",
+  softDotAccent: "Subtle Accent Pair",
+  threePointAccent: "Energetic Triad",
+  dustAccent: "Muted Highlight",
+  friendlyContrast: "Playful Contrast",
+  seededShades: "Extended Brand Scale",
+  cleanUi: "Interface Essentials",
+  boldPop: "High-Energy Mix",
+  mutedEditorial: "Restrained Editorial",
+  luxuryNeutral: "Refined Neutral",
+  techDigital: "Electric Interface",
+  warmHospitality: "Soft Welcome",
   highContrast: "Sharp Contrast",
-  gradientFriendly: "Smooth Ramp",
+  gradientFriendly: "Progressive Ramp",
   monochromePlusAccent: "Mono Accent",
-  pastelBloom: "Pastel Bloom",
-  nightMode: "Night Mode",
-  clayEarth: "Clay Earth",
+  pastelBloom: "Airy Pastels",
+  nightMode: "Dark Interface",
+  clayEarth: "Grounded Tones",
   trustSignal: "Trust Signal",
-  quietMono: "Quiet Mono",
-  duotonePoster: "Duotone Poster",
-  retroPop: "Retro Pop",
-  botanicalFresh: "Botanical Fresh",
+  quietMono: "Soft Monochrome",
+  duotonePoster: "Opposing Duotone",
+  retroPop: "Eclectic Vintage",
+  botanicalFresh: "Organic Range",
   minimalAccent: "Minimal Accent",
-  signalSystem: "Signal System",
+  signalSystem: "Multi-Signal System",
+  richTonal: "Rich Tonal",
+  brightAccentPair: "Bright Accent Pair",
+  vividArc: "Vivid Arc",
+  vividCounterpoint: "Vivid Counterpoint",
+  lightInterfaceSignals: "Light Interface Signals",
+  categoricalFive: "Categorical Five",
+  vividAnalogous: "Vivid Analogous",
+  chromaticBurst: "Chromatic Burst",
+  vividTriad: "Vivid Triad",
+  directComplement: "Direct Complement",
+  splitComplement: "Split Complement",
+  doubleComplement: "Double Complement",
+  complementaryBridge: "Complementary Bridge",
+  midnightComplement: "Midnight Complement",
+  darkWarmSignals: "Dark Warm Signals",
+  darkCoolSignals: "Dark Cool Signals",
+  neonTriad: "Neon Triad",
+  warmAccents: "Warm Accents",
+  coolAccents: "Cool Accents",
+  warmCoolSplit: "Warm-Cool Split",
+  backgroundPop: "Background Pop",
+  darkBackdropPunch: "Dark Backdrop Punch",
+  lightBackdropPunch: "Light Backdrop Punch",
+  electricForeground: "Electric Foreground",
+  posterOnColor: "Poster on Color",
+  spotlightContrast: "Chromatic Spotlight",
+  acidCabaret: "Acid Cabaret",
+  tropicalVoltage: "Tropical Voltage",
+  ultravioletCitrus: "Ultraviolet Citrus",
+  coralCobaltClash: "Coral–Cobalt Clash",
+  cyberBazaar: "Cyber Bazaar",
+  carnivalClash: "Carnival Clash",
+  semanticCore: "Semantic Core",
+  semanticLight: "Semantic on Light",
+  semanticDark: "Semantic on Dark",
+  financialSignals: "Financial Signals",
+  dataStates: "Data States",
+  editorialStates: "Editorial States",
 };
 
 export function isPaletteRecipeSource(source: GeneratedColorSource): source is Exclude<PaletteRecipe, "none"> {
@@ -189,6 +265,44 @@ export const paletteRecipeOrder: PaletteRecipe[] = [
   "botanicalFresh",
   "minimalAccent",
   "signalSystem",
+  "richTonal",
+  "brightAccentPair",
+  "vividArc",
+  "vividCounterpoint",
+  "lightInterfaceSignals",
+  "categoricalFive",
+  "vividAnalogous",
+  "chromaticBurst",
+  "vividTriad",
+  "directComplement",
+  "splitComplement",
+  "doubleComplement",
+  "complementaryBridge",
+  "midnightComplement",
+  "darkWarmSignals",
+  "darkCoolSignals",
+  "neonTriad",
+  "warmAccents",
+  "coolAccents",
+  "warmCoolSplit",
+  "backgroundPop",
+  "darkBackdropPunch",
+  "lightBackdropPunch",
+  "electricForeground",
+  "posterOnColor",
+  "spotlightContrast",
+  "acidCabaret",
+  "tropicalVoltage",
+  "ultravioletCitrus",
+  "coralCobaltClash",
+  "cyberBazaar",
+  "carnivalClash",
+  "semanticCore",
+  "semanticLight",
+  "semanticDark",
+  "financialSignals",
+  "dataStates",
+  "editorialStates",
 ];
 
 export function colorSourceLabel(source: GeneratedColorSource): string {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>HuePrint © 1.4.5</name>
+  <id>io.github.mr-winch.hueprint</id>
+  <effect needs-live-preview="false" implements-custom-gui="true" show-stderr="false">
+    <object-type>all</object-type>
+    <effects-menu><submenu name="Color" /></effects-menu>
+    <menu-tip>Create, discover, manage, and apply deliberate color palettes.</menu-tip>
+    <icon>hueprint-icon.svg</icon>
+  </effect>
+  <script><command location="inx" interpreter="python">hueprint.py</command></script>
+</inkscape-extension>

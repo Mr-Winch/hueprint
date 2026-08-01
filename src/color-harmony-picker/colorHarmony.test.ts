@@ -11,8 +11,9 @@ import {
   splitComplementaryHues,
   squareHues,
 } from "./colorHarmony.math";
-import { generatePaletteRecipeColors, paletteRecipeSize } from "./colorHarmony.recipes";
+import { generatePaletteRecipeColors, paletteRecipeSize, randomizePaletteRecipeColors, recipeCategories, resolveRecipeTransform } from "./colorHarmony.recipes";
 import { generateTints } from "./colorHarmony.tonal";
+import { paletteRecipeOrder } from "./colorHarmony.types";
 
 test("normalizes hue angles into [0, 360)", () => {
   assert.equal(normalizeHue(-30), 330);
@@ -76,3 +77,51 @@ test("palette recipes derive OKLCH transforms from the active anchor", () => {
   assert.notEqual(blue[3].hex, red[3].hex);
 });
 
+
+test("advanced recipe transforms honor precedence and exact base preservation", () => {
+  const anchor = { l: 0.5, c: 0.1, h: 350 };
+  assert.deepEqual(resolveRecipeTransform(anchor, { L: 0.7, dL: -0.2, C: 0.2, cScale: 0.1, cMin: 0.3, H: 20, dH: 40 }), { l: 0.7, c: 0.2, h: 20 });
+  assert.equal(resolveRecipeTransform(anchor, { cScale: 0.5, cMin: 0.12 }).c, 0.12);
+  const colors = generatePaletteRecipeColors("#3C75A7", "warmAccents", 6);
+  assert.equal(colors[0].hex, "#3C75A7");
+  assert.equal(colors.length, 6);
+});
+
+test("background recipes adapt foreground lightness to the selected backdrop", () => {
+  const lightAnchor = { l: 0.85, c: 0.08, h: 40 };
+  const darkAnchor = { l: 0.2, c: 0.08, h: 240 };
+  assert.equal(resolveRecipeTransform(lightAnchor, { contrast: true, C: 0.03 }).l, 0.14);
+  assert.equal(resolveRecipeTransform(darkAnchor, { contrast: true, C: 0.03 }).l, 0.96);
+  assert.equal(resolveRecipeTransform(lightAnchor, { softContrast: true, C: 0.06 }).l, 0.3);
+  assert.equal(resolveRecipeTransform(darkAnchor, { pop: true, C: 0.22, dH: 105 }).l, 0.78);
+
+  const lightPalette = generatePaletteRecipeColors("#F2E8D5", "backgroundPop", 5);
+  const darkPalette = generatePaletteRecipeColors("#16182A", "backgroundPop", 5);
+  assert.equal(lightPalette[0].hex, "#F2E8D5");
+  assert.equal(darkPalette[0].hex, "#16182A");
+  assert.notEqual(lightPalette[1].hex, darkPalette[1].hex);
+});
+
+test("semantic recipes provide distinct conventional signal colors", () => {
+  const colors = generatePaletteRecipeColors("#6B4EFF", "semanticCore", 6);
+  assert.equal(colors.length, 6);
+  assert.equal(colors[0].hex, "#6B4EFF");
+  assert.equal(new Set(colors.map((color) => color.hex)).size, colors.length);
+});
+
+test("randomized recipes are seeded, preserve the base, and identify their source", () => {
+  const first = randomizePaletteRecipeColors("#7F7F7F", "vividAnalogous", "vibrant", 5, "fixed-seed");
+  const second = randomizePaletteRecipeColors("#7F7F7F", "vividAnalogous", "vibrant", 5, "fixed-seed");
+  assert.deepEqual(first, second);
+  assert.ok(first.colors.includes("#7F7F7F"));
+  assert.equal(first.sourceRecipeId, "vividAnalogous");
+  assert.equal(first.sourceCategory, "vibrant");
+});
+
+test("every HTML palette recipe is present once and assigned to a current category", () => {
+  const recipes = paletteRecipeOrder.filter((recipe) => recipe !== "none");
+  assert.equal(recipes.length, 70);
+  assert.equal(new Set(recipes).size, recipes.length);
+  assert.equal(Object.keys(recipeCategories).length, recipes.length);
+  assert.ok(recipes.every((recipe) => Boolean(recipeCategories[recipe])));
+});
