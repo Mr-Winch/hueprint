@@ -10,7 +10,7 @@ type PaletteRecipeSelectorProps = {
   dimmed?: boolean;
 };
 
-const categoryOrder: RecipeCategory[] = ["tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature"];
+const categoryOrder: RecipeCategory[] = ["tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature", "background", "daring", "semantic"];
 const categoryLabels: Record<RecipeCategory, string> = {
   tonal: "Tonal",
   accent: "Accent",
@@ -21,6 +21,9 @@ const categoryLabels: Record<RecipeCategory, string> = {
   harmony: "Harmony",
   darkLuminous: "Dark & Luminous",
   temperature: "Temperature",
+  background: "Background & Pop",
+  daring: "Daring",
+  semantic: "Semantic",
 };
 
 const categorizedRecipes = categoryOrder.map((category) => ({

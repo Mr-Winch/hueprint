@@ -1,5 +1,97 @@
 # Changelog
 
+## 1.4.5 — 2026-07-31
+
+- Made loaded Saved Palettes behave as reusable geometry templates instead of falling back to Analogous when the active color changes.
+- Preserved every relative hue angle, lightness offset, saturation relationship, and swatch count while moving the active color on the wheel.
+- Applied the same geometry-preserving behavior to HEX entry, the lightness slider, screen picking, and colors chosen from Saved Swatches.
+- Kept Current Palette swatch selection non-destructive: choosing an existing swatch changes the active anchor without deforming the palette.
+- Stored a fixed source template during dragging to prevent cumulative color-rounding drift, and added functional geometry regression coverage.
+
+## 1.4.4 — 2026-07-31
+
+- Rebuilt the Saved Palettes chooser with the same full browser geometry and visual hierarchy used by Harmony and Palette Recipes.
+- Expanded the chooser to a 740-pixel, three-column, scrollable layout with uniform 220 × 142 cards.
+- Added a full swatch preview, palette name, saved-color count, load description, and selected-state indicator to every Saved Palette card.
+- Integrated an individual square delete button into each card while preserving confirmation and Current Palette behavior.
+- Forced the Saved Palettes chooser to open below its control when screen space permits and added regression coverage for the shared card pattern.
+
+## 1.4.3 — 2026-07-31
+
+- Restored the subtitle beneath HuePrint with the studio description, version, copyright, author credit, and interaction guidance.
+- Escaped the ampersand in the Pango markup so GTK renders the complete two-line subtitle instead of silently leaving the label blank.
+- Added regression coverage for the author-credit subtitle and rebuilt the extension packages.
+
+## 1.4.2 — 2026-07-30
+
+- Slimmed the Saved Swatches from 52 to 34 pixels high for a tighter single-row presentation.
+- Kept each HEX code and remove icon permanently visible in black at 60% opacity across every swatch color.
+- Restored the filled triangular reorder controls at the left and right edges, shown only while hovering at 50% black opacity.
+- Removed the interim overflow menu and retained the single Add Active Color action beside Active Color.
+- Updated the UI contract, documentation, local installation, and distribution packages.
+
+## 1.4.1 — 2026-07-30
+
+- Replaced the always-visible Saved Swatch editing controls with one restrained overflow menu inside each swatch.
+- Added clear, labeled actions for moving a swatch left or right and removing it, preserving the polished single-row layout.
+- Removed the duplicate Add Active Color button from the Saved Swatches header; the Active Color section remains the single place for that action.
+- Kept adaptive HEX labels and updated the tooltips, documentation, and regression contract for the refined interaction.
+
+## 1.4.0 — 2026-07-30
+
+- Added the HEX value directly inside every Saved Swatch.
+- Chose swatch text from two restrained neutral inks using relative luminance, maintaining contrast without introducing distracting text-color variation.
+- Replaced the separate reorder/remove button row with a compact action strip that fades in inside the swatch on hover.
+- Kept the editing icons consistently light against a subtle neutral overlay so they remain legible over every swatch color and in both application themes.
+- Expanded the project, Inkscape, and gallery documentation to describe HuePrint as a palette creation, discovery, and management studio spanning Current Palette, Saved Swatches, reusable Saved Palettes, Apply, and GPL export.
+- Added regression coverage for adaptive swatch text and the compact in-swatch editing contract.
+
+## 1.3.1 — 2026-07-30
+
+- Renamed Named Palettes to **Saved Palettes** throughout the Inkscape interface and documentation.
+- Rebuilt the Saved Palettes chooser to match the Harmony and Palette Recipe card pattern, including a swatch strip, bold name, color count, load action, and selected-state indicator.
+- Added individual Saved Palette deletion with confirmation while preserving any colors already loaded into Current Palette.
+- Migrated the palette library to a clearly named storage file while continuing to read existing named-palette data.
+- Removed the mismatched arrow character from the Saved Swatches workflow explanation.
+- Reworked the Windows picker input lifecycle so HuePrint consumes the selection press and release instead of passing the click to Inkscape while it waits for the extension.
+- Made the picker HUD transient to HuePrint, released the screen device context after every sample, and limited sampling and HUD movement to actual pointer changes to reduce intermittent stalls.
+
+## 1.3.0 — 2026-07-30
+
+- Expanded HuePrint from 52 to 70 curated palette recipes while preserving every existing recipe.
+- Added **Background & Pop**, a six-recipe collection that treats the selected color as a backdrop and adapts foreground lightness so text, accents, and focal colors stand out.
+- Added six more vibrant, exotic, and deliberately daring recipes for stronger chromatic tension and less conventional results.
+- Added six semantic recipes for interface states, light and dark systems, financial signals, data states, and editorial workflows.
+- Added adaptive contrast, soft-contrast, and pop transforms to both the Inkscape/Python and HTML/React recipe engines.
+- Kept recipe formulas, categories, chooser metadata, randomized variations, and automated coverage synchronized across both editions.
+## 1.2.0 — 2026-07-30
+
+- Renamed Swatches to Current Palette and Saved Palette to Saved Swatches throughout the Inkscape extension.
+- Added an in-window workflow note explaining how to load Saved Swatches into Current Palette before applying them to Inkscape.
+- Added persistent named palettes, including a naming dialog, separate storage, swatch-preview cards, and one-click loading into Current Palette.
+- Added a Save Named Palette button before Clear Saved Swatches and aligned all related tooltips, import/export labels, and GPL naming.
+- Set the HuePrint SVG as the GTK window and default application icon instead of the bundled Python icon.
+
+## 1.1.8 — 2026-07-29
+
+- Kept HuePrint visible while screen picking so Inkscape is not exposed as a greyed, apparently frozen window.
+- Restyled the picker HUD with a borderless semi-transparent grey background and removed the stray blue paths.
+- Changed the heading to larger title-case text and tightened the title, instruction, RGB, and HSL spacing.
+- Aligned the HEX/RGB/HSL metadata block to the swatch height and strengthened the swatch outline.
+
+## 1.1.7 — 2026-07-29
+
+- Rebuilt the Windows screen eyedropper from scratch without screenshots, fullscreen overlays, GTK pointer grabs, or full-screen redraws.
+- Added native live pixel sampling with a compact cursor-following HUD showing HEX, RGB, and HSL metadata.
+- Added reliable global click detection that arms only after the opening click is released, then restores HuePrint with the selected Active Color.
+- Made Escape cancel the picker globally, restore HuePrint, and preserve the previous Active Color.
+
+## 1.1.6 — 2026-07-25
+
+- Kept the main HuePrint dialog alive while entering screen-picking mode instead of hiding and terminating `Gtk.Dialog.run()`.
+- Replaced the Windows picker splash window and global pointer grab with a normal borderless input window.
+- Routed pointer motion, click, and Escape directly through the picker window and cached captured pixels for responsive sampling.
+
 ## 1.1.5 — 2026-07-25
 
 - Replaced the broken GTK root-window picker on Windows with native virtual-screen capture, including HiDPI and multi-monitor coordinate scaling.

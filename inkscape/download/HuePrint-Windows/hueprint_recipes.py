@@ -56,7 +56,24 @@ RECIPES = {
     "warmAccents": ("Warm Accents", [{"base":True},{"L":.18,"C":.035,"dH":0},{"L":.82,"C":.18,"H":85},{"L":.76,"C":.21,"H":55},{"L":.68,"C":.22,"H":25},{"L":.94,"C":.04,"H":75}]),
     "coolAccents": ("Cool Accents", [{"base":True},{"L":.18,"C":.035,"dH":0},{"L":.76,"C":.19,"H":195},{"L":.70,"C":.21,"H":275},{"L":.72,"C":.20,"H":330},{"L":.94,"C":.04,"H":240}]),
     "warmCoolSplit": ("Warm–Cool Split", [{"base":True},{"L":.74,"C":.20,"H":55},{"L":.82,"C":.18,"H":85},{"L":.76,"C":.19,"H":195},{"L":.72,"C":.20,"H":315},{"L":.18,"C":.035,"dH":0}]),
-}
+    "backgroundPop": ("Background Pop", [{"base":True},{"contrast":True,"C":.035},{"softContrast":True,"C":.06},{"pop":True,"C":.24,"dH":180},{"pop":True,"C":.22,"dH":105}]),
+    "darkBackdropPunch": ("Dark Backdrop Punch", [{"base":True},{"L":.96,"C":.025},{"L":.78,"C":.25,"dH":180},{"L":.84,"C":.22,"H":95},{"L":.74,"C":.24,"H":330}]),
+    "lightBackdropPunch": ("Light Backdrop Punch", [{"base":True},{"L":.13,"C":.025},{"L":.56,"C":.26,"dH":180},{"L":.62,"C":.24,"H":25},{"L":.54,"C":.23,"H":285}]),
+    "electricForeground": ("Electric Foreground", [{"base":True},{"contrast":True,"C":.03},{"L":.82,"C":.23,"H":100},{"L":.74,"C":.24,"H":200},{"L":.68,"C":.26,"H":330},{"softContrast":True,"C":.05}]),
+    "posterOnColor": ("Poster on Color", [{"base":True},{"contrast":True,"C":.025},{"L":.94,"C":.035,"dH":0},{"pop":True,"C":.26,"dH":150},{"pop":True,"C":.25,"dH":250}]),
+    "spotlightContrast": ("Chromatic Spotlight", [{"base":True},{"contrast":True,"C":.03},{"softContrast":True,"C":.055},{"L":.84,"C":.22,"dH":75},{"L":.64,"C":.27,"dH":200},{"L":.92,"C":.08,"dH":75}]),
+    "acidCabaret": ("Acid Cabaret", [{"base":True},{"L":.68,"C":.28,"H":340},{"L":.86,"C":.23,"H":125},{"L":.75,"C":.23,"H":205},{"L":.22,"C":.10,"H":320}]),
+    "tropicalVoltage": ("Tropical Voltage", [{"base":True},{"L":.72,"C":.25,"H":35},{"L":.84,"C":.22,"H":115},{"L":.76,"C":.22,"H":190},{"L":.62,"C":.27,"H":290}]),
+    "ultravioletCitrus": ("Ultraviolet Citrus", [{"base":True},{"L":.58,"C":.28,"H":285},{"L":.86,"C":.22,"H":95},{"L":.70,"C":.26,"H":25},{"L":.72,"C":.22,"H":200},{"contrast":True,"C":.03}]),
+    "coralCobaltClash": ("Coral–Cobalt Clash", [{"base":True},{"L":.70,"C":.27,"H":25},{"L":.55,"C":.29,"H":260},{"L":.84,"C":.20,"H":100},{"L":.66,"C":.25,"H":345},{"L":.94,"C":.03,"H":70}]),
+    "cyberBazaar": ("Cyber Bazaar", [{"base":True},{"L":.78,"C":.22,"H":185},{"L":.66,"C":.27,"H":310},{"L":.84,"C":.21,"H":70},{"L":.66,"C":.26,"H":15},{"L":.18,"C":.05,"H":280}]),
+    "carnivalClash": ("Carnival Clash", [{"base":True},{"L":.68,"C":.27,"H":350},{"L":.80,"C":.23,"H":55},{"L":.68,"C":.24,"H":145},{"L":.58,"C":.29,"H":250},{"L":.72,"C":.24,"H":300}]),
+    "semanticCore": ("Semantic Core", [{"base":True},{"L":.62,"C":.19,"H":250},{"L":.62,"C":.18,"H":145},{"L":.80,"C":.18,"H":85},{"L":.62,"C":.22,"H":25},{"contrast":True,"C":.03}]),
+    "semanticLight": ("Semantic on Light", [{"base":True},{"L":.98,"C":.02},{"L":.18,"C":.03},{"L":.58,"C":.19,"H":250},{"L":.58,"C":.18,"H":145},{"L":.75,"C":.18,"H":85},{"L":.58,"C":.22,"H":25}]),
+    "semanticDark": ("Semantic on Dark", [{"base":True},{"L":.14,"C":.025},{"L":.94,"C":.025},{"L":.76,"C":.19,"H":240},{"L":.75,"C":.18,"H":145},{"L":.84,"C":.18,"H":85},{"L":.72,"C":.22,"H":25}]),
+    "financialSignals": ("Financial Signals", [{"base":True},{"L":.58,"C":.18,"H":145},{"L":.58,"C":.22,"H":25},{"L":.78,"C":.18,"H":85},{"L":.55,"C":.03},{"L":.62,"C":.18,"H":250}]),
+    "dataStates": ("Data States", [{"base":True},{"L":.62,"C":.18,"H":250},{"L":.62,"C":.18,"H":145},{"L":.78,"C":.18,"H":85},{"L":.62,"C":.22,"H":25},{"L":.70,"C":.03},{"L":.64,"C":.20,"dH":180}]),
+    "editorialStates": ("Editorial States", [{"base":True},{"L":.58,"C":.17,"H":145},{"L":.76,"C":.17,"H":85},{"L":.64,"C":.21,"H":35},{"L":.56,"C":.22,"H":25},{"L":.60,"C":.20,"H":285},{"contrast":True,"C":.03}]),}
 
 def _linear(v): return v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4
 def _srgb(v): return 12.92 * v if v <= .0031308 else 1.055 * max(v, 0) ** (1 / 2.4) - .055
@@ -99,7 +116,12 @@ def resolve_transform(base, step):
     L,c,h=base
     if isinstance(step,(tuple,list)):
         dL,c_scale,dH=step; return L+dL,c*c_scale,h+dH
-    resolved_L=step.get("L",L+step.get("dL",0)); scaled=c*step.get("cScale",1); resolved_c=step.get("C",max(scaled,step.get("cMin",0))); resolved_h=step.get("H",h+step.get("dH",0))
+    if "L" in step:resolved_L=step["L"]
+    elif step.get("contrast"):resolved_L=.14 if L>=.56 else .96
+    elif step.get("softContrast"):resolved_L=.30 if L>=.56 else .84
+    elif step.get("pop"):resolved_L=.56 if L>=.56 else .78
+    else:resolved_L=L+step.get("dL",0)
+    scaled=c*step.get("cScale",1); resolved_c=step.get("C",max(scaled,step.get("cMin",0))); resolved_h=step.get("H",h+step.get("dH",0))
     return clamp(resolved_L,.08,.96),clamp(resolved_c,.02,.34),normalize_hue(resolved_h)
 
 def transforms_for_count(transforms,count):
@@ -122,9 +144,10 @@ RANDOM_JITTER = {
     "tonal":(.025,.08,6), "accent":(.030,.10,10), "spectrum":(.035,.10,14),
     "contrast":(.040,.12,14), "systems":(.030,.08,10), "vibrant":(.035,.12,14),
     "harmony":(.035,.12,12), "darkLuminous":(.025,.10,10), "temperature":(.025,.10,5),
+    "background":(.025,.08,8), "daring":(.035,.10,10), "semantic":(.018,.05,3),
 }
-STRUCTURAL_CATEGORIES={"tonal","accent","contrast","systems","darkLuminous","temperature"}
-VIVID_CATEGORIES={"vibrant","harmony","darkLuminous","temperature"}
+STRUCTURAL_CATEGORIES={"tonal","accent","contrast","systems","darkLuminous","temperature","background","semantic"}
+VIVID_CATEGORIES={"vibrant","harmony","darkLuminous","temperature","background","daring"}
 
 def _oklab_distance(first,second):
     L1,c1,h1=first;L2,c2,h2=second;a1=c1*math.cos(math.radians(h1));b1=c1*math.sin(math.radians(h1));a2=c2*math.cos(math.radians(h2));b2=c2*math.sin(math.radians(h2));return math.sqrt((L1-L2)**2+(a1-a2)**2+(b1-b2)**2)

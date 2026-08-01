@@ -1,6 +1,6 @@
 # Color Harmony Picker
 
-A reusable React + TypeScript color harmony control for generating and curating palettes from an active color.
+A reusable React + TypeScript studio for creating, discovering, and managing palettes from an active color.
 
 Live demo: https://mr-winch.github.io/hueprint/
 
@@ -11,14 +11,18 @@ It includes a donut-style color wheel with radial lightness, visible harmony geo
 - React + TypeScript component: `<ColorHarmonyPicker />`
 - Donut wheel with hue by angle and lightness by radius
 - Harmony rules: monochromatic, analogous, complementary, split complementary, triadic, square, rectangle/tetradic, polygon/equidistant, tint, shade, tone, custom
-- Palette recipes generated from direct OKLCH anchor transforms, including Warm Spectrum, Signature Accent, Interface Kit, Pastel Bloom, Night Mode, Trust Signal, and more
+- 70 curated palette recipes generated from direct and adaptive OKLCH transforms, including background-and-pop, daring chromatic, semantic, tonal, interface, and harmony-driven collections
 - SVG harmony geometry overlay
 - Generated swatch band with active marker
 - Active color HEX, RGB, CMYK, and HSL info
 - Native browser eyedropper support where available
-- Saved palette with select, remove, clear, drag reorder, import, and export
+- Palette-management workflow with Current Palette, Saved Swatches, reusable Saved Palettes, and GPL delivery to Inkscape
 - Custom harmony rules store OKLCH transforms from the anchor color, not fixed colors
 - Four layout modes for wide surfaces and narrow editor panels
+
+## Palette creation and management
+
+HuePrint treats palette work as a continuous process rather than a one-time generation step. Explore harmonies and curated recipes in Current Palette, collect useful colors in Saved Swatches, refine their order and membership, preserve complete systems as reusable Saved Palettes, and export GPL files for Inkscape. This supports discovery, comparison, organization, reuse, and production delivery in the same tool.
 
 ## Install By Source Copy
 

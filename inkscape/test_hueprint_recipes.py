@@ -18,7 +18,7 @@ HEX=re.compile(r"^#[0-9A-F]{6}$")
 
 class HuePrintRecipeTests(unittest.TestCase):
     def test_catalog_and_all_outputs(self):
-        self.assertEqual(len(RECIPES),53)
+        self.assertEqual(len(RECIPES),71)
         for recipe_id,(_label,transforms) in RECIPES.items():
             colors=generate_recipe("#3366FF",recipe_id)
             self.assertEqual(len(colors),len(transforms),recipe_id)
@@ -41,6 +41,23 @@ class HuePrintRecipeTests(unittest.TestCase):
             for index,step in enumerate(transforms):
                 if step.get("base"):self.assertEqual(colors[index],"#3C75A7",recipe_id)
 
+    def test_background_recipes_adapt_to_light_and_dark_anchors(self):
+        light=resolve_transform((.85,.10,40),{"contrast":True,"C":.03})
+        dark=resolve_transform((.20,.10,40),{"contrast":True,"C":.03})
+        self.assertEqual(light[0],.14)
+        self.assertEqual(dark[0],.96)
+        light_palette=generate_recipe("#F2E8D5","backgroundPop")
+        dark_palette=generate_recipe("#16182A","backgroundPop")
+        self.assertTrue(any(hex_to_oklch(color)[0]<=.20 for color in light_palette[1:]))
+        self.assertTrue(any(hex_to_oklch(color)[0]>=.90 for color in dark_palette[1:]))
+
+    def test_semantic_recipes_expose_conventional_signal_hues(self):
+        colors=generate_recipe("#6B4EFF","semanticCore")
+        hues=[hex_to_oklch(color)[2] for color in colors[1:5]]
+        self.assertTrue(220<=hues[0]<=275,hues)
+        self.assertTrue(120<=hues[1]<=170,hues)
+        self.assertTrue(65<=hues[2]<=105,hues)
+        self.assertTrue(5<=hues[3]<=45,hues)
     def test_seeded_randomization_is_reproducible_and_preserves_base(self):
         first=randomize_recipe("#7F7F7F","vividAnalogous","vibrant",5,"fixed-seed")
         second=randomize_recipe("#7F7F7F","vividAnalogous","vibrant",5,"fixed-seed")

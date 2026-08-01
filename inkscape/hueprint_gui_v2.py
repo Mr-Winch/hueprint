@@ -4,9 +4,9 @@ from ctypes import wintypes
 import cairo
 from pathlib import Path
 import gi
-gi.require_version("Gtk","3.0"); gi.require_version("Gdk","3.0"); gi.require_version("GdkPixbuf","2.0")
-from gi.repository import Gdk, GdkPixbuf, GLib, Gtk
-from hueprint_palette import generate_palette, hex_to_hls, hls_to_hex, palette_from_text, palette_storage_path, palette_to_gpl, sanitize_hex
+gi.require_version("Gtk","3.0"); gi.require_version("Gdk","3.0"); gi.require_version("GdkPixbuf","2.0"); gi.require_version("Pango","1.0")
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, Pango
+from hueprint_palette import generate_palette, hex_to_hls, hls_to_hex, palette_from_text, palette_storage_path, palette_to_gpl, sanitize_hex, translate_palette_geometry
 from hueprint_recipes import RECIPES, generate_recipe, hex_to_oklch, randomize_recipe
 from hueprint_recipe_metadata import CATEGORY_LABELS, CATEGORY_ORDER, RECIPE_IDS_BY_CATEGORY, RECIPE_METADATA, RECIPE_METADATA_BY_ID
 
@@ -29,6 +29,10 @@ def _palette_path():
     path=palette_storage_path(); path.parent.mkdir(parents=True,exist_ok=True); return path
 def _legacy_palette_path():
     return Path(os.environ.get("APPDATA",Path.home()/".config"))/"inkscape"/"hueprint-palettes.json"
+def _saved_palettes_path():
+    return _palette_path().with_name("saved-palette-library.json")
+def _legacy_named_palettes_path():
+    return _palette_path().with_name("named-palettes.json")
 def _inkscape_prefers_dark():
     try:
         preferences=Path(os.environ.get("APPDATA",Path.home()/".config"))/"inkscape"/"preferences.xml"
@@ -36,42 +40,59 @@ def _inkscape_prefers_dark():
         if theme is not None:return theme.get("preferDarkTheme",theme.get("darkTheme","0"))=="1"
     except (OSError,ET.ParseError):pass
     settings=Gtk.Settings.get_default(); return bool(settings and settings.get_property("gtk-application-prefer-dark-theme"))
-def _windows_screen_snapshot():
-    user32=ctypes.WinDLL("user32",use_last_error=True); gdi32=ctypes.WinDLL("gdi32",use_last_error=True)
-    user32.GetDC.argtypes=[wintypes.HWND]; user32.GetDC.restype=wintypes.HDC; user32.ReleaseDC.argtypes=[wintypes.HWND,wintypes.HDC]
-    gdi32.CreateCompatibleDC.argtypes=[wintypes.HDC]; gdi32.CreateCompatibleDC.restype=wintypes.HDC; gdi32.CreateCompatibleBitmap.argtypes=[wintypes.HDC,ctypes.c_int,ctypes.c_int]; gdi32.CreateCompatibleBitmap.restype=wintypes.HBITMAP
-    gdi32.SelectObject.argtypes=[wintypes.HDC,wintypes.HGDIOBJ]; gdi32.SelectObject.restype=wintypes.HGDIOBJ; gdi32.DeleteObject.argtypes=[wintypes.HGDIOBJ]; gdi32.DeleteDC.argtypes=[wintypes.HDC]
-    gdi32.BitBlt.argtypes=[wintypes.HDC,ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int,wintypes.HDC,ctypes.c_int,ctypes.c_int,wintypes.DWORD]
-    class BitmapInfoHeader(ctypes.Structure):
-        _fields_=[("biSize",wintypes.DWORD),("biWidth",wintypes.LONG),("biHeight",wintypes.LONG),("biPlanes",wintypes.WORD),("biBitCount",wintypes.WORD),("biCompression",wintypes.DWORD),("biSizeImage",wintypes.DWORD),("biXPelsPerMeter",wintypes.LONG),("biYPelsPerMeter",wintypes.LONG),("biClrUsed",wintypes.DWORD),("biClrImportant",wintypes.DWORD)]
-    class BitmapInfo(ctypes.Structure):_fields_=[("bmiHeader",BitmapInfoHeader),("bmiColors",wintypes.DWORD*3)]
-    gdi32.GetDIBits.argtypes=[wintypes.HDC,wintypes.HBITMAP,wintypes.UINT,wintypes.UINT,ctypes.c_void_p,ctypes.POINTER(BitmapInfo),wintypes.UINT]
-    root_x=user32.GetSystemMetrics(76); root_y=user32.GetSystemMetrics(77); width=user32.GetSystemMetrics(78); height=user32.GetSystemMetrics(79)
-    if width<=0 or height<=0:raise OSError("Windows returned an empty virtual screen")
-    screen_dc=user32.GetDC(None); memory_dc=gdi32.CreateCompatibleDC(screen_dc); bitmap=gdi32.CreateCompatibleBitmap(screen_dc,width,height); previous=gdi32.SelectObject(memory_dc,bitmap)
-    try:
-        if not gdi32.BitBlt(memory_dc,0,0,width,height,screen_dc,root_x,root_y,0x40CC0020):raise ctypes.WinError(ctypes.get_last_error())
-        info=BitmapInfo(); info.bmiHeader.biSize=ctypes.sizeof(BitmapInfoHeader); info.bmiHeader.biWidth=width; info.bmiHeader.biHeight=-height; info.bmiHeader.biPlanes=1; info.bmiHeader.biBitCount=32; info.bmiHeader.biCompression=0
-        data=bytearray(width*height*4); buffer=(ctypes.c_ubyte*len(data)).from_buffer(data)
-        if gdi32.GetDIBits(memory_dc,bitmap,0,height,buffer,ctypes.byref(info),0)!=height:raise ctypes.WinError(ctypes.get_last_error())
-        data[3::4]=b"\xff"*(width*height); surface=cairo.ImageSurface.create_for_data(data,cairo.FORMAT_ARGB32,width,height,width*4); snapshot=Gdk.pixbuf_get_from_surface(surface,0,0,width,height)
-        if snapshot is None:raise OSError("GTK could not convert the Windows screen capture")
-        return snapshot,(root_x,root_y,width,height)
-    finally:
-        if previous:gdi32.SelectObject(memory_dc,previous)
-        if bitmap:gdi32.DeleteObject(bitmap)
-        if memory_dc:gdi32.DeleteDC(memory_dc)
-        if screen_dc:user32.ReleaseDC(None,screen_dc)
-def _screen_snapshot():
-    if sys.platform.startswith("win"):return _windows_screen_snapshot()
-    root=Gdk.get_default_root_window()
-    if root is None:return None,None
-    geometry=root.get_geometry()
-    if hasattr(geometry,"x"):root_x,root_y,width,height=geometry.x,geometry.y,geometry.width,geometry.height
-    else:root_x,root_y,width,height=geometry[:4]
-    snapshot=Gdk.pixbuf_get_from_window(root,root_x,root_y,width,height)
-    if snapshot is None:return None,None
-    return snapshot,(root_x,root_y,width,height)
+def _windows_handle(value):
+    value=int(value or 0); return value&0xffffffff if value>>32==0xffffffff else value
+
+class NativeScreenSampler:
+    VK_LBUTTON=0x01; VK_ESCAPE=0x1B; WH_MOUSE_LL=14; WM_LBUTTONDOWN=0x0201; WM_LBUTTONUP=0x0202
+    def __init__(self):
+        if not sys.platform.startswith("win"):raise OSError("The native screen picker currently requires Windows")
+        self.user32=ctypes.WinDLL("user32",use_last_error=True); self.gdi32=ctypes.WinDLL("gdi32",use_last_error=True); self.kernel32=ctypes.WinDLL("kernel32",use_last_error=True)
+        self.user32.GetCursorPos.argtypes=[ctypes.POINTER(wintypes.POINT)]; self.user32.GetCursorPos.restype=wintypes.BOOL
+        self.user32.GetAsyncKeyState.argtypes=[ctypes.c_int]; self.user32.GetAsyncKeyState.restype=ctypes.c_short
+        self.user32.GetDC.argtypes=[wintypes.HWND]; self.user32.GetDC.restype=wintypes.HDC
+        self.user32.ReleaseDC.argtypes=[wintypes.HWND,wintypes.HDC]; self.user32.ReleaseDC.restype=ctypes.c_int
+        self.gdi32.GetPixel.argtypes=[wintypes.HDC,ctypes.c_int,ctypes.c_int]; self.gdi32.GetPixel.restype=wintypes.DWORD
+        self.left=self.user32.GetSystemMetrics(76); self.top=self.user32.GetSystemMetrics(77); self.width=self.user32.GetSystemMetrics(78); self.height=self.user32.GetSystemMetrics(79)
+        if self.width<=0 or self.height<=0:raise OSError("Windows screen access is unavailable")
+        self.armed=False; self.clicked_point=None; self.swallow_release=False; self.hook=None
+        class MouseInfo(ctypes.Structure):
+            _fields_=[("pt",wintypes.POINT),("mouseData",wintypes.DWORD),("flags",wintypes.DWORD),("time",wintypes.DWORD),("extra",ctypes.c_size_t)]
+        self.mouse_info_type=MouseInfo; self.mouse_proc_type=ctypes.WINFUNCTYPE(ctypes.c_ssize_t,ctypes.c_int,wintypes.WPARAM,wintypes.LPARAM); self.mouse_proc=self.mouse_proc_type(self._mouse_event)
+        self.user32.SetWindowsHookExW.argtypes=[ctypes.c_int,self.mouse_proc_type,wintypes.HANDLE,wintypes.DWORD]; self.user32.SetWindowsHookExW.restype=wintypes.HANDLE
+        self.user32.CallNextHookEx.argtypes=[wintypes.HANDLE,ctypes.c_int,wintypes.WPARAM,wintypes.LPARAM]; self.user32.CallNextHookEx.restype=ctypes.c_ssize_t
+        self.user32.UnhookWindowsHookEx.argtypes=[wintypes.HANDLE]; self.user32.UnhookWindowsHookEx.restype=wintypes.BOOL
+        self.kernel32.GetModuleHandleW.argtypes=[wintypes.LPCWSTR]; self.kernel32.GetModuleHandleW.restype=wintypes.HANDLE
+        self.hook=self.user32.SetWindowsHookExW(self.WH_MOUSE_LL,self.mouse_proc,self.kernel32.GetModuleHandleW(None),0)
+        if not self.hook:raise ctypes.WinError(ctypes.get_last_error())
+    def _mouse_event(self,code,message,data):
+        if code>=0:
+            message=int(message)
+            if message==self.WM_LBUTTONDOWN and self.armed:
+                info=ctypes.cast(data,ctypes.POINTER(self.mouse_info_type)).contents; self.clicked_point=(info.pt.x,info.pt.y); self.armed=False; self.swallow_release=True; return 1
+            if message==self.WM_LBUTTONUP and self.swallow_release:self.swallow_release=False; return 1
+        return self.user32.CallNextHookEx(self.hook,code,message,data)
+    def arm(self):self.armed=True
+    def take_click(self):
+        if self.clicked_point is None or self.swallow_release:return None
+        point=self.clicked_point; self.clicked_point=None; return point
+    def position(self):
+        point=wintypes.POINT()
+        if not self.user32.GetCursorPos(ctypes.byref(point)):raise ctypes.WinError(ctypes.get_last_error())
+        return point.x,point.y
+    def key_state(self,key):return int(self.user32.GetAsyncKeyState(key))&0xffff
+    def pressed(self,key):return bool(self.key_state(key)&0x8000)
+    def color_at(self,x,y):
+        dc=_windows_handle(self.user32.GetDC(None))
+        if not dc:raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            value=int(self.gdi32.GetPixel(dc,int(x),int(y)))
+            if value==0xffffffff:raise ctypes.WinError(ctypes.get_last_error())
+            return "#%02X%02X%02X"%(value&0xff,(value>>8)&0xff,(value>>16)&0xff)
+        finally:self.user32.ReleaseDC(None,dc)
+    def close(self):
+        self.armed=False; self.swallow_release=False
+        if self.hook:self.user32.UnhookWindowsHookEx(self.hook); self.hook=None
 def _clamp(value,low=0,high=1): return min(high,max(low,value))
 def _distance(a,b): return math.hypot(a[0]-b[0],a[1]-b[1])
 
@@ -86,20 +107,22 @@ SVG_ICONS = {
  "import":"<path d='M12 3v12M7 10l5 5 5-5M4 20h16' fill='none'/>",
  "use":"<rect x='4' y='15' width='4' height='4' rx='1' fill='none'/><rect x='10' y='15' width='4' height='4' rx='1' fill='none'/><rect x='16' y='15' width='4' height='4' rx='1' fill='none'/><path d='M12 13V4M8 8l4-4 4 4' fill='none'/>",
  "export":"<path d='M12 17V5M7 10l5-5 5 5M4 20h16' fill='none'/>",
+ "save":"<path d='M5 4h12l3 3v13H4V4zM8 4v6h8V4M8 20v-6h8v6' fill='none'/>",
  "trash":"<path d='M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 10v7M14 10v7' fill='none'/>",
- "left":"<path d='M15 5l-7 7 7 7' fill='none'/>",
- "right":"<path d='M9 5l7 7-7 7' fill='none'/>",
+ "left":"<path d='M16 4.5L6.5 12 16 19.5z' fill='#000000' stroke='none'/>",
+ "right":"<path d='M8 4.5l9.5 7.5L8 19.5z' fill='#000000' stroke='none'/>",
  "close":"<path d='M6 6l12 12M18 6L6 18' fill='none'/>",
  "moon":"<path d='M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5z' fill='none'/>",
  "sun":"<circle cx='12' cy='12' r='4' fill='none'/><path d='M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4' fill='none'/>",
 }
-def _svg_image(name,size=17):
-    settings=Gtk.Settings.get_default(); dark=bool(settings and settings.get_property("gtk-application-prefer-dark-theme")); stroke="#D7E9FF" if dark else "#20242B"
+def _svg_image(name,size=17,stroke=None):
+    if stroke is None:
+        settings=Gtk.Settings.get_default(); dark=bool(settings and settings.get_property("gtk-application-prefer-dark-theme")); stroke="#D7E9FF" if dark else "#20242B"
     body=SVG_ICONS[name]; svg=f"<svg xmlns='http://www.w3.org/2000/svg' width='{size}' height='{size}' viewBox='0 0 24 24'><g stroke='{stroke}' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>{body}</g></svg>"
     loader=GdkPixbuf.PixbufLoader.new_with_type("svg"); loader.set_size(size,size); loader.write(svg.encode("utf-8")); loader.close()
     return Gtk.Image.new_from_pixbuf(loader.get_pixbuf())
-def _set_icon(button,name,size=17):
-    button.hueprint_icon=name; button.hueprint_icon_size=size; button.set_image(_svg_image(name,size)); button.set_always_show_image(True)
+def _set_icon(button,name,size=17,stroke=None):
+    button.hueprint_icon=name; button.hueprint_icon_size=size; button.hueprint_icon_stroke=stroke; button.set_image(_svg_image(name,size,stroke)); button.set_always_show_image(True)
 
 class DescribedChooser(Gtk.Button):
     def __init__(self,items,columns=1):
@@ -176,7 +199,7 @@ class HarmonyBrowser(Gtk.Button):
     def get_active_id(self):return self.active_id
     def connect_changed(self,callback):self.callbacks.append(callback)
 class RecipeBrowser(Gtk.Button):
-    FILTERS = ("all", "tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature")
+    FILTERS = ("all", "tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature", "background", "daring", "semantic")
     def __init__(self,owner):
         super().__init__(); self.owner=owner; self.active_id=None; self.callbacks=[]; self.buttons={}; self.indicators={}; self.previews={}; self.preview_cache={}; self.sections={}; self.syncing=False
         self.label=Gtk.Label(); self.add(self.label); popover=Gtk.Popover.new(self); outer=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); outer.set_border_width(10)
@@ -251,6 +274,47 @@ class RecipeBrowser(Gtk.Button):
     def apply_filter(self):
         current=getattr(self,"current_filter","all")
         for category,section in self.sections.items():section.set_visible(current=="all" or current==category)
+class SavedPaletteBrowser(Gtk.Button):
+    def __init__(self,owner):
+        super().__init__(); self.owner=owner; self.active_index=None; self.buttons={}; self.indicators={}; self.syncing=False; self.label=Gtk.Label(label="Choose saved palette"); self.add(self.label); self.popover=Gtk.Popover.new(self); self.popover.set_position(Gtk.PositionType.BOTTOM)
+        outer=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); outer.set_border_width(10); support=Gtk.Label(label="Choose a saved palette to load into Current Palette."); support.set_xalign(0); outer.pack_start(support,False,False,0)
+        scroll=Gtk.ScrolledWindow(); scroll.set_policy(Gtk.PolicyType.NEVER,Gtk.PolicyType.AUTOMATIC); scroll.set_min_content_width(740); scroll.set_max_content_width(760); scroll.set_min_content_height(500); scroll.set_max_content_height(560); scroll.set_propagate_natural_width(True)
+        self.grid=Gtk.FlowBox(); self.grid.set_selection_mode(Gtk.SelectionMode.NONE); self.grid.set_column_spacing(6); self.grid.set_row_spacing(6); self.grid.set_min_children_per_line(1); self.grid.set_max_children_per_line(3); self.grid.set_homogeneous(True); scroll.add(self.grid); outer.pack_start(scroll,True,True,0); self.popover.add(outer); self.connect("clicked",self.open_popover); self.refresh_palettes(); outer.show_all(); self.update_selection()
+    def open_popover(self,*_args):
+        if self.popover.get_visible():self.popover.popdown()
+        else:self.refresh_palettes(); self.popover.show_all(); self.update_selection(); self.popover.set_position(Gtk.PositionType.BOTTOM); self.popover.popup()
+    def refresh_palettes(self):
+        for child in self.grid.get_children():self.grid.remove(child)
+        self.owner.icon_buttons=[button for button in self.owner.icon_buttons if not getattr(button,"hueprint_saved_palette_action",False)]; self.buttons={}; self.indicators={}
+        if self.active_index is not None and self.active_index>=len(self.owner.saved_palettes):self.active_index=None
+        if not self.owner.saved_palettes:
+            empty=Gtk.Label(label="No saved palettes yet. Save the Saved Swatches to create one."); empty.set_margin_top(24); empty.set_margin_bottom(24); self.grid.add(empty)
+        for index,palette in enumerate(self.owner.saved_palettes):self.grid.add(self.make_card(index,palette))
+        self.grid.show_all(); self.update_selection()
+    def make_card(self,index,palette):
+        name=palette["name"]; colors=palette["colors"]; count=len(colors); escaped_name=GLib.markup_escape_text(name); wrapper=Gtk.Overlay(); wrapper.set_hexpand(True); wrapper.set_size_request(220,142)
+        button=Gtk.ToggleButton(); button.set_relief(Gtk.ReliefStyle.NORMAL); button.set_hexpand(True); button.set_size_request(220,142); button.connect("clicked",self.select,index); button.set_tooltip_markup(f"<span line_height='0.95'><span size='large' weight='bold'>{escaped_name}</span>\n<span size='small'>{count} saved colors. Load into Current Palette.</span></span>")
+        box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=4); preview=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=1); preview.set_homogeneous(True)
+        for color in colors[:16]:
+            area=Gtk.DrawingArea(); area.set_size_request(10,18); area.hueprint_color=color; area.connect("draw",HarmonyBrowser.draw_preview); preview.pack_start(area,True,True,0)
+        box.pack_start(preview,False,False,0); heading=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=4); heading.set_margin_end(25); label=Gtk.Label(); label.set_markup(f"<span weight='bold'>{escaped_name}</span>"); label.set_xalign(0); label.set_max_width_chars(24); label.set_ellipsize(Pango.EllipsizeMode.END); heading.pack_start(label,True,True,0); indicator=Gtk.Label(label="✓"); indicator.set_tooltip_text("Selected saved palette"); heading.pack_end(indicator,False,False,0); box.pack_start(heading,False,False,0)
+        character=Gtk.Label(); character.set_markup(f"<span line_height='0.95'><span size='small' weight='bold'>{count} saved {'color' if count==1 else 'colors'}</span></span>"); character.set_xalign(0); box.pack_start(character,False,False,0)
+        detail=Gtk.Label(); detail.set_markup("<span line_height='0.95'><span size='small'>Load into Current Palette for editing or application.</span></span>"); detail.set_xalign(0); detail.set_line_wrap(True); detail.set_max_width_chars(34); box.pack_start(detail,False,False,0); button.add(box); wrapper.add(button); self.buttons[index]=button; self.indicators[index]=indicator
+        delete=self.owner._icon_button("trash",f"Delete saved palette {name}",lambda *_args,i=index:self.delete_palette(i),24); delete.hueprint_saved_palette_action=True; delete.set_halign(Gtk.Align.END); delete.set_valign(Gtk.Align.START); delete.set_margin_top(27); delete.set_margin_end(5); wrapper.add_overlay(delete); return wrapper
+    def select(self,_button,index):
+        if self.syncing:return
+        self.popover.popdown(); self.owner.use_saved_palette_collection(index)
+    def delete_palette(self,index):
+        self.popover.popdown(); self.owner.delete_saved_palette(index)
+    def update_selection(self):
+        self.syncing=True
+        try:
+            for index,button in self.buttons.items():button.set_active(index==self.active_index); self.indicators[index].set_visible(index==self.active_index)
+        finally:self.syncing=False
+    def set_active(self,index):
+        self.active_index=index if index is not None and 0<=index<len(self.owner.saved_palettes) else None
+        self.label.set_text(self.owner.saved_palettes[self.active_index]["name"] if self.active_index is not None else "Choose saved palette"); self.update_selection()
+    def clear_active(self):self.set_active(None)
 class CompactCount(Gtk.Box):
     def __init__(self,owner,minimum=2,maximum=8,value=5):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL,spacing=1); self.minimum=minimum; self.maximum=maximum; self.value=value; self.callbacks=[]
@@ -331,33 +395,32 @@ class ColorWheel(Gtk.DrawingArea):
         if event.state&Gdk.ModifierType.BUTTON1_MASK:self._set(event)
         return True
 
-class PickerHud(Gtk.DrawingArea):
-    def __init__(self,owner,width,height):
-        super().__init__(); self.owner=owner; self.screen_width=width; self.screen_height=height; self.x=width/2; self.y=height/2; self.color="#000000"; self.set_size_request(width,height); self.connect("draw",self.draw_hud)
-    def update_sample(self,x,y,color):
-        self.x=x; self.y=y; self.color=color; self.queue_draw()
+class NativePickerHud(Gtk.DrawingArea):
+    WIDTH=300; HEIGHT=124
+    def __init__(self):
+        super().__init__(); self.color="#000000"; self.set_size_request(self.WIDTH,self.HEIGHT); self.connect("draw",self.draw_hud)
+    def update_sample(self,color):
+        if color!=self.color:self.color=color; self.queue_draw()
     @staticmethod
     def rounded(cr,x,y,width,height,radius):
         cr.new_sub_path(); cr.arc(x+width-radius,y+radius,radius,-math.pi/2,0); cr.arc(x+width-radius,y+height-radius,radius,0,math.pi/2); cr.arc(x+radius,y+height-radius,radius,math.pi/2,math.pi); cr.arc(x+radius,y+radius,radius,math.pi,math.pi*1.5); cr.close_path()
     @staticmethod
     def text(cr,text,x,y,size,bold=False):
         cr.select_font_face("Sans",0,1 if bold else 0); cr.set_font_size(size); cr.move_to(x,y); cr.show_text(text)
-    def draw_hud(self,widget,cr):
-        width=widget.get_allocated_width(); height=widget.get_allocated_height(); accent=(.24,.64,1)
-        cr.set_source_rgba(*accent,.95); cr.set_line_width(4); cr.rectangle(2,2,width-4,height-4); cr.stroke()
-        notice_w,notice_h=300,58; nx,ny=width-notice_w-20,height-notice_h-20; self.rounded(cr,nx,ny,notice_w,notice_h,8); cr.set_source_rgba(.04,.06,.09,.9); cr.fill_preserve(); cr.set_source_rgba(*accent,1); cr.set_line_width(2); cr.stroke(); cr.set_source_rgb(1,1,1); self.text(cr,"COLOR PICKING MODE",nx+16,ny+24,15,True); cr.set_source_rgb(.82,.86,.92); self.text(cr,"Click to select  -  Esc to cancel",nx+16,ny+44,12)
-        tile_w,tile_h=238,92; tx=self.x+22; ty=self.y+24
-        if tx+tile_w>width-12:tx=self.x-tile_w-22
-        if ty+tile_h>height-12:ty=self.y-tile_h-24
-        tx=max(12,min(tx,width-tile_w-12)); ty=max(12,min(ty,height-tile_h-12)); self.rounded(cr,tx,ty,tile_w,tile_h,8); cr.set_source_rgba(.04,.06,.09,.92); cr.fill_preserve(); cr.set_source_rgba(*accent,1); cr.set_line_width(2); cr.stroke()
-        red,green,blue=[int(self.color[i:i+2],16) for i in (1,3,5)]; hue,light,saturation=hex_to_hls(self.color); cr.set_source_rgb(red/255,green/255,blue/255); cr.rectangle(tx+12,ty+14,54,54); cr.fill(); cr.set_source_rgb(1,1,1); cr.set_line_width(1); cr.rectangle(tx+12.5,ty+14.5,53,53); cr.stroke(); self.text(cr,self.color,tx+80,ty+25,16,True); cr.set_source_rgb(.84,.88,.94); self.text(cr,f"RGB  {red}  {green}  {blue}",tx+80,ty+48,12); self.text(cr,f"HSL  {round(hue)}  {round(saturation*100)}%  {round(light*100)}%",tx+80,ty+69,12)
+    def draw_hud(self,_widget,cr):
+        self.rounded(cr,1,1,self.WIDTH-2,self.HEIGHT-2,10); cr.set_source_rgba(.20,.21,.23,.88); cr.fill()
+        cr.set_source_rgb(1,1,1); self.text(cr,"Color Picking Mode",15,22,17,True); cr.set_source_rgb(.88,.89,.91); self.text(cr,"Click to select  ·  Esc to cancel",15,39,12)
+        red,green,blue=[int(self.color[i:i+2],16) for i in (1,3,5)]; hue,light,saturation=hex_to_hls(self.color); cr.set_source_rgb(red/255,green/255,blue/255); cr.rectangle(17,54,56,56); cr.fill(); cr.set_source_rgb(.94,.95,.97); cr.set_line_width(3); cr.rectangle(18.5,55.5,53,53); cr.stroke()
+        cr.set_source_rgb(1,1,1); self.text(cr,self.color,88,70,16,True); cr.set_source_rgb(.90,.91,.93); self.text(cr,f"RGB  {red}  {green}  {blue}",88,91,12); self.text(cr,f"HSL  {round(hue)}  {round(saturation*100)}%  {round(light*100)}%",88,108,12)
         return False
-
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — 1.1.5",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        super().__init__(title="HuePrint © — 1.4.5",flags=0); self.set_default_size(1,900); self.set_resizable(True)
         self.add_button("Cancel",Gtk.ResponseType.CANCEL)
-        self.color="#2F80ED"; self.saved=self._load_saved(); self.custom_palette=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.picker_overlay=None; self.picker_pending=False; self.picker_seat=None; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
+        try:
+            icon=GdkPixbuf.Pixbuf.new_from_file_at_scale(str(Path(__file__).with_name("hueprint-icon.svg")),32,32,True); self.set_icon(icon); Gtk.Window.set_default_icon(icon)
+        except (GLib.Error,OSError):pass
+        self.color="#2F80ED"; self.saved=self._load_saved(); self.saved_palettes=self._load_saved_palettes(); self.custom_palette=None; self.custom_palette_template=None; self.custom_palette_anchor=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.picker_window=None; self.picker_hud=None; self.picker_sampler=None; self.picker_timer_id=None; self.picker_armed=False; self.picker_position=None; self.picker_pending=False; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
         self.connect("key-press-event",self.history_key)
         self._build(); self.refresh()
@@ -366,7 +429,7 @@ class HuePrintDialog(Gtk.Dialog):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
         title_box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=0); self.main_title=Gtk.Label(); self.main_title.set_markup("<span size='28000' weight='bold'>HuePrint ©</span>"); self.main_title.set_xalign(0); self.main_title.get_style_context().add_class("hueprint-title"); title_box.pack_start(self.main_title,False,False,0)
-        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony studio · 1.1.5 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony or recipe for details. Drag the color wheel to change hue and lightness.</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
+        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony &amp; palette studio · 1.4.5 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony or recipe for details. Drag the color wheel to change hue and lightness.</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
         header.pack_start(title_box,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
@@ -375,25 +438,27 @@ class HuePrintDialog(Gtk.Dialog):
         active=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=5); self.active_swatch=Gtk.DrawingArea(); self.active_swatch.set_size_request(36,32); self.active_swatch.connect("draw",self.draw_active_swatch); active.pack_start(self.active_swatch,False,False,0)
         self.color_entry=Gtk.Entry(); self.color_entry.set_width_chars(7); self.color_entry.set_max_width_chars(7); self.color_entry.set_size_request(82,-1); self.color_entry.set_text(self.color); self.color_entry.connect("activate",self.entry_changed); active.pack_start(self.color_entry,False,False,0)
         lightness_label=Gtk.Label(label="L"); lightness_label.set_tooltip_text("Lightness"); active.pack_start(lightness_label,False,False,0); self.lightness=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,8,92,1); self.lightness.set_name("hueprint-lightness"); self.lightness.get_style_context().add_provider(self.lightness_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); self.lightness.set_draw_value(False); self.lightness.set_size_request(170,-1); self.lightness.set_hexpand(True); self.lightness.set_tooltip_text("Active color lightness"); self.lightness.set_value(hex_to_hls(self.color)[1]*100); self.lightness.connect("value-changed",self.lightness_changed); self.lightness.connect("button-release-event",self.lightness_released); active.pack_start(self.lightness,True,True,0)
-        self.add_active_button=self._icon_button("add","Add active color to Saved Palette",self.add_active); active.pack_start(self.add_active_button,False,False,0)
+        self.add_active_button=self._icon_button("add","Add active color to Saved Swatches",self.add_active); active.pack_start(self.add_active_button,False,False,0)
         self.color_button=self._icon_button("dropper","Pick a color anywhere on the active screen",self.start_screen_pick); active.pack_start(self.color_button,False,False,0)
         self.copy_button=self._icon_button("copy","Copy active color",self.copy_color); active.pack_start(self.copy_button,False,False,0); controls.pack_start(self._row("Active Color",active,17363),False,False,0)
         selectors=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
         self.harmony=HarmonyBrowser(self); self.harmony.set_hexpand(True); self.harmony.connect_changed(self.harmony_changed); selectors.pack_start(self._row("Harmony",self.harmony),True,True,0)
-        self.recipe=RecipeBrowser(self); self.recipe.set_hexpand(True); self.recipe.connect_changed(self.control_changed); selectors.pack_start(self._row("Palette recipe",self.recipe),True,True,0); controls.pack_start(selectors,False,False,0)
+        self.recipe=RecipeBrowser(self); self.recipe.set_hexpand(True); self.recipe.connect_changed(self.control_changed); selectors.pack_start(self._row("Palette recipe",self.recipe),True,True,0)
+        self.saved_palette=SavedPaletteBrowser(self); self.saved_palette.set_hexpand(True); self.saved_palette.set_tooltip_text("Load a saved palette into Current Palette"); selectors.pack_start(self._row("Saved Palettes",self.saved_palette),True,True,0); controls.pack_start(selectors,False,False,0)
         apply_line=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=10); self.apply_fill=Gtk.CheckButton(label="Fill"); self.apply_fill.set_active(True); apply_line.pack_start(self.apply_fill,False,False,0)
         self.apply_stroke=Gtk.CheckButton(label="Stroke"); apply_line.pack_start(self.apply_stroke,False,False,0); self.create=Gtk.CheckButton(label="Create swatches on canvas"); self.create.set_active(True); apply_line.pack_start(self.create,False,False,0)
         for option in (self.apply_fill,self.apply_stroke,self.create):option.connect("toggled",self.application_option_toggled)
-        self.apply_button=Gtk.Button(label="Apply"); self.apply_button.set_tooltip_text("Apply every selected action"); self.apply_button.connect("clicked",lambda *_:self.response(Gtk.ResponseType.APPLY)); apply_line.pack_end(self.apply_button,False,False,0); controls.pack_start(self._row("Apply Colors To",apply_line),False,False,0)
+        self.apply_button=Gtk.Button(label="Apply"); self.apply_button.set_tooltip_text("Apply the Current Palette using every selected action"); self.apply_button.connect("clicked",lambda *_:self.response(Gtk.ResponseType.APPLY)); apply_line.pack_end(self.apply_button,False,False,0); controls.pack_start(self._row("Apply Colors To",apply_line),False,False,0)
         swatch_separator=self._hairline(14,8); root.pack_start(swatch_separator,False,False,0)
-        swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='17363' weight='bold'>Swatches</span>"); swatch_title.set_xalign(0); swatch_title.get_style_context().add_class("hueprint-title"); swatch_header.pack_start(swatch_title,False,False,0)
+        swatch_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); swatch_title=Gtk.Label(); swatch_title.set_markup("<span size='17363' weight='bold'>Current Palette</span>"); swatch_title.set_xalign(0); swatch_title.get_style_context().add_class("hueprint-title"); swatch_header.pack_start(swatch_title,False,False,0)
         self.count=CompactCount(self,2,16,5); self.count.connect_changed(self.control_changed); swatch_header.pack_end(self.count,False,False,0); root.pack_start(swatch_header,False,False,0)
         self.metadata_grid=Gtk.Grid(); self.metadata_grid.set_row_spacing(0); self.metadata_grid.set_column_spacing(7); self.metadata_grid.set_column_homogeneous(True); root.pack_start(self.metadata_grid,False,False,0)
         saved_separator=self._hairline(12,8); root.pack_start(saved_separator,False,False,0)
-        saved_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); saved_title=Gtk.Label(); saved_title.set_markup("<span size='17363' weight='bold'>Saved Palette</span>"); saved_title.set_xalign(0); saved_title.get_style_context().add_class("hueprint-title"); saved_header.pack_start(saved_title,True,True,0)
-        for icon,tooltip,handler in (("use","Use saved colors as current palette",self.use_saved_palette),("add","Add active color",self.add_active),("palette","Add current swatches to Saved Palette",self.save_generated),("import","Import saved palette",self.import_palette),("export","Export saved palette for Inkscape",self.export_palette),("trash","Clear saved palette",self.clear_saved)):
+        saved_header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8); saved_title=Gtk.Label(); saved_title.set_markup("<span size='17363' weight='bold'>Saved Swatches</span>"); saved_title.set_xalign(0); saved_title.get_style_context().add_class("hueprint-title"); saved_header.pack_start(saved_title,True,True,0)
+        for icon,tooltip,handler in (("use","Load Saved Swatches as Current Palette before applying them to Inkscape",self.use_saved_palette),("palette","Add Current Palette to Saved Swatches",self.save_generated),("import","Import colors into Saved Swatches",self.import_palette),("export","Export Saved Swatches as an Inkscape palette",self.export_palette),("save","Save Saved Swatches as a reusable palette",self.save_saved_palette),("trash","Clear Saved Swatches",self.clear_saved)):
             saved_header.pack_start(self._icon_button(icon,tooltip,handler),False,False,0)
         root.pack_start(saved_header,False,False,0)
+        saved_help=Gtk.Label(label="To send these swatches to Inkscape, load them as Current Palette, choose the Apply options, then click Apply."); saved_help.set_xalign(0); saved_help.set_line_wrap(True); root.pack_start(saved_help,False,False,0)
         self.saved_box=Gtk.FlowBox(); self.saved_box.set_selection_mode(Gtk.SelectionMode.NONE); self.saved_box.set_column_spacing(5); self.saved_box.set_row_spacing(5); self.saved_box.set_min_children_per_line(8); self.saved_box.set_max_children_per_line(8); self.saved_box.set_homogeneous(True); root.pack_start(self.saved_box,False,False,0)
         self.show_all(); self.theme_changed()
     def _row(self,label,widget,size=14840):
@@ -401,11 +466,11 @@ class HuePrintDialog(Gtk.Dialog):
     def application_option_toggled(self,button):
         options=(self.apply_fill,self.apply_stroke,self.create)
         if not any(option.get_active() for option in options):button.set_active(True)
-    def _icon_button(self,icon,tooltip,handler,size=32):
+    def _icon_button(self,icon,tooltip,handler,size=32,stroke=None):
         button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); button.set_relief(Gtk.ReliefStyle.NONE if size<=24 else Gtk.ReliefStyle.NORMAL)
         if size<=24:
             context=button.get_style_context(); context.add_class("hueprint-mini-icon"); context.add_provider(self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-        _set_icon(button,icon,16 if size>=30 else 13); button.set_tooltip_text(tooltip); button.connect("clicked",handler); self.icon_buttons.append(button); return button
+        _set_icon(button,icon,16 if size>=30 else 13,stroke); button.set_tooltip_text(tooltip); button.connect("clicked",handler); self.icon_buttons.append(button); return button
     def _hairline(self,top,bottom,table=False):
         separator=Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL); separator.set_margin_top(top); separator.set_margin_bottom(bottom); context=separator.get_style_context(); context.add_class("hueprint-table-hairline" if table else "hueprint-section-hairline"); context.add_provider(self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); return separator
     def dark_mode(self): return self.theme_toggle.get_active()
@@ -422,12 +487,18 @@ class HuePrintDialog(Gtk.Dialog):
         if not getattr(self,"theme_provider_registered",False):
             Gtk.StyleContext.add_provider_for_screen(self.get_screen(),self.hairline_provider,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION); self.theme_provider_registered=True
         _set_icon(self.theme_toggle,"sun" if dark else "moon"); self.theme_toggle.set_tooltip_text("Switch to light mode" if dark else "Switch to dark mode")
-        for button in self.icon_buttons:_set_icon(button,button.hueprint_icon,button.hueprint_icon_size)
+        for button in self.icon_buttons:_set_icon(button,button.hueprint_icon,button.hueprint_icon_size,getattr(button,"hueprint_icon_stroke",None))
         self.update_lightness_gradient(); self.wheel.queue_draw()
     def recipe_active(self): return self.recipe.get_active_id() not in (None,"none")
     def rule_id(self): return self.harmony.get_active_id() or "analogous"
     def clear_custom_palette(self):
         if self.custom_palette is not None:self.custom_palette=None
+        self.custom_palette_template=None; self.custom_palette_anchor=None
+        if hasattr(self,"saved_palette"):self.saved_palette.clear_active()
+    def retarget_custom_palette(self,next_color):
+        if self.custom_palette is None:return False
+        template=self.custom_palette_template or self.custom_palette; anchor=self.custom_palette_anchor or self.color
+        self.custom_palette=translate_palette_geometry(template,anchor,next_color); return True
     def display_colors(self):
         return self.generated_colors()
     def expand_for_palette(self,count):
@@ -438,7 +509,7 @@ class HuePrintDialog(Gtk.Dialog):
         return False
     def use_saved_palette(self,*_args):
         if not self.saved:return
-        self.clear_random_palette(); self.custom_palette=list(self.saved)
+        self.clear_random_palette(); self.saved_palette.clear_active(); self.custom_palette=list(self.saved); self.custom_palette_template=list(self.custom_palette); self.custom_palette_anchor=self.custom_palette[0]
         if self.recipe_active():self.recipe.set_active_id("none")
         self.set_color(self.custom_palette[0],preserve_custom=True)
         GLib.idle_add(self.expand_for_palette,len(self.custom_palette))
@@ -480,7 +551,7 @@ class HuePrintDialog(Gtk.Dialog):
     def randomize_palette(self,active_filter):
         self.clear_custom_palette()
         chooser=random.SystemRandom(); categories=list(CATEGORY_ORDER[1:])
-        if active_filter=="all":category=chooser.choices(categories,weights=(12,16,12,12,10,16,12,6,4),k=1)[0]
+        if active_filter=="all":category=chooser.choices(categories,weights=(12,16,12,12,10,16,12,6,4,15,18,15),k=1)[0]
         else:category=active_filter
         recipe_id=chooser.choice(RECIPE_IDS_BY_CATEGORY[category]); previous=self.palette_snapshot(); self.recipe.set_active_id(recipe_id); state=randomize_recipe(self.color,recipe_id,category,int(self.count.get_value())); self.random_undo=previous; self.random_redo=None; self.random_state=state; self.recipe.label.set_text("Randomized Palette"); self.refresh()
     def history_key(self,_widget,event):
@@ -493,9 +564,11 @@ class HuePrintDialog(Gtk.Dialog):
         if not hasattr(self,"lightness"):return
         hue,_light,saturation=hex_to_hls(self.color); stops=[hls_to_hex(hue,value,saturation) for value in (.08,.28,.50,.72,.92)]; css="#hueprint-lightness trough { min-height: 7px; background-image: linear-gradient(to right, %s); } #hueprint-lightness highlight { background-color: transparent; background-image: none; }"%", ".join(stops); self.lightness_provider.load_from_data(css.encode("utf-8"))
     def set_color(self,color,preserve_custom=False):
-        self.clear_random_palette()
-        if not preserve_custom:self.clear_custom_palette()
-        self.color=sanitize_hex(color); self.color_entry.set_text(self.color); self.updating_lightness=True
+        self.clear_random_palette(); next_color=sanitize_hex(color)
+        if not preserve_custom:
+            if self.custom_palette is not None:self.retarget_custom_palette(next_color)
+            else:self.clear_custom_palette()
+        self.color=next_color; self.color_entry.set_text(self.color); self.updating_lightness=True
         if hasattr(self,"lightness"):self.lightness.set_value(hex_to_hls(self.color)[1]*100)
         self.updating_lightness=False; self.cancel_lightness_refresh(); self.update_lightness_gradient(); _set_icon(self.copy_button,"copy"); self.copy_button.set_tooltip_text("Copy active color"); self.active_swatch.queue_draw(); self.refresh()
     def cancel_lightness_refresh(self):
@@ -504,51 +577,61 @@ class HuePrintDialog(Gtk.Dialog):
         self.lightness_refresh_id=None; self.refresh(); return False
     def lightness_changed(self,scale):
         if self.updating_lightness:return
-        self.clear_custom_palette()
-        self.clear_random_palette()
-        hue,_light,saturation=hex_to_hls(self.color); self.color=hls_to_hex(hue,scale.get_value()/100,saturation); self.color_entry.set_text(self.color); self.update_lightness_gradient(); _set_icon(self.copy_button,"copy"); self.copy_button.set_tooltip_text("Copy active color"); self.active_swatch.queue_draw(); self.wheel.queue_draw(); self.cancel_lightness_refresh(); self.lightness_refresh_id=GLib.timeout_add(40,self.finish_lightness_refresh)
+        self.clear_random_palette(); hue,_light,saturation=hex_to_hls(self.color); next_color=hls_to_hex(hue,scale.get_value()/100,saturation)
+        if self.custom_palette is not None:self.retarget_custom_palette(next_color)
+        else:self.clear_custom_palette()
+        self.color=next_color; self.color_entry.set_text(self.color); self.update_lightness_gradient(); _set_icon(self.copy_button,"copy"); self.copy_button.set_tooltip_text("Copy active color"); self.active_swatch.queue_draw(); self.wheel.queue_draw(); self.cancel_lightness_refresh(); self.lightness_refresh_id=GLib.timeout_add(40,self.finish_lightness_refresh)
     def lightness_released(self,*_args):
         self.cancel_lightness_refresh(); self.refresh(); self.set_focus(None); return False
     def entry_changed(self,entry):self.set_color(entry.get_text())
-    def picker_sample(self,x_root,y_root):
-        snapshot=self.picker_snapshot; origin_x,origin_y,width,height=self.picker_bounds; scale_x=snapshot.get_width()/max(1,width); scale_y=snapshot.get_height()/max(1,height); x=max(0,min(snapshot.get_width()-1,round((x_root-origin_x)*scale_x))); y=max(0,min(snapshot.get_height()-1,round((y_root-origin_y)*scale_y))); pixels=bytes(snapshot.get_pixels()); offset=y*snapshot.get_rowstride()+x*snapshot.get_n_channels(); return "#%02X%02X%02X"%(pixels[offset],pixels[offset+1],pixels[offset+2])
+    def select_palette_color(self,color):
+        preserve=self.custom_palette is not None
+        if preserve:self.custom_palette_template=list(self.custom_palette); self.custom_palette_anchor=sanitize_hex(color)
+        self.set_color(color,preserve_custom=preserve)
     def start_screen_pick(self,*_args):
-        if self.picker_overlay is not None or self.picker_pending:return
-        self.picker_pending=True; self.color_button.set_sensitive(False); self.hide(); display=Gdk.Display.get_default()
-        if display:display.flush()
-        GLib.timeout_add(140,self.open_screen_picker)
+        if self.picker_window is not None or self.picker_pending:return
+        self.picker_pending=True; self.color_button.set_sensitive(False); GLib.idle_add(self.open_screen_picker)
     def open_screen_picker(self):
-        try:snapshot,bounds=_screen_snapshot()
-        except (OSError,TypeError,GLib.Error):snapshot,bounds=None,None
-        if snapshot is None or bounds is None:self.restore_after_picker(); return False
-        root_x,root_y,width,height=bounds
-        overlay=Gtk.Window(type=Gtk.WindowType.TOPLEVEL); self.picker_overlay=overlay; self.picker_snapshot=snapshot; self.picker_bounds=(root_x,root_y,width,height); overlay.set_screen(self.get_screen()); overlay.set_decorated(False); overlay.set_keep_above(True); overlay.set_skip_taskbar_hint(True); overlay.set_skip_pager_hint(True); overlay.set_accept_focus(True); overlay.set_resizable(False); overlay.set_type_hint(Gdk.WindowTypeHint.SPLASHSCREEN); overlay.add_events(Gdk.EventMask.KEY_PRESS_MASK)
-        overlay.connect("key-press-event",self.cancel_screen_pick); display_snapshot=snapshot
-        if snapshot.get_width()!=width or snapshot.get_height()!=height:display_snapshot=snapshot.scale_simple(width,height,GdkPixbuf.InterpType.BILINEAR)
-        stack=Gtk.Overlay(); stack.add(Gtk.Image.new_from_pixbuf(display_snapshot)); self.picker_hud=PickerHud(self,width,height); stack.add_overlay(self.picker_hud)
-        if hasattr(stack,"set_overlay_pass_through"):stack.set_overlay_pass_through(self.picker_hud,True)
-        event_surface=Gtk.EventBox(); event_surface.set_visible_window(False); event_surface.add_events(Gdk.EventMask.BUTTON_PRESS_MASK|Gdk.EventMask.POINTER_MOTION_MASK); event_surface.connect("button-press-event",self.finish_screen_pick); event_surface.connect("motion-notify-event",self.update_screen_pick); event_surface.add(stack)
-        overlay.add(event_surface); overlay.move(root_x,root_y); overlay.resize(width,height); overlay.show_all(); overlay.grab_add(); overlay.grab_focus(); cursor=Gdk.Cursor.new_from_name(Gdk.Display.get_default(),"crosshair")
-        if overlay.get_window():overlay.get_window().set_cursor(cursor)
-        display=Gdk.Display.get_default(); self.picker_seat=display.get_default_seat() if display else None
-        if self.picker_seat and overlay.get_window():
-            try:self.picker_seat.grab(overlay.get_window(),Gdk.SeatCapabilities.ALL_POINTING,True,cursor,None,None,None)
-            except (TypeError,GLib.Error):self.picker_seat=None
-        center_x,center_y=width/2,height/2; self.picker_hud.update_sample(center_x,center_y,self.picker_sample(center_x+root_x,center_y+root_y)); self.picker_pending=False; return False
-    def update_screen_pick(self,_overlay,event):
-        color=self.picker_sample(event.x_root,event.y_root); origin_x,origin_y,_,_=self.picker_bounds; self.picker_hud.update_sample(event.x_root-origin_x,event.y_root-origin_y,color); return True
-    def close_screen_picker(self):
-        overlay=self.picker_overlay
-        if self.picker_seat is not None:self.picker_seat.ungrab()
-        if overlay is not None:
-            overlay.hide(); overlay.grab_remove(); overlay.destroy()
-        self.picker_overlay=None; self.picker_snapshot=None; self.picker_hud=None; self.picker_seat=None
-    def finish_screen_pick(self,_overlay,event):
-        color=self.picker_sample(event.x_root,event.y_root); self.close_screen_picker(); self.set_color(color); GLib.idle_add(self.restore_after_picker); return True
-    def cancel_screen_pick(self,_overlay,event):
-        if event.keyval==Gdk.KEY_Escape:self.close_screen_picker(); GLib.idle_add(self.restore_after_picker); return True
+        try:
+            sampler=NativeScreenSampler(); self.picker_sampler=sampler; x,y=sampler.position(); color=sampler.color_at(x,y)
+            window=Gtk.Window(type=Gtk.WindowType.TOPLEVEL); window.set_decorated(False); window.set_transient_for(self); window.set_destroy_with_parent(True); window.set_keep_above(True); window.set_skip_taskbar_hint(True); window.set_skip_pager_hint(True); window.set_accept_focus(False); window.set_focus_on_map(False); window.set_resizable(False); screen=window.get_screen(); visual=screen.get_rgba_visual() if screen and screen.is_composited() else None
+            if visual is not None:window.set_visual(visual); window.set_app_paintable(True)
+            hud=NativePickerHud(); hud.update_sample(color); window.add(hud); self.picker_window=window; self.picker_hud=hud; self.picker_position=(x,y); self.picker_armed=False
+            window.show_all(); self.position_picker_hud(x,y)
+            if not sampler.pressed(NativeScreenSampler.VK_LBUTTON):sampler.arm(); self.picker_armed=True
+            self.picker_timer_id=GLib.timeout_add(40,self.poll_screen_picker); self.picker_pending=False
+        except Exception as error:
+            print("HuePrint color picker:",error,file=sys.stderr); self.close_screen_picker(); self.restore_after_picker()
         return False
-    def restore_after_picker(self):self.picker_pending=False; self.color_button.set_sensitive(True); self.show_all(); self.present(); return False
+    def position_picker_hud(self,x,y):
+        if self.picker_window is None or self.picker_sampler is None:return
+        sampler=self.picker_sampler; width,height=NativePickerHud.WIDTH,NativePickerHud.HEIGHT; right=sampler.left+sampler.width; bottom=sampler.top+sampler.height; px=x+28; py=y+28
+        if px+width>right-10:px=x-width-28
+        if py+height>bottom-10:py=y-height-28
+        self.picker_window.move(max(sampler.left+10,min(px,right-width-10)),max(sampler.top+10,min(py,bottom-height-10)))
+    def poll_screen_picker(self):
+        try:
+            sampler=self.picker_sampler
+            if sampler is None:return False
+            if sampler.key_state(NativeScreenSampler.VK_ESCAPE)&0x8001:
+                self.picker_timer_id=None; self.close_screen_picker(); GLib.idle_add(self.restore_after_picker); return False
+            clicked=sampler.take_click()
+            if clicked is not None:
+                color=sampler.color_at(*clicked); self.picker_timer_id=None; self.close_screen_picker(); GLib.idle_add(self.commit_screen_pick,color); return False
+            if not self.picker_armed and not sampler.pressed(NativeScreenSampler.VK_LBUTTON):sampler.arm(); self.picker_armed=True
+            position=sampler.position()
+            if position!=self.picker_position:
+                color=sampler.color_at(*position); self.picker_hud.update_sample(color); self.position_picker_hud(*position); self.picker_position=position
+            return True
+        except Exception as error:
+            print("HuePrint color picker:",error,file=sys.stderr); self.picker_timer_id=None; self.close_screen_picker(); GLib.idle_add(self.restore_after_picker); return False
+    def close_screen_picker(self):
+        if self.picker_timer_id is not None:GLib.source_remove(self.picker_timer_id); self.picker_timer_id=None
+        window=self.picker_window; sampler=self.picker_sampler; self.picker_window=None; self.picker_hud=None; self.picker_sampler=None; self.picker_armed=False; self.picker_position=None
+        if window is not None:window.hide(); window.destroy()
+        if sampler is not None:sampler.close()
+    def commit_screen_pick(self,color):self.set_color(color); return self.restore_after_picker()
+    def restore_after_picker(self):self.picker_pending=False; self.color_button.set_sensitive(True); self.present(); return False
     def copy_color(self,*_args):
         Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(self.color,-1); _set_icon(self.copy_button,"check"); self.copy_button.set_tooltip_text("Color copied")
     def draw_active_swatch(self,widget,cr):
@@ -584,7 +667,7 @@ class HuePrintDialog(Gtk.Dialog):
             header=self._table_label(f"<span size='14840' weight='bold'>{name}</span>",1)
             if name=="Active":header.get_style_context().add_class("hueprint-active-heading")
             header.set_size_request(53,-1); header.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(header,col,0,1,1)
-            swatch=self._color_widget(color,30,self.set_color); swatch.set_margin_top(5); swatch.set_margin_bottom(6); swatch.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(swatch,col,1,1,1)
+            swatch=self._color_widget(color,30,self.select_palette_color); swatch.set_margin_top(5); swatch.set_margin_bottom(6); swatch.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(swatch,col,1,1,1)
         for index,kind in enumerate(("HEX","RGB","CMYK","HSL","OKLCH")):
             separator=self._hairline(4,4,table=True); self.metadata_grid.attach(separator,0,2+index*2,total,1)
             row=3+index*2; self.metadata_grid.attach(self._table_label(f"<span size='large' weight='bold'>{kind}</span>"),0,row,1,1)
@@ -592,6 +675,51 @@ class HuePrintDialog(Gtk.Dialog):
             for col,(_name,color) in enumerate(columns,2):
                 value=self._table_label(f"<span size='medium'>{self._metadata(color)[kind]}</span>"); value.set_selectable(True); value.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(value,col,row,1,1)
         self.metadata_grid.show_all()
+    def _load_saved_palettes(self):
+        for path in (_saved_palettes_path(),_legacy_named_palettes_path()):
+            try:payload=json.loads(path.read_text(encoding="utf-8"))
+            except (OSError,ValueError,TypeError):continue
+            entries=payload.get("palettes",[]) if isinstance(payload,dict) else payload
+            if not isinstance(entries,list):continue
+            palettes=[]
+            for entry in entries:
+                if not isinstance(entry,dict):continue
+                name=str(entry.get("name","")).strip()[:64]; values=entry.get("colors",[])
+                colors=[sanitize_hex(value,"") for value in values if isinstance(value,str)] if isinstance(values,list) else []; colors=[color for color in colors if color]
+                if name and colors:palettes.append({"name":name,"colors":colors})
+            return palettes
+        return []
+    def _save_saved_palettes(self):
+        try:
+            path=_saved_palettes_path(); path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps({"palettes":self.saved_palettes},indent=2),encoding="utf-8")
+        except OSError:pass
+    def save_saved_palette(self,*_args):
+        if not self.saved:return
+        dialog=Gtk.Dialog(title="Save Palette",parent=self,flags=Gtk.DialogFlags.MODAL); dialog.add_buttons("Cancel",Gtk.ResponseType.CANCEL,"Save",Gtk.ResponseType.OK); dialog.set_default_response(Gtk.ResponseType.OK)
+        content=dialog.get_content_area(); content.set_spacing(8); content.set_border_width(12); prompt=Gtk.Label(label="Name this palette built from Saved Swatches:"); prompt.set_xalign(0); content.pack_start(prompt,False,False,0); entry=Gtk.Entry(); entry.set_placeholder_text("Palette name"); entry.set_max_length(64); entry.set_activates_default(True); content.pack_start(entry,False,False,0)
+        save_button=dialog.get_widget_for_response(Gtk.ResponseType.OK); save_button.set_sensitive(False); entry.connect("changed",lambda field:save_button.set_sensitive(bool(field.get_text().strip()))); dialog.show_all(); response=dialog.run(); name=entry.get_text().strip()[:64]
+        if response==Gtk.ResponseType.OK and name:
+            palette={"name":name,"colors":list(self.saved)}; existing=next((index for index,item in enumerate(self.saved_palettes) if item["name"].casefold()==name.casefold()),None)
+            if existing is None:self.saved_palettes.append(palette)
+            else:self.saved_palettes[existing]=palette
+            self._save_saved_palettes(); self.saved_palette.refresh_palettes(); self.saved_palette.set_active(existing if existing is not None else len(self.saved_palettes)-1)
+        dialog.destroy()
+    def delete_saved_palette(self,index):
+        if index<0 or index>=len(self.saved_palettes):return
+        palette=self.saved_palettes[index]; dialog=Gtk.MessageDialog(transient_for=self,flags=Gtk.DialogFlags.MODAL,message_type=Gtk.MessageType.QUESTION,buttons=Gtk.ButtonsType.NONE,text=f"Delete ‘{palette['name']}’?")
+        dialog.format_secondary_text("This removes it from Saved Palettes. Colors already loaded into Current Palette will remain there."); dialog.add_buttons("Cancel",Gtk.ResponseType.CANCEL,"Delete",Gtk.ResponseType.OK); response=dialog.run(); dialog.destroy()
+        if response!=Gtk.ResponseType.OK:return
+        active=self.saved_palette.active_index; self.saved_palettes.pop(index); self._save_saved_palettes()
+        if active==index:active=None
+        elif active is not None and active>index:active-=1
+        self.saved_palette.refresh_palettes(); self.saved_palette.set_active(active)
+    def use_saved_palette_collection(self,index):
+        if index<0 or index>=len(self.saved_palettes):return
+        colors=list(self.saved_palettes[index]["colors"])
+        if not colors:return
+        self.clear_random_palette(); self.custom_palette=colors; self.custom_palette_template=list(colors); self.custom_palette_anchor=colors[0]
+        if self.recipe_active():self.recipe.set_active_id("none")
+        self.saved_palette.set_active(index); self.set_color(colors[0],preserve_custom=True); GLib.idle_add(self.expand_for_palette,len(colors))
     def _load_saved(self):
         for path in (_palette_path(),_legacy_palette_path()):
             try:return [sanitize_hex(c) for c in json.loads(path.read_text(encoding="utf-8")) if isinstance(c,str)]
@@ -609,18 +737,26 @@ class HuePrintDialog(Gtk.Dialog):
         if target!=index:self.saved.insert(target,self.saved.pop(index));self._save_saved();self.render_saved()
     def remove_saved(self,index):self.saved.pop(index);self._save_saved();self.render_saved()
     def clear_saved(self,*_args):self.saved=[];self._save_saved();self.render_saved()
+    def _saved_swatch_icon(self,icon,tooltip,handler,size,opacity):
+        event=Gtk.EventBox(); event.set_visible_window(False); event.set_size_request(size,size); event.add(_svg_image(icon,max(9,size-4),"#000000")); event.set_opacity(opacity); event.set_tooltip_text(tooltip); event.connect("button-press-event",lambda *_args:handler()); return event
+    def _saved_swatch_hover(self,_widget,event,arrows,visible):
+        if not visible and getattr(event,"detail",None)==Gdk.NotifyType.INFERIOR:return False
+        arrows.set_sensitive(visible); arrows.set_opacity(.5 if visible else 0); return False
+    def _saved_swatch_widget(self,color,index):
+        outer=Gtk.EventBox(); outer.set_hexpand(True); outer.set_size_request(74,34); outer.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK|Gdk.EventMask.LEAVE_NOTIFY_MASK); overlay=Gtk.Overlay(); target=Gtk.EventBox(); area=Gtk.DrawingArea(); area.set_size_request(74,34); area.set_hexpand(True); rgba=_rgba(color)
+        area.connect("draw",lambda widget,cr:(cr.set_source_rgba(rgba.red,rgba.green,rgba.blue,1),cr.rectangle(0,0,widget.get_allocated_width(),widget.get_allocated_height()),cr.fill(),False)[-1]); target.add(area); target.connect("button-press-event",lambda *_args:self.set_color(color)); overlay.add(target)
+        label=Gtk.Label(); label.set_markup(f"<span foreground='#000000'>{color}</span>"); label.set_halign(Gtk.Align.CENTER); label.set_valign(Gtk.Align.CENTER); label.set_opacity(.6); overlay.add_overlay(label)
+        remove=self._saved_swatch_icon("close",f"Remove {color}",lambda:self.remove_saved(index),14,.6); remove.set_halign(Gtk.Align.END); remove.set_valign(Gtk.Align.START); remove.set_margin_end(1); remove.set_margin_top(1); overlay.add_overlay(remove)
+        arrows=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=0); arrows.set_hexpand(True); arrows.set_halign(Gtk.Align.FILL); arrows.set_valign(Gtk.Align.CENTER); arrows.set_sensitive(False); arrows.set_opacity(0); arrows.pack_start(self._saved_swatch_icon("left",f"Move {color} left",lambda:self.move_saved(index,-1),16,1),False,False,0); arrows.pack_end(self._saved_swatch_icon("right",f"Move {color} right",lambda:self.move_saved(index,1),16,1),False,False,0); overlay.add_overlay(arrows)
+        outer.connect("enter-notify-event",self._saved_swatch_hover,arrows,True); outer.connect("leave-notify-event",self._saved_swatch_hover,arrows,False); outer.add(overlay); outer.set_tooltip_text(f"{color} - Hover to reorder; use × to remove"); return outer
     def render_saved(self):
         if not hasattr(self,"saved_box"):return
         for child in self.saved_box.get_children():self.saved_box.remove(child)
-        if not self.saved:self.saved_box.add(Gtk.Label(label="No saved colors"))
-        for index,color in enumerate(self.saved):
-            item=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=2); item.set_hexpand(True); item.pack_start(self._color_widget(color,34,self.set_color),False,False,0); controls=Gtk.Box(spacing=1); controls.set_homogeneous(True)
-            for icon,tooltip,handler in (("left","Move left",lambda _b,i=index:self.move_saved(i,-1)),("right","Move right",lambda _b,i=index:self.move_saved(i,1)),("close","Remove color",lambda _b,i=index:self.remove_saved(i))):
-                controls.pack_start(self._icon_button(icon,tooltip,handler,24),True,True,0)
-            item.pack_start(controls,False,False,0); self.saved_box.add(item)
+        if not self.saved:self.saved_box.add(Gtk.Label(label="No saved swatches yet"))
+        for index,color in enumerate(self.saved):self.saved_box.add(self._saved_swatch_widget(color,index))
         self.saved_box.show_all()
     def import_palette(self,*_args):
-        chooser=Gtk.FileChooserDialog(title="Import saved palette",parent=self,action=Gtk.FileChooserAction.OPEN,buttons=("Cancel",Gtk.ResponseType.CANCEL,"Import",Gtk.ResponseType.OK)); file_filter=Gtk.FileFilter(); file_filter.set_name("Palette files (*.gpl, *.json)"); file_filter.add_pattern("*.gpl"); file_filter.add_pattern("*.json"); chooser.add_filter(file_filter)
+        chooser=Gtk.FileChooserDialog(title="Import colors into Saved Swatches",parent=self,action=Gtk.FileChooserAction.OPEN,buttons=("Cancel",Gtk.ResponseType.CANCEL,"Import",Gtk.ResponseType.OK)); file_filter=Gtk.FileFilter(); file_filter.set_name("Palette files (*.gpl, *.json)"); file_filter.add_pattern("*.gpl"); file_filter.add_pattern("*.json"); chooser.add_filter(file_filter)
         if chooser.run()==Gtk.ResponseType.OK:
             try:
                 self.saved=palette_from_text(Path(chooser.get_filename()).read_text(encoding="utf-8")); self._save_saved();self.render_saved()
@@ -628,8 +764,8 @@ class HuePrintDialog(Gtk.Dialog):
         chooser.destroy()
     def export_palette(self,*_args):
         if not self.saved:return
-        chooser=Gtk.FileChooserDialog(title="Export saved palette for Inkscape",parent=self,action=Gtk.FileChooserAction.SAVE,buttons=("Cancel",Gtk.ResponseType.CANCEL,"Export",Gtk.ResponseType.OK)); chooser.set_current_name("HuePrint-Saved-Palette.gpl"); chooser.set_do_overwrite_confirmation(True); file_filter=Gtk.FileFilter(); file_filter.set_name("GIMP Palette (*.gpl)"); file_filter.add_pattern("*.gpl"); chooser.add_filter(file_filter)
+        chooser=Gtk.FileChooserDialog(title="Export Saved Swatches for Inkscape",parent=self,action=Gtk.FileChooserAction.SAVE,buttons=("Cancel",Gtk.ResponseType.CANCEL,"Export",Gtk.ResponseType.OK)); chooser.set_current_name("HuePrint-Saved-Swatches.gpl"); chooser.set_do_overwrite_confirmation(True); file_filter=Gtk.FileFilter(); file_filter.set_name("GIMP Palette (*.gpl)"); file_filter.add_pattern("*.gpl"); chooser.add_filter(file_filter)
         if chooser.run()==Gtk.ResponseType.OK:
-            try:Path(chooser.get_filename()).write_text(palette_to_gpl(self.saved),encoding="utf-8")
+            try:Path(chooser.get_filename()).write_text(palette_to_gpl(self.saved,"HuePrint Saved Swatches"),encoding="utf-8")
             except OSError:pass
         chooser.destroy()

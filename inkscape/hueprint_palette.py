@@ -30,6 +30,14 @@ def sanitize_hex(value, fallback=DEFAULT_COLOR):
     full = re.fullmatch(r"#?([0-9a-fA-F]{6})", value)
     return ("#" + full.group(1)).upper() if full else fallback.upper()
 
+def swatch_text_color(value):
+    """Return one of two neutral text colors with the stronger swatch contrast."""
+    color = sanitize_hex(value)
+    channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+    linear = [channel / 12.92 if channel <= .04045 else ((channel + .055) / 1.055) ** 2.4 for channel in channels]
+    luminance = .2126 * linear[0] + .7152 * linear[1] + .0722 * linear[2]
+    return "#101114" if luminance >= .19 else "#F7F8FA"
+
 def hex_to_hls(value):
     value = sanitize_hex(value)
     rgb = tuple(int(value[i:i + 2], 16) / 255 for i in (1, 3, 5))
@@ -39,6 +47,26 @@ def hex_to_hls(value):
 def hls_to_hex(hue, lightness, saturation):
     rgb = colorsys.hls_to_rgb(normalize_hue(hue) / 360, clamp(lightness, 0, 1), clamp(saturation, 0, 1))
     return "#" + "".join(f"{round(channel * 255):02X}" for channel in rgb)
+def translate_palette_geometry(colors, old_anchor, new_anchor):
+    """Move a palette to a new anchor while preserving its wheel geometry."""
+    safe = [sanitize_hex(color, "") for color in colors if isinstance(color, str)]
+    safe = [color for color in safe if color]
+    if not safe: return []
+    old_anchor = sanitize_hex(old_anchor); new_anchor = sanitize_hex(new_anchor)
+    old_hue, old_lightness, old_saturation = hex_to_hls(old_anchor)
+    new_hue, new_lightness, new_saturation = hex_to_hls(new_anchor)
+    anchor_index = next((index for index, color in enumerate(safe) if color == old_anchor), 0)
+    translated = []
+    for index, color in enumerate(safe):
+        if index == anchor_index:
+            translated.append(new_anchor); continue
+        hue, lightness, saturation = hex_to_hls(color)
+        hue_offset = normalize_hue(hue - old_hue)
+        lightness_offset = lightness - old_lightness
+        saturation_ratio = saturation / old_saturation if old_saturation > .02 else None
+        next_saturation = saturation if saturation_ratio is None else new_saturation * saturation_ratio
+        translated.append(hls_to_hex(new_hue + hue_offset, clamp(new_lightness + lightness_offset, .08, .92), next_saturation))
+    return translated
 
 def harmony_hues(anchor, rule, count):
     count = int(clamp(count, 2, 16))
@@ -86,7 +114,7 @@ def generate_palette(base_color, rule, count):
         if rule == "complementary" and count == 5 and i == 4: next_s *= .18
         result.append(hls_to_hex(next_hue, next_l, next_s))
     return result
-def palette_to_gpl(colors, name="HuePrint Saved Palette", columns=8):
+def palette_to_gpl(colors, name="HuePrint Saved Swatches", columns=8):
     safe = [sanitize_hex(color, "") for color in colors if isinstance(color, str)]
     safe = [color for color in safe if color]
     lines = ["GIMP Palette", f"Name: {name}", f"Columns: {max(1, min(64, int(columns)))}", "#"]

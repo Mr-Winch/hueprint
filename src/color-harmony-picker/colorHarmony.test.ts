@@ -87,6 +87,28 @@ test("advanced recipe transforms honor precedence and exact base preservation", 
   assert.equal(colors.length, 6);
 });
 
+test("background recipes adapt foreground lightness to the selected backdrop", () => {
+  const lightAnchor = { l: 0.85, c: 0.08, h: 40 };
+  const darkAnchor = { l: 0.2, c: 0.08, h: 240 };
+  assert.equal(resolveRecipeTransform(lightAnchor, { contrast: true, C: 0.03 }).l, 0.14);
+  assert.equal(resolveRecipeTransform(darkAnchor, { contrast: true, C: 0.03 }).l, 0.96);
+  assert.equal(resolveRecipeTransform(lightAnchor, { softContrast: true, C: 0.06 }).l, 0.3);
+  assert.equal(resolveRecipeTransform(darkAnchor, { pop: true, C: 0.22, dH: 105 }).l, 0.78);
+
+  const lightPalette = generatePaletteRecipeColors("#F2E8D5", "backgroundPop", 5);
+  const darkPalette = generatePaletteRecipeColors("#16182A", "backgroundPop", 5);
+  assert.equal(lightPalette[0].hex, "#F2E8D5");
+  assert.equal(darkPalette[0].hex, "#16182A");
+  assert.notEqual(lightPalette[1].hex, darkPalette[1].hex);
+});
+
+test("semantic recipes provide distinct conventional signal colors", () => {
+  const colors = generatePaletteRecipeColors("#6B4EFF", "semanticCore", 6);
+  assert.equal(colors.length, 6);
+  assert.equal(colors[0].hex, "#6B4EFF");
+  assert.equal(new Set(colors.map((color) => color.hex)).size, colors.length);
+});
+
 test("randomized recipes are seeded, preserve the base, and identify their source", () => {
   const first = randomizePaletteRecipeColors("#7F7F7F", "vividAnalogous", "vibrant", 5, "fixed-seed");
   const second = randomizePaletteRecipeColors("#7F7F7F", "vividAnalogous", "vibrant", 5, "fixed-seed");
@@ -98,7 +120,7 @@ test("randomized recipes are seeded, preserve the base, and identify their sourc
 
 test("every HTML palette recipe is present once and assigned to a current category", () => {
   const recipes = paletteRecipeOrder.filter((recipe) => recipe !== "none");
-  assert.equal(recipes.length, 52);
+  assert.equal(recipes.length, 70);
   assert.equal(new Set(recipes).size, recipes.length);
   assert.equal(Object.keys(recipeCategories).length, recipes.length);
   assert.ok(recipes.every((recipe) => Boolean(recipeCategories[recipe])));

@@ -9,11 +9,12 @@ class RecipeMetadata(NamedTuple):
     character: str
     description: str
 
-CATEGORY_ORDER = ("manual", "tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature")
+CATEGORY_ORDER = ("manual", "tonal", "accent", "spectrum", "contrast", "systems", "vibrant", "harmony", "darkLuminous", "temperature", "background", "daring", "semantic")
 CATEGORY_LABELS = {
     "manual":"Manual", "tonal":"Tonal", "accent":"Accent", "spectrum":"Spectrum",
     "contrast":"Contrast", "systems":"Systems", "vibrant":"Vibrant", "harmony":"Harmony",
     "darkLuminous":"Dark & Luminous", "temperature":"Temperature",
+    "background":"Background & Pop", "daring":"Daring", "semantic":"Semantic",
 }
 
 RECIPE_METADATA = (
@@ -70,6 +71,24 @@ RECIPE_METADATA = (
     RecipeMetadata("warmAccents", "Warm Accents", "Warm Accents", "temperature", "Sunny, energetic, and inviting.", "Keeps the selected base and introduces vivid yellow, orange, and red accent options."),
     RecipeMetadata("coolAccents", "Cool Accents", "Cool Accents", "temperature", "Crisp, technical, and luminous.", "Keeps the selected base and introduces cyan, violet, and magenta accent options."),
     RecipeMetadata("warmCoolSplit", "Warm-Cool Split", "Warm-Cool Split", "temperature", "Balanced, contrasting, and versatile.", "Combines warm and cool accents around the selected base without committing to one temperature family."),
+    RecipeMetadata("backgroundPop", "Background Pop", "Background Pop", "background", "Adaptive, crisp, and foreground-first.", "Treats the selected color as a background and generates adaptive dark-or-light foregrounds plus vivid contrasting accents that stand clearly against it."),
+    RecipeMetadata("darkBackdropPunch", "Dark Backdrop Punch", "Dark Backdrop Punch", "background", "Nocturnal, luminous, and high-impact.", "Builds bright neutral and neon-like companions intended to flare against a dark selected background."),
+    RecipeMetadata("lightBackdropPunch", "Light Backdrop Punch", "Light Backdrop Punch", "background", "Graphic, saturated, and ink-forward.", "Pairs a light selected background with deep text and forceful cobalt, coral, and violet foreground colors."),
+    RecipeMetadata("electricForeground", "Electric Foreground", "Electric Foreground", "background", "Charged, legible, and multichromatic.", "Adds an adaptive foreground hierarchy and electric lime, cyan, and magenta signals around the selected background."),
+    RecipeMetadata("posterOnColor", "Poster on Color", "Poster on Color", "background", "Bold, editorial, and display-oriented.", "Creates decisive foreground and supporting colors for typography, icons, and graphic shapes placed over a colored field."),
+    RecipeMetadata("spotlightContrast", "Chromatic Spotlight", "Chromatic Spotlight", "background", "Focused, theatrical, and attention-directing.", "Uses adaptive text values with vivid shifted highlights to produce clear focal points over the selected background."),
+    RecipeMetadata("acidCabaret", "Acid Cabaret", "Acid Cabaret", "daring", "Fluorescent, decadent, and unapologetic.", "Collides hot magenta, acid green, cyan, and deep plum around the base for an extravagant high-energy palette."),
+    RecipeMetadata("tropicalVoltage", "Tropical Voltage", "Tropical Voltage", "daring", "Sun-soaked, electric, and exuberant.", "Combines charged coral, chartreuse, cyan, and ultraviolet for tropical color with deliberately amplified tension."),
+    RecipeMetadata("ultravioletCitrus", "Ultraviolet Citrus", "Ultraviolet Citrus", "daring", "Sharp, surreal, and flavorfully discordant.", "Sets ultraviolet and citrus tones against coral, cyan, and an adaptive neutral to create a vivid surrealist clash."),
+    RecipeMetadata("coralCobaltClash", "Coral–Cobalt Clash", "Coral–Cobalt Clash", "daring", "Graphic, fashion-forward, and polarized.", "Opposes hot coral and saturated cobalt, then intensifies the composition with chartreuse, magenta, and a pale flash."),
+    RecipeMetadata("cyberBazaar", "Cyber Bazaar", "Cyber Bazaar", "daring", "Digital, exotic, and densely colorful.", "Mixes turquoise, orchid, saffron, vermilion, and deep violet into a crowded but deliberately controlled chromatic market."),
+    RecipeMetadata("carnivalClash", "Carnival Clash", "Carnival Clash", "daring", "Festive, brash, and rhythmically varied.", "Combines red, gold, green, blue, and purple at vivid strengths for celebratory palettes that refuse to recede."),
+    RecipeMetadata("semanticCore", "Semantic Core", "Semantic Core", "semantic", "Universal, functional, and brand-aware.", "Keeps the selected base and adds conventional information, success, warning, error, and adaptive text colors."),
+    RecipeMetadata("semanticLight", "Semantic on Light", "Semantic on Light", "semantic", "Clear, production-ready, and light-surface oriented.", "Provides light surfaces, dark text, and recognizable information, success, warning, and error roles alongside the base."),
+    RecipeMetadata("semanticDark", "Semantic on Dark", "Semantic on Dark", "semantic", "Luminous, functional, and dark-surface oriented.", "Provides dark surfaces, pale text, and brighter semantic signals designed to remain distinct in dark interfaces."),
+    RecipeMetadata("financialSignals", "Financial Signals", "Financial Signals", "semantic", "Directional, analytical, and immediately readable.", "Adds positive, negative, caution, neutral, and informational roles for financial dashboards, tables, and reporting."),
+    RecipeMetadata("dataStates", "Data States", "Data States", "semantic", "Systematic, categorical, and state-aware.", "Creates information, success, warning, error, inactive, and selected-state colors for interfaces and data visualization."),
+    RecipeMetadata("editorialStates", "Editorial States", "Editorial States", "semantic", "Workflow-oriented, expressive, and precise.", "Maps approved, review, revision, rejected, annotation, and text roles for editorial and collaborative workflows."),
 )
 
 RECIPE_METADATA_BY_ID = {item.id: item for item in RECIPE_METADATA}

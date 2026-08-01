@@ -16,11 +16,14 @@ export type AdvancedRecipeTransform = {
   C?: number;
   dH?: number;
   H?: number;
+  contrast?: true;
+  softContrast?: true;
+  pop?: true;
 };
 
 export type RecipeTransform = LegacyRecipeTransform | AdvancedRecipeTransform;
 
-export type RecipeCategory = "tonal" | "accent" | "spectrum" | "contrast" | "systems" | "vibrant" | "harmony" | "darkLuminous" | "temperature";
+export type RecipeCategory = "tonal" | "accent" | "spectrum" | "contrast" | "systems" | "vibrant" | "harmony" | "darkLuminous" | "temperature" | "background" | "daring" | "semantic";
 
 export interface RandomPaletteState {
   seed: string;
@@ -83,6 +86,24 @@ export const recipeCategories: Record<Exclude<PaletteRecipe, "none">, RecipeCate
   warmAccents: "temperature",
   coolAccents: "temperature",
   warmCoolSplit: "temperature",
+  backgroundPop: "background",
+  darkBackdropPunch: "background",
+  lightBackdropPunch: "background",
+  electricForeground: "background",
+  posterOnColor: "background",
+  spotlightContrast: "background",
+  acidCabaret: "daring",
+  tropicalVoltage: "daring",
+  ultravioletCitrus: "daring",
+  coralCobaltClash: "daring",
+  cyberBazaar: "daring",
+  carnivalClash: "daring",
+  semanticCore: "semantic",
+  semanticLight: "semantic",
+  semanticDark: "semantic",
+  financialSignals: "semantic",
+  dataStates: "semantic",
+  editorialStates: "semantic",
 };
 
 type RecipeDefinition = {
@@ -143,6 +164,24 @@ const recipeDefinitions: RecipeDefinition[] = [
   { id: "warmAccents", transforms: [{"base":true},{"L":0.18,"C":0.035,"dH":0},{"L":0.82,"C":0.18,"H":85},{"L":0.76,"C":0.21,"H":55},{"L":0.68,"C":0.22,"H":25},{"L":0.94,"C":0.04,"H":75}] },
   { id: "coolAccents", transforms: [{"base":true},{"L":0.18,"C":0.035,"dH":0},{"L":0.76,"C":0.19,"H":195},{"L":0.7,"C":0.21,"H":275},{"L":0.72,"C":0.2,"H":330},{"L":0.94,"C":0.04,"H":240}] },
   { id: "warmCoolSplit", transforms: [{"base":true},{"L":0.74,"C":0.2,"H":55},{"L":0.82,"C":0.18,"H":85},{"L":0.76,"C":0.19,"H":195},{"L":0.72,"C":0.2,"H":315},{"L":0.18,"C":0.035,"dH":0}] },
+  { id: "backgroundPop", transforms: [{ base: true }, { contrast: true, C: 0.035 }, { softContrast: true, C: 0.06 }, { pop: true, C: 0.24, dH: 180 }, { pop: true, C: 0.22, dH: 105 }] },
+  { id: "darkBackdropPunch", transforms: [{ base: true }, { L: 0.96, C: 0.025 }, { L: 0.78, C: 0.25, dH: 180 }, { L: 0.84, C: 0.22, H: 95 }, { L: 0.74, C: 0.24, H: 330 }] },
+  { id: "lightBackdropPunch", transforms: [{ base: true }, { L: 0.13, C: 0.025 }, { L: 0.56, C: 0.26, dH: 180 }, { L: 0.62, C: 0.24, H: 25 }, { L: 0.54, C: 0.23, H: 285 }] },
+  { id: "electricForeground", transforms: [{ base: true }, { contrast: true, C: 0.03 }, { L: 0.82, C: 0.23, H: 100 }, { L: 0.74, C: 0.24, H: 200 }, { L: 0.68, C: 0.26, H: 330 }, { softContrast: true, C: 0.05 }] },
+  { id: "posterOnColor", transforms: [{ base: true }, { contrast: true, C: 0.025 }, { L: 0.94, C: 0.035, dH: 0 }, { pop: true, C: 0.26, dH: 150 }, { pop: true, C: 0.25, dH: 250 }] },
+  { id: "spotlightContrast", transforms: [{ base: true }, { contrast: true, C: 0.03 }, { softContrast: true, C: 0.055 }, { L: 0.84, C: 0.22, dH: 75 }, { L: 0.64, C: 0.27, dH: 200 }, { L: 0.92, C: 0.08, dH: 75 }] },
+  { id: "acidCabaret", transforms: [{ base: true }, { L: 0.68, C: 0.28, H: 340 }, { L: 0.86, C: 0.23, H: 125 }, { L: 0.75, C: 0.23, H: 205 }, { L: 0.22, C: 0.10, H: 320 }] },
+  { id: "tropicalVoltage", transforms: [{ base: true }, { L: 0.72, C: 0.25, H: 35 }, { L: 0.84, C: 0.22, H: 115 }, { L: 0.76, C: 0.22, H: 190 }, { L: 0.62, C: 0.27, H: 290 }] },
+  { id: "ultravioletCitrus", transforms: [{ base: true }, { L: 0.58, C: 0.28, H: 285 }, { L: 0.86, C: 0.22, H: 95 }, { L: 0.70, C: 0.26, H: 25 }, { L: 0.72, C: 0.22, H: 200 }, { contrast: true, C: 0.03 }] },
+  { id: "coralCobaltClash", transforms: [{ base: true }, { L: 0.70, C: 0.27, H: 25 }, { L: 0.55, C: 0.29, H: 260 }, { L: 0.84, C: 0.20, H: 100 }, { L: 0.66, C: 0.25, H: 345 }, { L: 0.94, C: 0.03, H: 70 }] },
+  { id: "cyberBazaar", transforms: [{ base: true }, { L: 0.78, C: 0.22, H: 185 }, { L: 0.66, C: 0.27, H: 310 }, { L: 0.84, C: 0.21, H: 70 }, { L: 0.66, C: 0.26, H: 15 }, { L: 0.18, C: 0.05, H: 280 }] },
+  { id: "carnivalClash", transforms: [{ base: true }, { L: 0.68, C: 0.27, H: 350 }, { L: 0.80, C: 0.23, H: 55 }, { L: 0.68, C: 0.24, H: 145 }, { L: 0.58, C: 0.29, H: 250 }, { L: 0.72, C: 0.24, H: 300 }] },
+  { id: "semanticCore", transforms: [{ base: true }, { L: 0.62, C: 0.19, H: 250 }, { L: 0.62, C: 0.18, H: 145 }, { L: 0.80, C: 0.18, H: 85 }, { L: 0.62, C: 0.22, H: 25 }, { contrast: true, C: 0.03 }] },
+  { id: "semanticLight", transforms: [{ base: true }, { L: 0.98, C: 0.02 }, { L: 0.18, C: 0.03 }, { L: 0.58, C: 0.19, H: 250 }, { L: 0.58, C: 0.18, H: 145 }, { L: 0.75, C: 0.18, H: 85 }, { L: 0.58, C: 0.22, H: 25 }] },
+  { id: "semanticDark", transforms: [{ base: true }, { L: 0.14, C: 0.025 }, { L: 0.94, C: 0.025 }, { L: 0.76, C: 0.19, H: 240 }, { L: 0.75, C: 0.18, H: 145 }, { L: 0.84, C: 0.18, H: 85 }, { L: 0.72, C: 0.22, H: 25 }] },
+  { id: "financialSignals", transforms: [{ base: true }, { L: 0.58, C: 0.18, H: 145 }, { L: 0.58, C: 0.22, H: 25 }, { L: 0.78, C: 0.18, H: 85 }, { L: 0.55, C: 0.03 }, { L: 0.62, C: 0.18, H: 250 }] },
+  { id: "dataStates", transforms: [{ base: true }, { L: 0.62, C: 0.18, H: 250 }, { L: 0.62, C: 0.18, H: 145 }, { L: 0.78, C: 0.18, H: 85 }, { L: 0.62, C: 0.22, H: 25 }, { L: 0.70, C: 0.03 }, { L: 0.64, C: 0.20, dH: 180 }] },
+  { id: "editorialStates", transforms: [{ base: true }, { L: 0.58, C: 0.17, H: 145 }, { L: 0.76, C: 0.17, H: 85 }, { L: 0.64, C: 0.21, H: 35 }, { L: 0.56, C: 0.22, H: 25 }, { L: 0.60, C: 0.20, H: 285 }, { contrast: true, C: 0.03 }] },
 ];
 
 const recipesById = new Map(recipeDefinitions.map((recipe) => [recipe.id, recipe]));
@@ -164,7 +203,11 @@ export function resolveRecipeTransform(anchor: { l: number; c: number; h: number
   if ("c" in transform) {
     return { l: anchor.l + transform.dL, c: anchor.c * transform.c, h: anchor.h + transform.dH };
   }
-  const l = transform.L ?? anchor.l + (transform.dL ?? 0);
+  const adaptiveL = transform.contrast ? (anchor.l >= 0.56 ? 0.14 : 0.96)
+    : transform.softContrast ? (anchor.l >= 0.56 ? 0.30 : 0.84)
+      : transform.pop ? (anchor.l >= 0.56 ? 0.56 : 0.78)
+        : anchor.l + (transform.dL ?? 0);
+  const l = transform.L ?? adaptiveL;
   const scaledChroma = anchor.c * (transform.cScale ?? 1);
   const c = transform.C ?? Math.max(scaledChroma, transform.cMin ?? 0);
   const h = transform.H ?? anchor.h + (transform.dH ?? 0);
@@ -190,6 +233,7 @@ const RANDOM_JITTER: Record<RecipeCategory, readonly [number, number, number]> =
   tonal: [0.025, 0.08, 6], accent: [0.030, 0.10, 10], spectrum: [0.035, 0.10, 14],
   contrast: [0.040, 0.12, 14], systems: [0.030, 0.08, 10], vibrant: [0.035, 0.12, 14],
   harmony: [0.035, 0.12, 12], darkLuminous: [0.025, 0.10, 10], temperature: [0.025, 0.10, 5],
+  background: [0.025, 0.08, 8], daring: [0.035, 0.10, 10], semantic: [0.018, 0.05, 3],
 };
 
 function seededRandom(seed: string): () => number {
@@ -207,9 +251,9 @@ function randomCandidateIsValid(colors: GeneratedColor[], baseHex: string, categ
     const first = values[index]; const second = values[previous]; const a1 = first.c * Math.cos(first.h * Math.PI / 180); const b1 = first.c * Math.sin(first.h * Math.PI / 180); const a2 = second.c * Math.cos(second.h * Math.PI / 180); const b2 = second.c * Math.sin(second.h * Math.PI / 180);
     if (Math.hypot(first.l - second.l, a1 - a2, b1 - b2) < threshold) return false;
   }
-  const lightness = values.map((value) => value.l); const structural = ["tonal","accent","contrast","systems","darkLuminous","temperature"].includes(category);
+  const lightness = values.map((value) => value.l); const structural = ["tonal","accent","contrast","systems","darkLuminous","temperature","background","semantic"].includes(category);
   if (Math.max(...lightness) - Math.min(...lightness) < (structural ? 0.25 : 0.18)) return false;
-  if (["vibrant","harmony","darkLuminous","temperature"].includes(category) && values.filter((value) => value.c >= 0.15).length < 2) return false;
+  if (["vibrant","harmony","darkLuminous","temperature","background","daring"].includes(category) && values.filter((value) => value.c >= 0.15).length < 2) return false;
   if (category === "darkLuminous" && !(values.some((value) => value.l <= 0.22) && values.some((value) => value.l >= 0.72) && values.some((value) => value.c >= 0.16))) return false;
   return true;
 }

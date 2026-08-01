@@ -13,10 +13,13 @@ EXPECTED={
  "harmony":("threePointAccent","duotonePoster","directComplement","splitComplement","doubleComplement","complementaryBridge"),
  "darkLuminous":("techDigital","nightMode","midnightComplement","darkWarmSignals","darkCoolSignals","neonTriad"),
  "temperature":("warmAccents","coolAccents","warmCoolSplit"),
+ "background":("backgroundPop","darkBackdropPunch","lightBackdropPunch","electricForeground","posterOnColor","spotlightContrast"),
+ "daring":("acidCabaret","tropicalVoltage","ultravioletCitrus","coralCobaltClash","cyberBazaar","carnivalClash"),
+ "semantic":("semanticCore","semanticLight","semanticDark","financialSignals","dataStates","editorialStates"),
 }
 class RecipeMetadataTests(unittest.TestCase):
  def test_every_recipe_has_one_metadata_entry(self):
-  ids=[item.id for item in RECIPE_METADATA];self.assertEqual(len(ids),53);self.assertEqual(len(ids),len(set(ids)));self.assertEqual(set(ids),set(RECIPES));self.assertEqual(set(RECIPE_METADATA_BY_ID),set(RECIPES))
+  ids=[item.id for item in RECIPE_METADATA];self.assertEqual(len(ids),71);self.assertEqual(len(ids),len(set(ids)));self.assertEqual(set(ids),set(RECIPES));self.assertEqual(set(RECIPE_METADATA_BY_ID),set(RECIPES))
  def test_categories_and_order_match_specification(self):
   self.assertEqual(CATEGORY_ORDER,tuple(EXPECTED));self.assertEqual(RECIPE_IDS_BY_CATEGORY,EXPECTED)
  def test_manual_maps_only_to_none(self):self.assertEqual(RECIPE_IDS_BY_CATEGORY["manual"],("none",))

@@ -65,7 +65,25 @@ export type PaletteRecipe =
   | "neonTriad"
   | "warmAccents"
   | "coolAccents"
-  | "warmCoolSplit";
+  | "warmCoolSplit"
+  | "backgroundPop"
+  | "darkBackdropPunch"
+  | "lightBackdropPunch"
+  | "electricForeground"
+  | "posterOnColor"
+  | "spotlightContrast"
+  | "acidCabaret"
+  | "tropicalVoltage"
+  | "ultravioletCitrus"
+  | "coralCobaltClash"
+  | "cyberBazaar"
+  | "carnivalClash"
+  | "semanticCore"
+  | "semanticLight"
+  | "semanticDark"
+  | "financialSignals"
+  | "dataStates"
+  | "editorialStates";
 
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom" | "recipe";
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
@@ -189,6 +207,24 @@ export const paletteRecipeLabels: Record<PaletteRecipe, string> = {
   warmAccents: "Warm Accents",
   coolAccents: "Cool Accents",
   warmCoolSplit: "Warm-Cool Split",
+  backgroundPop: "Background Pop",
+  darkBackdropPunch: "Dark Backdrop Punch",
+  lightBackdropPunch: "Light Backdrop Punch",
+  electricForeground: "Electric Foreground",
+  posterOnColor: "Poster on Color",
+  spotlightContrast: "Chromatic Spotlight",
+  acidCabaret: "Acid Cabaret",
+  tropicalVoltage: "Tropical Voltage",
+  ultravioletCitrus: "Ultraviolet Citrus",
+  coralCobaltClash: "Coral–Cobalt Clash",
+  cyberBazaar: "Cyber Bazaar",
+  carnivalClash: "Carnival Clash",
+  semanticCore: "Semantic Core",
+  semanticLight: "Semantic on Light",
+  semanticDark: "Semantic on Dark",
+  financialSignals: "Financial Signals",
+  dataStates: "Data States",
+  editorialStates: "Editorial States",
 };
 
 export function isPaletteRecipeSource(source: GeneratedColorSource): source is Exclude<PaletteRecipe, "none"> {
@@ -249,6 +285,24 @@ export const paletteRecipeOrder: PaletteRecipe[] = [
   "warmAccents",
   "coolAccents",
   "warmCoolSplit",
+  "backgroundPop",
+  "darkBackdropPunch",
+  "lightBackdropPunch",
+  "electricForeground",
+  "posterOnColor",
+  "spotlightContrast",
+  "acidCabaret",
+  "tropicalVoltage",
+  "ultravioletCitrus",
+  "coralCobaltClash",
+  "cyberBazaar",
+  "carnivalClash",
+  "semanticCore",
+  "semanticLight",
+  "semanticDark",
+  "financialSignals",
+  "dataStates",
+  "editorialStates",
 ];
 
 export function colorSourceLabel(source: GeneratedColorSource): string {
