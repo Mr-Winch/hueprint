@@ -1,6 +1,6 @@
 {
   "name": "hueprint",
-  "version": "1.4.5",
+  "version": "1.5.0",
   "description": "Color harmony and palette-management studio with wheel geometry, OKLCH recipes, reusable palettes, and production-ready import/export.",
   "license": "MIT",
   "type": "module",

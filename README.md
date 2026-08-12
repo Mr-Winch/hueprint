@@ -15,6 +15,7 @@ It includes a donut-style color wheel with radial lightness, visible harmony geo
 - SVG harmony geometry overlay
 - Generated swatch band with active marker
 - Active color HEX, RGB, CMYK, and HSL info
+- Dual-source swatch naming in the Inkscape edition: offline NTC names plus cached background lookups from Colornames.org
 - Native browser eyedropper support where available
 - Palette-management workflow with Current Palette, Saved Swatches, reusable Saved Palettes, and GPL delivery to Inkscape
 - Custom harmony rules store OKLCH transforms from the anchor color, not fixed colors

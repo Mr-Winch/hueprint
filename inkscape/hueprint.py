@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
 """Full HuePrint color harmony studio for Inkscape."""
+import ctypes
+import sys
+from ctypes import wintypes
+
+# Set the Windows shell identity before inkex or GTK can initialize. If this is
+# delayed until the dialog module loads, GTK has already registered python.exe
+# as the taskbar application.
+if sys.platform.startswith("win"):
+    try:
+        shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+        shell32.SetCurrentProcessExplicitAppUserModelID.argtypes = [wintypes.LPCWSTR]
+        shell32.SetCurrentProcessExplicitAppUserModelID.restype = ctypes.c_long
+        shell32.SetCurrentProcessExplicitAppUserModelID("MrWinch.HuePrint")
+    except (AttributeError, OSError):
+        pass
+
 import inkex
 from hueprint_gui_v2 import Gtk, HuePrintDialog
 

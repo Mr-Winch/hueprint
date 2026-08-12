@@ -1,14 +1,64 @@
 """HuePrint GTK interface: responsive metadata, collision-safe geometry, palettes."""
 import colorsys, ctypes, json, math, os, random, sys, xml.etree.ElementTree as ET
 from ctypes import wintypes
+import uuid
 import cairo
 from pathlib import Path
 import gi
+gi.require_version("GLib","2.0")
+from gi.repository import GLib
+
+# GTK snapshots the GLib program/application names during initialization. Set
+# them before importing Gtk so the Windows backend does not retain "Python".
+GLib.set_application_name("HuePrint")
+GLib.set_prgname("hueprint")
+
 gi.require_version("Gtk","3.0"); gi.require_version("Gdk","3.0"); gi.require_version("GdkPixbuf","2.0"); gi.require_version("Pango","1.0")
-from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, Gtk, Pango
 from hueprint_palette import generate_palette, hex_to_hls, hls_to_hex, palette_from_text, palette_storage_path, palette_to_gpl, sanitize_hex, translate_palette_geometry
+from hueprint_color_names import UNNAMED, ColorNameResolver, color_name_markup, colornames_color_url
 from hueprint_recipes import RECIPES, generate_recipe, hex_to_oklch, randomize_recipe
 from hueprint_recipe_metadata import CATEGORY_LABELS, CATEGORY_ORDER, RECIPE_IDS_BY_CATEGORY, RECIPE_METADATA, RECIPE_METADATA_BY_ID
+
+def _set_application_identity():
+    if sys.platform.startswith("win"):
+        try:
+            shell32=ctypes.WinDLL("shell32",use_last_error=True); shell32.SetCurrentProcessExplicitAppUserModelID.argtypes=[wintypes.LPCWSTR]; shell32.SetCurrentProcessExplicitAppUserModelID.restype=ctypes.c_long
+            shell32.SetCurrentProcessExplicitAppUserModelID("MrWinch.HuePrint")
+        except (AttributeError,OSError):pass
+
+_set_application_identity()
+
+HUEPRINT_APP_ID="MrWinch.HuePrint"
+
+def _guid(value):
+    parsed=uuid.UUID(value)
+    class GUID(ctypes.Structure):
+        _fields_=[("Data1",ctypes.c_ulong),("Data2",ctypes.c_ushort),("Data3",ctypes.c_ushort),("Data4",ctypes.c_ubyte*8)]
+    return GUID(parsed.time_low,parsed.time_mid,parsed.time_hi_version,(ctypes.c_ubyte*8)(*parsed.bytes[8:])),GUID
+
+def _set_window_app_id(window_title):
+    """Assign HuePrint's AppUserModelID directly to its native taskbar window."""
+    if not sys.platform.startswith("win"):return True
+    store=None
+    try:
+        user32=ctypes.WinDLL("user32",use_last_error=True); user32.FindWindowW.argtypes=[wintypes.LPCWSTR,wintypes.LPCWSTR]; user32.FindWindowW.restype=wintypes.HWND
+        hwnd=user32.FindWindowW(None,window_title)
+        if not hwnd:return False
+        app_guid,guid_type=_guid("9f4c2855-9f79-4b39-a8d0-e1d42de1d5f3"); interface_guid,_=_guid("886d8eeb-8cf2-4446-8d02-cdba1dbdcf99")
+        class PROPERTYKEY(ctypes.Structure):_fields_=[("fmtid",guid_type),("pid",ctypes.c_ulong)]
+        class PROPVARIANT(ctypes.Structure):_fields_=[("vt",ctypes.c_ushort),("reserved1",ctypes.c_ushort),("reserved2",ctypes.c_ushort),("reserved3",ctypes.c_ushort),("value",ctypes.c_void_p)]
+        shell32=ctypes.WinDLL("shell32",use_last_error=True); shell32.SHGetPropertyStoreForWindow.argtypes=[wintypes.HWND,ctypes.POINTER(guid_type),ctypes.POINTER(ctypes.c_void_p)]; shell32.SHGetPropertyStoreForWindow.restype=ctypes.c_long
+        store=ctypes.c_void_p(); result=shell32.SHGetPropertyStoreForWindow(hwnd,ctypes.byref(interface_guid),ctypes.byref(store))
+        if result<0 or not store:return False
+        vtable=ctypes.cast(store,ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p))).contents
+        set_value=ctypes.WINFUNCTYPE(ctypes.c_long,ctypes.c_void_p,ctypes.POINTER(PROPERTYKEY),ctypes.POINTER(PROPVARIANT))(vtable[6]); commit=ctypes.WINFUNCTYPE(ctypes.c_long,ctypes.c_void_p)(vtable[7]); release=ctypes.WINFUNCTYPE(ctypes.c_ulong,ctypes.c_void_p)(vtable[2])
+        text=ctypes.create_unicode_buffer(HUEPRINT_APP_ID); value=PROPVARIANT(31,0,0,0,ctypes.cast(text,ctypes.c_void_p)); key=PROPERTYKEY(app_guid,5)
+        result=set_value(store,ctypes.byref(key),ctypes.byref(value))
+        if result>=0:result=commit(store)
+        release(store); store=None
+        return result>=0
+    except (AttributeError,OSError,ValueError):return False
 
 HARMONIES = [
  ("monochromatic","Monochromatic","One hue with a balanced light-to-dark range."),
@@ -415,21 +465,22 @@ class NativePickerHud(Gtk.DrawingArea):
         return False
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — 1.4.5",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        super().__init__(title="HuePrint © — 1.5.0",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        self.set_role("HuePrint"); self.set_name("HuePrint")
         self.add_button("Cancel",Gtk.ResponseType.CANCEL)
         try:
             icon=GdkPixbuf.Pixbuf.new_from_file_at_scale(str(Path(__file__).with_name("hueprint-icon.svg")),32,32,True); self.set_icon(icon); Gtk.Window.set_default_icon(icon)
         except (GLib.Error,OSError):pass
-        self.color="#2F80ED"; self.saved=self._load_saved(); self.saved_palettes=self._load_saved_palettes(); self.custom_palette=None; self.custom_palette_template=None; self.custom_palette_anchor=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.picker_window=None; self.picker_hud=None; self.picker_sampler=None; self.picker_timer_id=None; self.picker_armed=False; self.picker_position=None; self.picker_pending=False; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); settings=Gtk.Settings.get_default()
+        self.color="#2F80ED"; self.saved=self._load_saved(); self.saved_palettes=self._load_saved_palettes(); self.custom_palette=None; self.custom_palette_template=None; self.custom_palette_anchor=None; self.updating_lightness=False; self.lightness_refresh_id=None; self.random_state=None; self.random_undo=None; self.random_redo=None; self.icon_buttons=[]; self.picker_window=None; self.picker_hud=None; self.picker_sampler=None; self.picker_timer_id=None; self.picker_armed=False; self.picker_position=None; self.picker_pending=False; self.hairline_provider=Gtk.CssProvider(); self.lightness_provider=Gtk.CssProvider(); self.initial_dark=_inkscape_prefers_dark(); self.color_names=ColorNameResolver(_palette_path().with_name("colornames-cache.json")); settings=Gtk.Settings.get_default()
         if settings:settings.set_property("gtk-application-prefer-dark-theme",self.initial_dark)
-        self.connect("key-press-event",self.history_key)
+        self.connect("key-press-event",self.history_key); self.connect("destroy",self.dialog_destroyed); self.connect("realize",self.window_realized)
         self._build(); self.refresh()
     def described_combo(self,items,wrap=0):return DescribedChooser(items,wrap or 1)
     def _build(self):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
         title_box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=0); self.main_title=Gtk.Label(); self.main_title.set_markup("<span size='28000' weight='bold'>HuePrint ©</span>"); self.main_title.set_xalign(0); self.main_title.get_style_context().add_class("hueprint-title"); title_box.pack_start(self.main_title,False,False,0)
-        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony &amp; palette studio · 1.4.5 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony or recipe for details. Drag the color wheel to change hue and lightness.</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
+        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony &amp; palette studio · 1.5.0 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony, recipe, or swatch for details. Drag the color wheel to change hue and lightness.</span>\n<span size='9000'>Color naming: NTC by Chirag Mehta · community names by Colornames.org</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
         header.pack_start(title_box,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)
@@ -466,6 +517,12 @@ class HuePrintDialog(Gtk.Dialog):
     def application_option_toggled(self,button):
         options=(self.apply_fill,self.apply_stroke,self.create)
         if not any(option.get_active() for option in options):button.set_active(True)
+    def window_realized(self,*_args):
+        self.window_identity_attempts=0; GLib.timeout_add(40,self.apply_window_identity)
+    def apply_window_identity(self):
+        self.window_identity_attempts+=1
+        if _set_window_app_id(self.get_title()):return False
+        return self.window_identity_attempts<10
     def _icon_button(self,icon,tooltip,handler,size=32,stroke=None):
         button=Gtk.Button(); button.set_size_request(size,size); button.set_valign(Gtk.Align.CENTER); button.set_relief(Gtk.ReliefStyle.NONE if size<=24 else Gtk.ReliefStyle.NORMAL)
         if size<=24:
@@ -634,16 +691,32 @@ class HuePrintDialog(Gtk.Dialog):
     def restore_after_picker(self):self.picker_pending=False; self.color_button.set_sensitive(True); self.present(); return False
     def copy_color(self,*_args):
         Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(self.color,-1); _set_icon(self.copy_button,"check"); self.copy_button.set_tooltip_text("Color copied")
+    def dialog_destroyed(self,*_args):
+        self.close_screen_picker(); self.color_names.close()
+    def _color_name_pair(self,color):return self.color_names.names(color)
+    def _swatch_tooltip(self,color,instruction=None):
+        ntc_name,colornames_name=self._color_name_pair(color); markup=color_name_markup(color,ntc_name,colornames_name)
+        if instruction:markup+=f"\n<span size='small'>{GLib.markup_escape_text(instruction)}</span>"
+        return markup
+    def _request_color_names(self,colors):
+        visible=list(colors)+list(self.saved)+[self.color]
+        self.color_names.request(visible,lambda color:GLib.idle_add(self._color_names_updated,color))
+    def _color_names_updated(self,color):
+        if not self.get_window():return False
+        colors=self.generated_colors()
+        visible={value.upper() for value in colors+self.saved+[self.color]}
+        if color.upper() not in visible:return False
+        self.active_swatch.set_tooltip_markup(self._swatch_tooltip(self.color,"Active color")); self.render_metadata(colors); self.render_saved(); return False
     def draw_active_swatch(self,widget,cr):
         red,green,blue=[int(self.color[i:i+2],16)/255 for i in (1,3,5)]; cr.set_source_rgb(red,green,blue); cr.rectangle(0,0,widget.get_allocated_width(),widget.get_allocated_height()); cr.fill(); return False
     def _color_widget(self,color,height,handler=None):
         event=Gtk.EventBox(); event.set_hexpand(True); event.set_halign(Gtk.Align.FILL); area=Gtk.DrawingArea(); area.set_size_request(36,height); area.set_hexpand(True); red,green,blue=[int(color[i:i+2],16)/255 for i in (1,3,5)]
-        area.connect("draw",lambda w,cr:(cr.set_source_rgb(red,green,blue),cr.rectangle(0,0,w.get_allocated_width(),w.get_allocated_height()),cr.fill(),False)[-1]); event.add(area); event.set_tooltip_text(color)
+        area.connect("draw",lambda w,cr:(cr.set_source_rgb(red,green,blue),cr.rectangle(0,0,w.get_allocated_width(),w.get_allocated_height()),cr.fill(),False)[-1]); event.add(area); event.set_tooltip_markup(self._swatch_tooltip(color,"Click to make this the active color"))
         if handler:event.connect("button-press-event",lambda *_:handler(color))
         return event
     def refresh(self):
         if not hasattr(self,"metadata_grid"):return
-        colors=self.generated_colors(); self.harmony.refresh_previews(); self.recipe.refresh_previews(); self.render_metadata(colors); self.render_saved(); self.wheel.queue_draw()
+        colors=self.generated_colors(); self._request_color_names(colors); self.active_swatch.set_tooltip_markup(self._swatch_tooltip(self.color,"Active color")); self.harmony.refresh_previews(); self.recipe.refresh_previews(); self.render_metadata(colors); self.render_saved(); self.wheel.queue_draw()
     def _metadata(self,color):
         h,l,s=hex_to_hls(color); r,g,b=[int(color[i:i+2],16) for i in (1,3,5)]; rn,gn,bn=r/255,g/255,b/255; k=1-max(rn,gn,bn)
         c=m=y=0 if k>=.999 else None
@@ -656,6 +729,15 @@ class HuePrintDialog(Gtk.Dialog):
         layout=label.get_layout()
         if hasattr(layout,"set_line_spacing"):layout.set_line_spacing(.85)
         return label
+    def _hex_name_cell(self,color):
+        ntc_name,colornames_name=self._color_name_pair(color); cell=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=0); cell.set_hexpand(True); cell.set_halign(Gtk.Align.FILL)
+        hex_label=self._table_label(f"<span size='large' weight='bold'>{color}</span>"); hex_label.set_selectable(True); cell.pack_start(hex_label,False,False,0)
+        for source,name in (("NTC",ntc_name),("CN.org",colornames_name)):
+            escaped=GLib.markup_escape_text(name)
+            if source=="CN.org" and name==UNNAMED:markup=f"<span size='small'>{source} · <a href='{colornames_color_url(color)}'><i>Name this color ↗</i></a></span>"
+            else:markup=f"<span size='small'>{source} · <i>{escaped}</i></span>"
+            label=self._table_label(markup); label.set_track_visited_links(False); label.set_ellipsize(Pango.EllipsizeMode.END); label.set_max_width_chars(15); label.set_tooltip_markup(self._swatch_tooltip(color)); cell.pack_start(label,False,False,0)
+        return cell
     def render_metadata(self,colors):
         for child in self.metadata_grid.get_children():self.metadata_grid.remove(child)
         other_colors=list(colors); active_index=next((i for i,color in enumerate(other_colors) if color.upper()==self.color.upper()),0)
@@ -673,7 +755,9 @@ class HuePrintDialog(Gtk.Dialog):
             row=3+index*2; self.metadata_grid.attach(self._table_label(f"<span size='large' weight='bold'>{kind}</span>"),0,row,1,1)
             parts=self._table_label(f"<span size='medium' weight='bold'>{channel[kind]}</span>"); parts.set_margin_end(16); self.metadata_grid.attach(parts,1,row,1,1)
             for col,(_name,color) in enumerate(columns,2):
-                value=self._table_label(f"<span size='medium'>{self._metadata(color)[kind]}</span>"); value.set_selectable(True); value.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(value,col,row,1,1)
+                if kind=="HEX":value=self._hex_name_cell(color)
+                else:value=self._table_label(f"<span size='medium'>{self._metadata(color)[kind]}</span>"); value.set_selectable(True)
+                value.set_margin_start(16 if col==2 else 0); self.metadata_grid.attach(value,col,row,1,1)
         self.metadata_grid.show_all()
     def _load_saved_palettes(self):
         for path in (_saved_palettes_path(),_legacy_named_palettes_path()):
@@ -748,7 +832,7 @@ class HuePrintDialog(Gtk.Dialog):
         label=Gtk.Label(); label.set_markup(f"<span foreground='#000000'>{color}</span>"); label.set_halign(Gtk.Align.CENTER); label.set_valign(Gtk.Align.CENTER); label.set_opacity(.6); overlay.add_overlay(label)
         remove=self._saved_swatch_icon("close",f"Remove {color}",lambda:self.remove_saved(index),14,.6); remove.set_halign(Gtk.Align.END); remove.set_valign(Gtk.Align.START); remove.set_margin_end(1); remove.set_margin_top(1); overlay.add_overlay(remove)
         arrows=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=0); arrows.set_hexpand(True); arrows.set_halign(Gtk.Align.FILL); arrows.set_valign(Gtk.Align.CENTER); arrows.set_sensitive(False); arrows.set_opacity(0); arrows.pack_start(self._saved_swatch_icon("left",f"Move {color} left",lambda:self.move_saved(index,-1),16,1),False,False,0); arrows.pack_end(self._saved_swatch_icon("right",f"Move {color} right",lambda:self.move_saved(index,1),16,1),False,False,0); overlay.add_overlay(arrows)
-        outer.connect("enter-notify-event",self._saved_swatch_hover,arrows,True); outer.connect("leave-notify-event",self._saved_swatch_hover,arrows,False); outer.add(overlay); outer.set_tooltip_text(f"{color} - Hover to reorder; use × to remove"); return outer
+        outer.connect("enter-notify-event",self._saved_swatch_hover,arrows,True); outer.connect("leave-notify-event",self._saved_swatch_hover,arrows,False); outer.add(overlay); outer.set_tooltip_markup(self._swatch_tooltip(color,"Hover to reorder; use × to remove")); return outer
     def render_saved(self):
         if not hasattr(self,"saved_box"):return
         for child in self.saved_box.get_children():self.saved_box.remove(child)

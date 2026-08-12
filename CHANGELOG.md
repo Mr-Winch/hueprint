@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5.0 — 2026-08-12
+
+- Added human-readable color names beneath HEX metadata for every Current Palette color.
+- Added identified, italic NTC Library and Colornames.org name lines to Current Palette and Saved Swatch tooltips.
+- Bundled the official NTC name list for completely offline matching and credited its creator, Chirag Mehta, in the HuePrint header.
+- Added non-blocking Colornames.org lookups with persistent successful-result caching, obsolete-request cancellation, and an explicit “No connection” state when the service cannot be reached.
+- Routed Colornames.org requests through Windows’ native WinINet certificate store when running inside Inkscape, fixing TLS validation failures without disabling certificate verification.
+- Turned unnamed Colornames.org metadata into a compact “Name this color” link that opens the exact community proposal page for that HEX value.
+- Added a best-effort HuePrint AppUserModelID, GLib application name, window role, and window-level shell identity for Windows.
+- Known limitation: some Windows/Inkscape configurations still label the running extension as Python in the taskbar because Inkscape launches it through its bundled Python interpreter.
+- Standardized every distributable ZIP on versioned filenames and included both one-click install and uninstall tools in every package.
+- Added a packaging script that reads the canonical project version, refuses unversioned releases, and builds the Inkscape, Windows, and Gallery packages consistently.
+- Documented the external naming sources, licenses, connectivity behavior, and attribution notices.
+
 ## 1.4.5 — 2026-07-31
 
 - Made loaded Saved Palettes behave as reusable geometry templates instead of falling back to Analogous when the active color changes.

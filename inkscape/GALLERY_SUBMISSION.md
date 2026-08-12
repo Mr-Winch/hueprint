@@ -1,9 +1,9 @@
 # Inkscape Extensions Gallery submission
 
-- **Upload file:** HuePrint-1.4.5-Inkscape-Gallery.zip
-- **Signature file:** HuePrint-1.4.5-Inkscape-Gallery.zip.md5 (MD5 fallback accepted by the Inkscape submission guide)
+- **Upload file:** HuePrint-1.5.0-Inkscape-Gallery.zip
+- **Signature file:** HuePrint-1.5.0-Inkscape-Gallery.zip.md5 (MD5 fallback accepted by the Inkscape submission guide)
 - **Title:** HuePrint — Color Harmony & Palette Studio
-- **Version:** 1.4.5
+- **Version:** 1.5.0
 - **Author:** Winton Diaz Dauhajre
 - **Username:** Mr-Winch
 - **License:** MIT
@@ -12,8 +12,9 @@
 - **Supported versions:** Inkscape 1.4.x
 - **Repository:** https://github.com/Mr-Winch/hueprint
 - **Demo:** https://mr-winch.github.io/hueprint/
-- **Menu location:** Extensions → Color → HuePrint © 1.4.5
+- **Menu location:** Extensions → Color → HuePrint © 1.5.0
 - **Icon:** hueprint-icon.svg
+- **Package utilities:** `Install HuePrint.cmd`, `Uninstall HuePrint.cmd`, `install.ps1`, and `uninstall.ps1`
 
 ## Short description
 
@@ -35,7 +36,7 @@ Key features include:
 - 70 curated palette recipes, including adaptive background-and-pop, daring, and semantic collections, plus harmony-based and randomized exploration
 - Two to sixteen generated swatches with adjustable lightness
 - Screen eyedropper for sampling colors from anywhere on the screen
-- Compact HEX, RGB, CMYK, HSL, and OKLCH metadata for every color
+- Compact HEX, RGB, CMYK, HSL, and OKLCH metadata for every color, with offline NTC and live Colornames.org naming beneath HEX
 - Slim Saved Swatches with persistent HEX and remove controls plus hover-only triangular reordering controls for collecting, arranging, loading, and exporting colors
 - Persistent Saved Palettes in a full three-column card browser matching Harmony and Palette Recipes, with custom names, swatch previews, one-click loading, and individual deletion
 - Geometry-preserving Saved Palette retargeting that moves the complete palette to a new active color without reverting to a default harmony or changing its swatch count
@@ -45,7 +46,9 @@ Key features include:
 
 Whether you need a quick supporting palette or want to study the structure of a complete color system, HuePrint keeps exploration, comparison, organization, and application inside Inkscape.
 
-HuePrint is dependency-free beyond the Python 3, inkex, GTK 3, PyGObject, and Pycairo components supplied with supported Inkscape installations. It does not contact the internet or self-update.
+HuePrint is dependency-free beyond the Python 3, inkex, GTK 3, PyGObject, and Pycairo components supplied with supported Inkscape installations. NTC naming is bundled and fully offline. Colornames.org lookups are optional background requests with a local cache and explicit offline status; HuePrint does not self-update or send telemetry.
+
+Known Windows limitation: because Inkscape launches extensions through its bundled Python interpreter, some systems can still show “Python” as HuePrint’s taskbar application label despite HuePrint’s custom title, icon, process AppUserModelID, and window-level shell identity. This is cosmetic and does not affect extension behavior.
 
 ## Suggested tags
 
