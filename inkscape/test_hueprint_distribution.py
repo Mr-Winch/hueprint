@@ -1,5 +1,4 @@
 import hashlib
-import json
 from pathlib import Path
 import unittest
 import zipfile
@@ -11,7 +10,7 @@ class HuePrintDistributionTests(unittest.TestCase):
         cls.inkscape = Path(__file__).resolve().parent
         cls.repository = cls.inkscape.parent
         cls.download = cls.inkscape / "download"
-        cls.version = json.loads((cls.repository / "package.json").read_text(encoding="utf-8"))["version"]
+        cls.version = (cls.inkscape / "VERSION").read_text(encoding="utf-8").strip()
 
     def test_every_release_package_is_versioned_and_self_service(self):
         package_names = (
@@ -51,6 +50,7 @@ class HuePrintDistributionTests(unittest.TestCase):
         self.assertIn('HuePrint-$Version-Inkscape-Gallery.zip', source)
         self.assertIn("semantic versioning", source)
         self.assertIn("Version mismatch", source)
+        self.assertIn('Join-Path $InkscapeRoot "VERSION"', source)
 
 
 if __name__ == "__main__":

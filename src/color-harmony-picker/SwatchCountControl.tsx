@@ -21,8 +21,9 @@ export function SwatchCountControl({ value, min, max, onChange }: SwatchCountCon
         min={min}
         max={max}
         step={1}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
+      value={value}
+      onInput={(event) => onChange(Number(event.currentTarget.value))}
+      onChange={(event) => onChange(Number(event.target.value))}
       />
     </div>
   );

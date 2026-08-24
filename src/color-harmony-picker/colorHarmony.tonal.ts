@@ -3,7 +3,7 @@ import { GeneratedColor } from "./colorHarmony.types";
 
 export function generateTints(color: string, count: number): GeneratedColor[] {
   const base = hexToOklch(color);
-  return Array.from({ length: clamp(Math.floor(count), 2, 8) }, (_, index) => {
+  return Array.from({ length: clamp(Math.floor(count), 2, 16) }, (_, index) => {
     const t = (index + 1) / count;
     return makeGeneratedColor("tint", index, {
       l: lerp(base.l, 0.96, t),
@@ -15,7 +15,7 @@ export function generateTints(color: string, count: number): GeneratedColor[] {
 
 export function generateShades(color: string, count: number): GeneratedColor[] {
   const base = hexToOklch(color);
-  return Array.from({ length: clamp(Math.floor(count), 2, 8) }, (_, index) => {
+  return Array.from({ length: clamp(Math.floor(count), 2, 16) }, (_, index) => {
     const t = (index + 1) / count;
     return makeGeneratedColor("shade", index, {
       l: lerp(base.l, 0.12, t),
@@ -27,7 +27,7 @@ export function generateShades(color: string, count: number): GeneratedColor[] {
 
 export function generateTones(color: string, count: number): GeneratedColor[] {
   const base = hexToOklch(color);
-  return Array.from({ length: clamp(Math.floor(count), 2, 8) }, (_, index) => {
+  return Array.from({ length: clamp(Math.floor(count), 2, 16) }, (_, index) => {
     const t = (index + 1) / count;
     return makeGeneratedColor("tone", index, {
       l: base.l,

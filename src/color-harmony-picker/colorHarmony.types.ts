@@ -91,9 +91,18 @@ export type ColorHarmonyTheme = "light" | "dark";
 export type ColorHarmonyLayout = "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact";
 export type SavedPaletteInput = string | GeneratedColor;
 
+export interface SavedPaletteCollection {
+  id: string;
+  name: string;
+  colors: SavedPaletteInput[];
+}
+
+export type CommunityColorNameResolver = (hex: string) => Promise<string | null>;
+
 export interface GeneratedColor {
   id: string;
   hex: string;
+  name?: string;
   oklch?: {
     l: number;
     c: number;
@@ -113,6 +122,11 @@ export interface ColorHarmonyPickerProps {
   savedPalette?: SavedPaletteInput[];
   initialSavedPalette?: SavedPaletteInput[];
   onSavedPaletteChange?: (colors: GeneratedColor[]) => void;
+  savedPalettes?: SavedPaletteCollection[];
+  initialSavedPalettes?: SavedPaletteCollection[];
+  onSavedPalettesChange?: (palettes: SavedPaletteCollection[]) => void;
+  resolveCommunityColorName?: CommunityColorNameResolver;
+  onApplyPalette?: (colors: GeneratedColor[]) => void;
   initialRule?: HarmonyRule;
   initialSwatchCount?: number;
   minSwatches?: number;

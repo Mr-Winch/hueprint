@@ -1,6 +1,6 @@
 {
   "name": "hueprint",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Color harmony and palette-management studio with wheel geometry, OKLCH recipes, reusable palettes, and production-ready import/export.",
   "license": "MIT",
   "type": "module",
@@ -9,9 +9,11 @@
     "docs",
     "examples",
     "README.md",
+    "THIRD_PARTY_NOTICES.md",
     "LICENSE"
   ],
   "scripts": {
+    "sync:data": "node scripts/sync-react-data.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test --import tsx src/color-harmony-picker/*.test.ts",
     "dev": "vite --host 127.0.0.1",

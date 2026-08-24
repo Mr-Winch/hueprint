@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.0 — 2026-08-23
+
+- Brought the React edition up to the Current Palette, Saved Swatches, and reusable Saved Palettes workflow introduced in the Inkscape extension.
+- Added Inkscape-compatible GIMP Palette (GPL) import and export while retaining HuePrint JSON import/export and legacy JSON-array compatibility.
+- Preserved GPL swatch labels, input order, safe deduplication, palette names, and configurable GPL column counts.
+- Replaced the React harmony and recipe dropdowns with visual, responsive chooser cards containing live previews and descriptions synchronized from the extension.
+- Exposed category-aware recipe randomization in the React interface and identified randomized palettes in the chooser.
+- Added named Saved Palettes with previews, loading, overwriting by name, deletion, controlled/uncontrolled state, and demo persistence.
+- Added a responsive Current Palette metadata table for HEX, NTC names, optional Colornames.org names, RGB, CMYK, HSL, and OKLCH.
+- Added the complete offline NTC library to React through generated TypeScript data synchronized from the attributed extension source.
+- Added an optional asynchronous community-name resolver with browser caching, loading/offline/unnamed states, and exact Colornames.org proposal links.
+- Raised React harmony and tonal palettes to sixteen swatches while keeping recipe and fixed-harmony limits aligned with their formulas.
+- Added a generic `onApplyPalette` integration callback, slimmer labeled Saved Swatches, and responsive full-width palette sections.
+- Refined both compact layouts: their three visual choosers remain on one row, metadata is omitted, and opaque chooser panels stay above the palette content.
+- Made Escape close Harmony, Palette Recipes, or Saved Palettes without changing the current selection and return keyboard focus to its chooser.
+- Decoupled the React package version from the Inkscape package version so React releases cannot accidentally relabel extension ZIPs.
+- Added GPL, JSON, NTC, and sixteen-swatch regression coverage and visually verified wide, compact, light, and dark layouts.
+
 ## 1.5.0 — 2026-08-12
 
 - Added human-readable color names beneath HEX metadata for every Current Palette color.

@@ -1,6 +1,8 @@
 "use client";
 
 import styles from "./ColorHarmonyPicker.module.css";
+import { ColorNameTooltip } from "./ColorNameTooltip";
+import { ColorNames } from "./colorNames";
 import { GeneratedColor, colorSourceLabel } from "./colorHarmony.types";
 
 type GeneratedSwatchesProps = {
@@ -8,9 +10,10 @@ type GeneratedSwatchesProps = {
   activeHex: string;
   onSelect: (color: GeneratedColor) => void;
   onAddAll: (colors: GeneratedColor[]) => void;
+  namesByHex: Record<string, ColorNames>;
 };
 
-export function GeneratedSwatches({ colors, activeHex, onSelect, onAddAll }: GeneratedSwatchesProps) {
+export function GeneratedSwatches({ colors, activeHex, onSelect, onAddAll, namesByHex }: GeneratedSwatchesProps) {
   return (
     <div className={styles.swatchBandBlock}>
       <div className={styles.swatchBand} style={{ gridTemplateColumns: `repeat(${Math.max(colors.length, 1)}, minmax(0, 1fr))` }}>
@@ -27,7 +30,9 @@ export function GeneratedSwatches({ colors, activeHex, onSelect, onAddAll }: Gen
               aria-label={title}
               aria-pressed={active}
               onClick={() => onSelect(color)}
-            />
+            >
+              <ColorNameTooltip hex={color.hex} names={namesByHex[color.hex.toUpperCase()]} instruction={title} />
+            </button>
           );
         })}
       </div>

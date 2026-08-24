@@ -1,10 +1,10 @@
-# Color Harmony Picker
+# HuePrint React
 
 A reusable React + TypeScript studio for creating, discovering, and managing palettes from an active color.
 
 Live demo: https://mr-winch.github.io/hueprint/
 
-It includes a donut-style color wheel with radial lightness, visible harmony geometry, generated swatches, tints/shades/tones, OKLCH palette recipes, custom harmony rules based on angular offsets, palette import/export, and draggable saved palette ordering.
+It includes a color wheel with radial lightness, visible harmony geometry, visual harmony and recipe browsers, generated swatches, reusable named palettes, GPL/JSON exchange, and production color metadata.
 
 ## Features
 
@@ -14,10 +14,12 @@ It includes a donut-style color wheel with radial lightness, visible harmony geo
 - 70 curated palette recipes generated from direct and adaptive OKLCH transforms, including background-and-pop, daring chromatic, semantic, tonal, interface, and harmony-driven collections
 - SVG harmony geometry overlay
 - Generated swatch band with active marker
-- Active color HEX, RGB, CMYK, and HSL info
-- Dual-source swatch naming in the Inkscape edition: offline NTC names plus cached background lookups from Colornames.org
+- Current Palette metadata for HEX, RGB, CMYK, HSL, and OKLCH
+- Offline NTC color names plus an optional cached Colornames.org resolver
 - Native browser eyedropper support where available
 - Palette-management workflow with Current Palette, Saved Swatches, reusable Saved Palettes, and GPL delivery to Inkscape
+- GPL and HuePrint JSON import/export with legacy JSON compatibility
+- Category-aware randomized palette exploration
 - Custom harmony rules store OKLCH transforms from the anchor color, not fixed colors
 - Four layout modes for wide surfaces and narrow editor panels
 
@@ -68,6 +70,11 @@ export interface ColorHarmonyPickerProps {
   savedPalette?: SavedPaletteInput[];
   initialSavedPalette?: SavedPaletteInput[];
   onSavedPaletteChange?: (colors: GeneratedColor[]) => void;
+  savedPalettes?: SavedPaletteCollection[];
+  initialSavedPalettes?: SavedPaletteCollection[];
+  onSavedPalettesChange?: (palettes: SavedPaletteCollection[]) => void;
+  resolveCommunityColorName?: (hex: string) => Promise<string | null>;
+  onApplyPalette?: (colors: GeneratedColor[]) => void;
   initialRule?: HarmonyRule;
   initialSwatchCount?: number;
   minSwatches?: number;
@@ -83,7 +90,7 @@ export interface ColorHarmonyPickerProps {
 
 The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`.
 
-Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata beside the donut, `layout="verticalCompact"` for tighter narrow panels with the same side metadata, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers.
+Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata beside the donut, `layout="verticalCompact"` for tighter narrow panels, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers. Compact layouts omit the metadata table while retaining color-name tooltips on their swatches.
 
 ## Palette Persistence
 
@@ -99,6 +106,16 @@ const [savedPalette, setSavedPalette] = useState<GeneratedColor[]>([]);
   onSavedPaletteChange={setSavedPalette}
 />
 ```
+
+Reusable Saved Palettes use the parallel `savedPalettes`, `initialSavedPalettes`, and `onSavedPalettesChange` props. The demo persists both collections in `localStorage`; a host application can instead store them in IndexedDB, a project document, or a backend.
+
+## GPL and JSON
+
+The import control accepts GIMP Palette (`.gpl`) and HuePrint JSON files. GPL exports include palette and swatch names and can be installed directly in Inkscape. JSON retains HuePrint roles and source rules. The public `parsePaletteText`, `paletteToGpl`, and `paletteToJson` utilities are also exported for host applications.
+
+## Color Names
+
+NTC matching is bundled and works offline. Colornames.org does not allow direct cross-origin browser requests, so community naming is opt-in through `resolveCommunityColorName`. Pass a resolver backed by your own same-origin endpoint; successful names are cached locally. Without a resolver, the interface reports that community naming is not configured while NTC remains available.
 
 ## Browser Notes
 

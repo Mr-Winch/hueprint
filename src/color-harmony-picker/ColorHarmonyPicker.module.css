@@ -11,6 +11,8 @@
   align-items: start;
   width: 100%;
   min-width: 0;
+  position: relative;
+  isolation: isolate;
 }
 .horizontal {
   max-width: none;
@@ -60,12 +62,8 @@
 }
 
 .verticalCompact .controlRow {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.verticalCompact .controlRow .field:nth-child(3) {
-  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .verticalCompact .hexInputRow {
@@ -117,6 +115,14 @@
   gap: 4px;
 }
 
+.verticalCompact .controlRow label,
+.horizontalCompact .controlRow label {
+  overflow: hidden;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .verticalCompact .tonalButtons {
   gap: 5px;
 }
@@ -147,6 +153,11 @@
   display: grid;
   gap: 10px;
   min-width: 0;
+}
+
+.controlColumn {
+  position: relative;
+  z-index: 20;
 }
 
 .wheelWrap {
@@ -250,14 +261,13 @@
 
 
 .dimmedField {
-  opacity: 0.52;
-  filter: saturate(0.72);
-  transition: opacity 140ms ease, filter 140ms ease;
+  opacity: 1;
+  filter: none;
 }
 
 .dimmedField:hover,
 .dimmedField:focus-within {
-  opacity: 0.92;
+  opacity: 1;
   filter: none;
 }
 .field label,
@@ -536,11 +546,7 @@
   }
 
   .verticalCompact .controlRow {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .verticalCompact .controlRow .field:nth-child(3) {
-    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -992,4 +998,398 @@
   border-color: #0f172a;
   background: #f8fafc;
   box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.6);
+}
+
+/* React 1.6 palette studio */
+.currentPaletteBlock,
+.savedSwatchesBlock,
+.attribution {
+  grid-column: 1 / -1;
+}
+
+.currentPaletteBlock {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #dbe2ea);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sectionHeader h2,
+.paletteHeader h2,
+.saveDialog h2 {
+  margin: 0;
+  color: var(--text, #18202a);
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.sectionHeader > .field {
+  width: min(190px, 42%);
+}
+
+.controlRow {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+}
+
+.chooserField {
+  position: relative;
+}
+
+.chooserField:has(.chooser[open]) {
+  z-index: 100;
+}
+
+.chooser {
+  position: relative;
+  min-width: 0;
+}
+
+.chooser > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 6px 28px 6px 9px;
+  overflow: hidden;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  color: var(--text, #18202a);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+}
+
+.chooser > summary::-webkit-details-marker { display: none; }
+.chooser > summary::after {
+  content: "";
+  position: absolute;
+  right: 11px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+.chooser[open] > summary::after { transform: translateY(2px) rotate(225deg); }
+
+.chooserPanel {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 10px;
+  width: min(760px, calc(100vw - 32px));
+  max-height: min(610px, calc(100vh - 80px));
+  box-sizing: border-box;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 7px;
+  background-color: var(--surface, #fff);
+  opacity: 1;
+  box-shadow: 0 16px 42px rgba(17, 24, 32, 0.22);
+}
+
+.verticalCompact .chooserPanel,
+.horizontalCompact .chooserPanel {
+  position: fixed;
+  top: 16px;
+  right: auto;
+  left: 50%;
+  z-index: 1000;
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  transform: translateX(-50%);
+}
+
+.verticalCompact .harmonyChooserPanel,
+.horizontalCompact .harmonyChooserPanel {
+  width: min(590px, calc(100vw - 32px));
+}
+
+.harmonyChooserPanel { right: auto; left: 0; width: min(590px, calc(100vw - 32px)); }
+.chooserSupport,
+.emptyChooser {
+  margin: 0;
+  color: var(--muted, #657384);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.chooserGrid,
+.recipeChooserGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.recipeChooserGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.chooserCard {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  min-height: 96px;
+  padding: 8px;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 5px;
+  background: var(--control-bg, #eef3f8);
+  color: var(--text, #18202a);
+  text-align: left;
+  cursor: pointer;
+}
+.recipeChooserGrid .chooserCard { min-height: 142px; }
+.chooserCardSelected { box-shadow: inset 0 0 0 2px var(--accent, #1f5f8b); }
+.chooserCard strong { font-size: 12px; line-height: 1.1; }
+.chooserCard em { font-size: 10px; font-weight: 650; line-height: .95; }
+.chooserCard small { color: var(--muted, #657384); font-size: 10px; line-height: .95; }
+
+.cardPreview {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.cardPreview > span { flex: 1 1 0; min-width: 1px; }
+
+.categoryFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.categoryFilters button,
+.applyButton,
+.saveDialog button {
+  min-height: 28px;
+  padding: 4px 9px;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 4px;
+  background: var(--control-bg, #eef3f8);
+  color: var(--text, #18202a);
+  cursor: pointer;
+}
+.categoryFilters button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--accent, #1f5f8b); }
+.categoryFilters .randomizeButton { margin-left: auto; font-weight: 700; }
+
+.savedPaletteLoad {
+  display: contents;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.savedPaletteDelete {
+  position: absolute;
+  top: 28px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 4px;
+  background: var(--surface, #fff);
+  color: var(--text, #18202a);
+  cursor: pointer;
+}
+
+.applyButton { justify-self: end; font-weight: 700; }
+
+.metadataWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-top: 1px solid var(--border, #dbe2ea);
+  scrollbar-width: thin;
+}
+.metadataTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: var(--text, #18202a);
+  font-size: 10px;
+  line-height: .95;
+}
+.metadataTable th,
+.metadataTable td {
+  padding: 5px 5px;
+  vertical-align: top;
+  text-align: right;
+}
+.metadataTable thead th {
+  font-size: 11.5px;
+  font-weight: 750;
+}
+.metadataTable thead th:first-child,
+.metadataTable tbody th { width: 62px; }
+.metadataTable thead th:nth-child(2),
+.metadataTable tbody td:nth-child(2) { width: 36px; }
+.metadataTable tbody th { font-size: 11px; }
+.metadataTable tbody td:nth-child(2) { color: var(--muted, #657384); font-weight: 650; }
+.metadataSection { border-top: 1px solid color-mix(in srgb, var(--border, #dbe2ea) 55%, transparent); }
+.metadataTable td em,
+.metadataTable td a {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted, #657384);
+  font-size: 8.5px;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hexValue { display: block; margin-bottom: 3px; font-size: 11px; }
+
+.savedSwatchesBlock {
+  position: relative;
+  z-index: 1;
+  border-radius: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  padding: 12px 0 0;
+}
+.paletteHeader > div:first-child { min-width: 0; }
+.paletteHeader p { margin: 3px 0 0; color: var(--muted, #657384); font-size: 11px; font-weight: 400; }
+
+.paletteStrip {
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 5px;
+}
+.paletteItem { height: 34px; aspect-ratio: auto; }
+.paletteColor { position: relative; overflow: visible; padding: 0 18px 0 6px; }
+.savedHex { font-size: 9.5px; font-weight: 650; }
+.removePaletteColor {
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: .7;
+}
+
+.swatchBand { overflow: visible; }
+.swatchSegment:first-child { border-radius: 4px 0 0 4px; }
+.swatchSegment:last-child { border-radius: 0 4px 4px 0; }
+.swatchSegment,
+.paletteItem { position: relative; }
+.colorTooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  z-index: 50;
+  display: none;
+  width: max-content;
+  max-width: 260px;
+  padding: 7px 9px;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  color: var(--text, #18202a);
+  box-shadow: 0 8px 24px rgba(17, 24, 32, .2);
+  font-size: 10px;
+  line-height: 1.18;
+  text-align: left;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.colorTooltip strong,
+.colorTooltip span,
+.colorTooltip small { display: block; }
+.colorTooltip em { font-weight: 400; }
+.colorTooltip small { margin-top: 4px; color: var(--muted, #657384); }
+.swatchSegment:hover .colorTooltip,
+.swatchSegment:focus-visible .colorTooltip,
+.paletteColor:hover .colorTooltip,
+.paletteColor:focus-visible .colorTooltip { display: block; }
+
+.saveIcon::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.saveIcon::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 3px;
+  width: 5px;
+  height: 4px;
+  border: 1.5px solid currentColor;
+  box-shadow: 0 7px 0 -1px currentColor;
+}
+
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(17, 24, 32, .42);
+}
+.saveDialog {
+  display: grid;
+  gap: 9px;
+  width: min(360px, 100%);
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid var(--border, #dbe2ea);
+  border-radius: 7px;
+  background: var(--surface, #fff);
+  color: var(--text, #18202a);
+  box-shadow: 0 18px 60px rgba(17, 24, 32, .3);
+}
+.saveDialog p { margin: 0; color: var(--muted, #657384); font-size: 12px; }
+.saveDialog label { font-size: 12px; font-weight: 700; }
+.saveDialog input { min-height: 34px; padding: 5px 8px; border: 1px solid var(--border, #dbe2ea); border-radius: 4px; background: var(--surface, #fff); color: var(--text, #18202a); }
+.saveDialog > div { display: flex; justify-content: flex-end; gap: 7px; }
+.errorMessage { margin: 0; color: #b42318; font-size: 11px; }
+.attribution { margin: 0; color: var(--muted, #657384); font-size: 9px; text-align: right; }
+
+.dark .chooser > summary,
+.dark .chooserPanel,
+.dark .savedPaletteDelete,
+.dark .saveDialog,
+.dark .saveDialog input,
+.dark .colorTooltip { background: var(--surface); border-color: var(--border); color: var(--text); }
+.dark .chooserCard,
+.dark .categoryFilters button,
+.dark .applyButton,
+.dark .saveDialog button { background: var(--control-bg); border-color: var(--border); color: var(--text); }
+
+@media (max-width: 760px) {
+  .recipeChooserGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chooserPanel { position: fixed; top: 16px; right: 16px; left: 16px; width: auto; max-height: calc(100vh - 32px); }
+}
+
+@media (max-width: 520px) {
+  .controlRow { grid-template-columns: 1fr; }
+  .verticalCompact .controlRow,
+  .horizontalCompact .controlRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .recipeChooserGrid,
+  .chooserGrid { grid-template-columns: 1fr; }
+  .paletteHeader { align-items: flex-start; }
+  .paletteTools { flex-wrap: wrap; justify-content: flex-end; }
 }

@@ -2,6 +2,8 @@
 
 import { PointerEvent, useState } from "react";
 import styles from "./ColorHarmonyPicker.module.css";
+import { ColorNameTooltip } from "./ColorNameTooltip";
+import { ColorNames } from "./colorNames";
 import { GeneratedColor } from "./colorHarmony.types";
 
 type SavedPaletteStripProps = {
@@ -10,6 +12,7 @@ type SavedPaletteStripProps = {
   onSelect: (color: GeneratedColor) => void;
   onRemove: (id: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
+  namesByHex: Record<string, ColorNames>;
 };
 
 type DragState = {
@@ -17,7 +20,14 @@ type DragState = {
   hasMoved: boolean;
 };
 
-export function SavedPaletteStrip({ colors, activeHex, onSelect, onRemove, onReorder }: SavedPaletteStripProps) {
+function swatchInk(hex: string) {
+  const channels = [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16) / 255);
+  const linear = channels.map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+  const luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  return luminance >= 0.19 ? "rgba(16,17,20,.72)" : "rgba(247,248,250,.82)";
+}
+
+export function SavedPaletteStrip({ colors, activeHex, onSelect, onRemove, onReorder, namesByHex }: SavedPaletteStripProps) {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const draggingId = dragState?.id ?? null;
 
@@ -57,13 +67,15 @@ export function SavedPaletteStrip({ colors, activeHex, onSelect, onRemove, onReo
             <button
               type="button"
               className={`${styles.paletteColor} ${active ? styles.activePaletteColor : ""}`}
-              style={{ background: color.hex }}
+              style={{ background: color.hex, color: swatchInk(color.hex) }}
               aria-label={`Make ${color.hex} active`}
               onClick={() => {
                 if (!dragState?.hasMoved) onSelect(color);
               }}
-              title={`${color.hex} - make active`}
-            />
+            >
+              <span className={styles.savedHex}>{color.hex}</span>
+              <ColorNameTooltip hex={color.hex} names={namesByHex[color.hex.toUpperCase()]} instruction="Click to make active. Drag to reorder." />
+            </button>
             <button
               type="button"
               className={styles.removePaletteColor}
@@ -74,7 +86,7 @@ export function SavedPaletteStrip({ colors, activeHex, onSelect, onRemove, onReo
                 onRemove(color.id);
               }}
             >
-              x
+              ×
             </button>
           </div>
         );

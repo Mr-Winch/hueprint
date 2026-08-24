@@ -6,13 +6,14 @@ $RepositoryRoot = Split-Path -Parent $InkscapeRoot
 $DownloadRoot = Join-Path $InkscapeRoot "download"
 
 if (-not $Version) {
-    $Version = (Get-Content -LiteralPath (Join-Path $RepositoryRoot "package.json") -Raw | ConvertFrom-Json).version
+    $Version = (Get-Content -LiteralPath (Join-Path $InkscapeRoot "VERSION") -Raw).Trim()
 }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
     throw "HuePrint package versions must use semantic versioning, for example 1.5.0."
 }
 
 $RuntimeFiles = @(
+    "VERSION",
     "hueprint.inx",
     "hueprint.py",
     "hueprint_palette.py",
