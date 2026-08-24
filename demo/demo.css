@@ -156,7 +156,7 @@ select {
 
 .demoSurface {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .demoSurface[data-layout="horizontal"] > * {

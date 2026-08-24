@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.6.0 — 2026-08-23
+
+- Brought the React edition up to the Current Palette, Saved Swatches, and reusable Saved Palettes workflow introduced in the Inkscape extension.
+- Added Inkscape-compatible GIMP Palette (GPL) import and export while retaining HuePrint JSON import/export and legacy JSON-array compatibility.
+- Preserved GPL swatch labels, input order, safe deduplication, palette names, and configurable GPL column counts.
+- Replaced the React harmony and recipe dropdowns with visual, responsive chooser cards containing live previews and descriptions synchronized from the extension.
+- Exposed category-aware recipe randomization in the React interface and identified randomized palettes in the chooser.
+- Added named Saved Palettes with previews, loading, overwriting by name, deletion, controlled/uncontrolled state, and demo persistence.
+- Added a responsive Current Palette metadata table for HEX, NTC names, optional Colornames.org names, RGB, CMYK, HSL, and OKLCH.
+- Added the complete offline NTC library to React through generated TypeScript data synchronized from the attributed extension source.
+- Added an optional asynchronous community-name resolver with browser caching, loading/offline/unnamed states, and exact Colornames.org proposal links.
+- Raised React harmony and tonal palettes to sixteen swatches while keeping recipe and fixed-harmony limits aligned with their formulas.
+- Added a generic `onApplyPalette` integration callback, slimmer labeled Saved Swatches, and responsive full-width palette sections.
+- Refined both compact layouts: their three visual choosers remain on one row, metadata is omitted, and opaque chooser panels stay above the palette content.
+- Made Escape close Harmony, Palette Recipes, or Saved Palettes without changing the current selection and return keyboard focus to its chooser.
+- Unified the React and Inkscape editions under the public HuePrint 1.6.0 version and rebuilt every distributable with matching labels.
+- Added SHA-256 checksum files for every release ZIP while retaining the gallery-compatible MD5 checksum.
+- Added GPL, JSON, NTC, and sixteen-swatch regression coverage and visually verified wide, compact, light, and dark layouts.
+
+## 1.5.0 — 2026-08-12
+
+- Added human-readable color names beneath HEX metadata for every Current Palette color.
+- Added identified, italic NTC Library and Colornames.org name lines to Current Palette and Saved Swatch tooltips.
+- Bundled the official NTC name list for completely offline matching and credited its creator, Chirag Mehta, in the HuePrint header.
+- Added non-blocking Colornames.org lookups with persistent successful-result caching, obsolete-request cancellation, and an explicit “No connection” state when the service cannot be reached.
+- Routed Colornames.org requests through Windows’ native WinINet certificate store when running inside Inkscape, fixing TLS validation failures without disabling certificate verification.
+- Turned unnamed Colornames.org metadata into a compact “Name this color” link that opens the exact community proposal page for that HEX value.
+- Added a best-effort HuePrint AppUserModelID, GLib application name, window role, and window-level shell identity for Windows.
+- Known limitation: some Windows/Inkscape configurations still label the running extension as Python in the taskbar because Inkscape launches it through its bundled Python interpreter.
+- Standardized every distributable ZIP on versioned filenames and included both one-click install and uninstall tools in every package.
+- Added a packaging script that reads the canonical project version, refuses unversioned releases, and builds the Inkscape, Windows, and Gallery packages consistently.
+- Documented the external naming sources, licenses, connectivity behavior, and attribution notices.
+
 ## 1.4.5 — 2026-07-31
 
 - Made loaded Saved Palettes behave as reusable geometry templates instead of falling back to Analogous when the active color changes.

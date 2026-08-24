@@ -311,7 +311,7 @@ export function customHarmonyColors(color: string, transforms: CustomHarmonyTran
   });
 }
 export function generateHarmonyColors(color: string, rule: HarmonyRule, count: number, fallbackHue = 0): GeneratedColor[] {
-  const safeCount = clamp(Math.floor(count), 2, 8);
+  const safeCount = clamp(Math.floor(count), 2, 16);
   const baseOklch = hexToOklch(color, fallbackHue);
   const baseHsl = hexToHsl(color, fallbackHue);
 

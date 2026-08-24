@@ -125,3 +125,9 @@ test("every HTML palette recipe is present once and assigned to a current catego
   assert.equal(Object.keys(recipeCategories).length, recipes.length);
   assert.ok(recipes.every((recipe) => Boolean(recipeCategories[recipe])));
 });
+
+test("React harmonies and tonal scales support sixteen Current Palette swatches", () => {
+  assert.equal(generateHarmonyColors("#3366FF", "analogous", 16).length, 16);
+  assert.equal(generateHarmonyColors("#3366FF", "polygon", 16).length, 16);
+  assert.equal(generateTints("#3366FF", 16).length, 16);
+});

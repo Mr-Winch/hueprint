@@ -4,13 +4,13 @@ title Install HuePrint for Inkscape
 set "SOURCE=%~dp0"
 set "TARGET=%APPDATA%\inkscape\extensions\hueprint"
 echo.
-echo  HuePrint for Inkscape
-echo  ---------------------
+echo  HuePrint 1.6.0 for Inkscape
+echo  ---------------------------
 echo.
-for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_gui_v2.py hueprint-icon.svg) do if not exist "%SOURCE%%%F" goto missing
+for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_color_names.py hueprint_ntc.js hueprint_gui_v2.py hueprint-icon.svg THIRD_PARTY_NOTICES.md) do if not exist "%SOURCE%%%F" goto missing
 if not exist "%TARGET%" mkdir "%TARGET%"
 if errorlevel 1 goto failed
-for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_gui_v2.py hueprint-icon.svg) do (
+for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_color_names.py hueprint_ntc.js hueprint_gui_v2.py hueprint-icon.svg THIRD_PARTY_NOTICES.md) do (
   copy /Y "%SOURCE%%%F" "%TARGET%\%%F" >nul
   if errorlevel 1 goto failed
 )
@@ -18,7 +18,7 @@ echo  Installation complete!
 echo.
 echo  1. Close every Inkscape window.
 echo  2. Reopen Inkscape.
-echo  3. Choose Extensions ^> Color ^> HuePrint 1.4.5.
+echo  3. Choose Extensions ^> Color ^> HuePrint 1.6.0.
 echo.
 echo  Installed in:
 echo  %TARGET%
