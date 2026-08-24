@@ -15,7 +15,8 @@
 - Added a generic `onApplyPalette` integration callback, slimmer labeled Saved Swatches, and responsive full-width palette sections.
 - Refined both compact layouts: their three visual choosers remain on one row, metadata is omitted, and opaque chooser panels stay above the palette content.
 - Made Escape close Harmony, Palette Recipes, or Saved Palettes without changing the current selection and return keyboard focus to its chooser.
-- Decoupled the React package version from the Inkscape package version so React releases cannot accidentally relabel extension ZIPs.
+- Unified the React and Inkscape editions under the public HuePrint 1.6.0 version and rebuilt every distributable with matching labels.
+- Added SHA-256 checksum files for every release ZIP while retaining the gallery-compatible MD5 checksum.
 - Added GPL, JSON, NTC, and sixteen-swatch regression coverage and visually verified wide, compact, light, and dark layouts.
 
 ## 1.5.0 — 2026-08-12

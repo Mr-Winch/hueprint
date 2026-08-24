@@ -9,7 +9,7 @@ if (-not $Version) {
     $Version = (Get-Content -LiteralPath (Join-Path $InkscapeRoot "VERSION") -Raw).Trim()
 }
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
-    throw "HuePrint package versions must use semantic versioning, for example 1.5.0."
+    throw "HuePrint package versions must use semantic versioning, for example 1.6.0."
 }
 
 $RuntimeFiles = @(
@@ -72,6 +72,11 @@ try {
         Copy-Item -Destination $Tests
     $GalleryPackage = Join-Path $DownloadRoot "HuePrint-$Version-Inkscape-Gallery.zip"
     Compress-Archive -Path "$Stage\*" -DestinationPath $GalleryPackage -CompressionLevel Optimal -Force
+    foreach ($Package in @($InkscapePackage, $WindowsPackage, $GalleryPackage)) {
+        $PackageName = Split-Path -Leaf $Package
+        $Sha256 = (Get-FileHash -LiteralPath $Package -Algorithm SHA256).Hash.ToLowerInvariant()
+        Set-Content -LiteralPath "$Package.sha256" -Value "$Sha256  $PackageName" -Encoding ascii
+    }
     $Md5 = (Get-FileHash -LiteralPath $GalleryPackage -Algorithm MD5).Hash.ToLowerInvariant()
     Set-Content -LiteralPath "$GalleryPackage.md5" -Value "$Md5  HuePrint-$Version-Inkscape-Gallery.zip" -Encoding ascii
 

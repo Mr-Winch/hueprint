@@ -465,7 +465,7 @@ class NativePickerHud(Gtk.DrawingArea):
         return False
 class HuePrintDialog(Gtk.Dialog):
     def __init__(self):
-        super().__init__(title="HuePrint © — 1.5.0",flags=0); self.set_default_size(1,900); self.set_resizable(True)
+        super().__init__(title="HuePrint © — 1.6.0",flags=0); self.set_default_size(1,900); self.set_resizable(True)
         self.set_role("HuePrint"); self.set_name("HuePrint")
         self.add_button("Cancel",Gtk.ResponseType.CANCEL)
         try:
@@ -480,7 +480,7 @@ class HuePrintDialog(Gtk.Dialog):
         root=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8); root.set_border_width(14); self.get_content_area().pack_start(root,True,True,0)
         header=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=8)
         title_box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=0); self.main_title=Gtk.Label(); self.main_title.set_markup("<span size='28000' weight='bold'>HuePrint ©</span>"); self.main_title.set_xalign(0); self.main_title.get_style_context().add_class("hueprint-title"); title_box.pack_start(self.main_title,False,False,0)
-        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony &amp; palette studio · 1.5.0 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony, recipe, or swatch for details. Drag the color wheel to change hue and lightness.</span>\n<span size='9000'>Color naming: NTC by Chirag Mehta · community names by Colornames.org</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
+        subtitle=Gtk.Label(); subtitle.set_markup("<span line_height='0.95'><span size='10000'>Color harmony &amp; palette studio · 1.6.0 · © 2026 Winton Diaz Dauhajre</span>\n<span size='10000'>Hover over any harmony, recipe, or swatch for details. Drag the color wheel to change hue and lightness.</span>\n<span size='9000'>Color naming: NTC by Chirag Mehta · community names by Colornames.org</span></span>"); subtitle.set_xalign(0); title_box.pack_start(subtitle,False,False,0)
         header.pack_start(title_box,True,True,0)
         self.theme_toggle=Gtk.ToggleButton(); self.theme_toggle.set_size_request(36,36); self.theme_toggle.set_valign(Gtk.Align.CENTER); self.theme_toggle.set_active(self.initial_dark); _set_icon(self.theme_toggle,"sun" if self.theme_toggle.get_active() else "moon"); self.theme_toggle.connect("toggled",self.theme_changed); header.pack_end(self.theme_toggle,False,False,0); root.pack_start(header,False,False,0)
         workspace=Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,spacing=18); root.pack_start(workspace,True,True,0)

@@ -1,6 +1,6 @@
 # HuePrint for Inkscape
 
-HuePrint 1.5.0 is a visual color-harmony and palette-management studio for Inkscape 1.4.x. It includes the interactive color wheel, harmony geometry, 70 curated HuePrint palette recipes across tonal, contrast, background-aware, daring, semantic, and other design categories, dual-source color naming, Saved Swatches, reusable Saved Palettes, JSON/GPL import, and Inkscape-compatible GPL export.
+HuePrint 1.6.0 is a visual color-harmony and palette-management studio for Inkscape 1.4.x. It includes the interactive color wheel, harmony geometry, 70 curated HuePrint palette recipes across tonal, contrast, background-aware, daring, semantic, and other design categories, dual-source color naming, Saved Swatches, reusable Saved Palettes, JSON/GPL import, and Inkscape-compatible GPL export.
 
 Tested with Inkscape 1.4.4 on Windows. Author: Winton Diaz Dauhajre ([Mr-Winch](https://github.com/Mr-Winch)). License: MIT.
 
@@ -16,24 +16,24 @@ This creates a continuous process: discover relationships with harmonies and rec
 
 You do not need to program anything or install Python.
 
-1. Download [`HuePrint-Inkscape-1.5.0.zip`](download/HuePrint-Inkscape-1.5.0.zip). Do **not** unpack it.
+1. Download [`HuePrint-Inkscape-1.6.0.zip`](download/HuePrint-Inkscape-1.6.0.zip). Do **not** unpack it.
 2. Open Inkscape.
 3. Open **Extensions → Manage Extensions**.
 4. Choose **Install Packages**.
-5. Click the folder/disk button and select `HuePrint-Inkscape-1.5.0.zip`.
+5. Click the folder/disk button and select `HuePrint-Inkscape-1.6.0.zip`.
 6. Close every Inkscape window, then reopen Inkscape.
-7. Open **Extensions → Color → HuePrint © 1.5.0**.
+7. Open **Extensions → Color → HuePrint © 1.6.0**.
 
 ## Windows: double-click installer
 
 If **Manage Extensions** is unavailable:
 
-1. Download [`HuePrint-Windows-1.5.0.zip`](download/HuePrint-Windows-1.5.0.zip).
+1. Download [`HuePrint-Windows-1.6.0.zip`](download/HuePrint-Windows-1.6.0.zip).
 2. Right-click the ZIP and choose **Extract All**.
 3. Open the extracted folder.
 4. Double-click **Install HuePrint.cmd**.
 5. Close and reopen Inkscape.
-6. Open **Extensions → Color → HuePrint © 1.5.0**.
+6. Open **Extensions → Color → HuePrint © 1.6.0**.
 
 Windows may warn that the installer is not digitally signed. Choose **More info → Run anyway**, or use Inkscape's package installer above.
 
@@ -50,7 +50,7 @@ HuePrint release ZIPs always include the semantic version in their filename. Unv
 ## Using HuePrint
 
 1. Select objects if you want HuePrint to recolor them.
-2. Open **Extensions → Color → HuePrint © 1.5.0**.
+2. Open **Extensions → Color → HuePrint © 1.6.0**.
 3. Click or drag around the color wheel, enter a hex color, use the gradient lightness slider, or use the eyedropper to sample any visible screen color with a live preview tile.
 4. Choose a harmony, open **Palette recipe**, or load a reusable palette from **Saved Palettes**. A loaded Saved Palette acts as a reusable geometry template: move its active color on the wheel, enter a new HEX value, adjust lightness, or pick a screen color and HuePrint preserves every hue/lightness relationship and the complete swatch count. Use **Randomize** for a validated variation from the active recipe category.
 5. Click the **+** beside Active Color to place it in **Saved Swatches**, or use the palette button there to add every color from **Current Palette**.

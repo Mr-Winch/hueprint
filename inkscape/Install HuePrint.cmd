@@ -4,7 +4,7 @@ title Install HuePrint for Inkscape
 set "SOURCE=%~dp0"
 set "TARGET=%APPDATA%\inkscape\extensions\hueprint"
 echo.
-echo  HuePrint 1.5.0 for Inkscape
+echo  HuePrint 1.6.0 for Inkscape
 echo  ---------------------------
 echo.
 for %%F in (hueprint.inx hueprint.py hueprint_palette.py hueprint_recipes.py hueprint_recipe_metadata.py hueprint_color_names.py hueprint_ntc.js hueprint_gui_v2.py hueprint-icon.svg THIRD_PARTY_NOTICES.md) do if not exist "%SOURCE%%%F" goto missing
@@ -18,7 +18,7 @@ echo  Installation complete!
 echo.
 echo  1. Close every Inkscape window.
 echo  2. Reopen Inkscape.
-echo  3. Choose Extensions ^> Color ^> HuePrint 1.5.0.
+echo  3. Choose Extensions ^> Color ^> HuePrint 1.6.0.
 echo.
 echo  Installed in:
 echo  %TARGET%

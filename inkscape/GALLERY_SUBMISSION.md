@@ -1,9 +1,9 @@
 # Inkscape Extensions Gallery submission
 
-- **Upload file:** HuePrint-1.5.0-Inkscape-Gallery.zip
-- **Signature file:** HuePrint-1.5.0-Inkscape-Gallery.zip.md5 (MD5 fallback accepted by the Inkscape submission guide)
+- **Upload file:** HuePrint-1.6.0-Inkscape-Gallery.zip
+- **Checksum files:** HuePrint-1.6.0-Inkscape-Gallery.zip.sha256 and HuePrint-1.6.0-Inkscape-Gallery.zip.md5 (MD5 fallback accepted by the Inkscape submission guide)
 - **Title:** HuePrint — Color Harmony & Palette Studio
-- **Version:** 1.5.0
+- **Version:** 1.6.0
 - **Author:** Winton Diaz Dauhajre
 - **Username:** Mr-Winch
 - **License:** MIT
@@ -12,7 +12,7 @@
 - **Supported versions:** Inkscape 1.4.x
 - **Repository:** https://github.com/Mr-Winch/hueprint
 - **Demo:** https://mr-winch.github.io/hueprint/
-- **Menu location:** Extensions → Color → HuePrint © 1.5.0
+- **Menu location:** Extensions → Color → HuePrint © 1.6.0
 - **Icon:** hueprint-icon.svg
 - **Package utilities:** `Install HuePrint.cmd`, `Uninstall HuePrint.cmd`, `install.ps1`, and `uninstall.ps1`
 

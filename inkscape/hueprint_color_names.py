@@ -39,7 +39,7 @@ def _windows_json(url, timeout=4):
     wininet.InternetSetOptionW.restype = ctypes.c_bool
     wininet.InternetCloseHandle.argtypes = [handle_type]
     wininet.InternetCloseHandle.restype = ctypes.c_bool
-    session = wininet.InternetOpenW("Mozilla/5.0 (Windows NT 10.0; Win64; x64) HuePrint/1.5", 0, None, None, 0)
+    session = wininet.InternetOpenW("Mozilla/5.0 (Windows NT 10.0; Win64; x64) HuePrint/1.6", 0, None, None, 0)
     if not session:
         raise ctypes.WinError(ctypes.get_last_error())
     request = None
@@ -203,7 +203,7 @@ class ColorNameResolver:
 
     def _lookup_colornames(self, color):
         url = f"{self.API_URL}?{urlencode({'hex': color[1:]})}"
-        request = Request(url, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) HuePrint/1.5"})
+        request = Request(url, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) HuePrint/1.6"})
         try:
             if sys.platform.startswith("win") and self.opener is urlopen:
                 payload = _windows_json(url, self.timeout)

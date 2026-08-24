@@ -43,6 +43,19 @@ class HuePrintDistributionTests(unittest.TestCase):
         expected = checksum.read_text(encoding="ascii").split()[0]
         self.assertEqual(hashlib.md5(package.read_bytes()).hexdigest(), expected)
 
+    def test_release_sha256_checksums_match_packages(self):
+        package_names = (
+            f"HuePrint-Inkscape-{self.version}.zip",
+            f"HuePrint-Windows-{self.version}.zip",
+            f"HuePrint-{self.version}-Inkscape-Gallery.zip",
+        )
+        for package_name in package_names:
+            with self.subTest(package=package_name):
+                package = self.download / package_name
+                checksum = package.with_suffix(package.suffix + ".sha256")
+                expected = checksum.read_text(encoding="ascii").split()[0]
+                self.assertEqual(hashlib.sha256(package.read_bytes()).hexdigest(), expected)
+
     def test_package_builder_enforces_semantic_versioned_names(self):
         source = (self.inkscape / "build_packages.ps1").read_text(encoding="utf-8")
         self.assertIn('HuePrint-Inkscape-$Version.zip', source)

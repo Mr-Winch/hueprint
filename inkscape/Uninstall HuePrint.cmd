@@ -5,7 +5,7 @@ set "TARGET=%APPDATA%\inkscape\extensions\hueprint"
 set "DATA=%LOCALAPPDATA%\HuePrint"
 
 echo.
-echo  HuePrint 1.5.0 uninstaller
+echo  HuePrint 1.6.0 uninstaller
 echo  --------------------------
 echo.
 echo  This will remove HuePrint from:
