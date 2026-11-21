@@ -86,7 +86,9 @@ export function SavedPaletteStrip({ colors, activeHex, onSelect, onRemove, onReo
                 onRemove(color.id);
               }}
             >
-              ×
+              <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                <path d="m3 3 6 6m0-6-6 6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
         );

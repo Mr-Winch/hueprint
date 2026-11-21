@@ -1,0 +1,232 @@
+:root {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+  font-synthesis: none;
+  --desktop-bg: #eef1f5;
+  --desktop-surface: #fff;
+  --desktop-border: #d6dce5;
+  --desktop-muted: #526173;
+  --desktop-accent: #245f85;
+  --desktop-text: #1f2937;
+  --desktop-control: #f7f9fb;
+  --desktop-error: #b12736;
+  color: var(--desktop-text);
+  background: var(--desktop-bg);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --desktop-bg: #17181d;
+  --desktop-surface: #22252d;
+  --desktop-border: #404652;
+  --desktop-muted: #b2bdce;
+  --desktop-accent: #89c8ef;
+  --desktop-text: #e5e7eb;
+  --desktop-control: #2e333e;
+  --desktop-error: #ff9ba6;
+}
+
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--desktop-border) transparent; }
+body { margin: 0; min-width: 400px; }
+button, input { font: inherit; }
+::selection { background: #245f85; color: #fff; }
+
+.desktopShell {
+  --desktop-inset: 24px;
+  height: 100dvh;
+  max-width: 1160px;
+  margin: auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.appHeader, .paintDock {
+  background: var(--desktop-bg);
+  padding-inline: var(--desktop-inset);
+}
+.appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--desktop-border);
+}
+.identity { display: flex; align-items: center; gap: 8px; }
+.identity h1 { font-size: 21px; line-height: 1.2; margin: 0; }
+.identity h1 span { font-size: 13px; font-weight: 400; color: var(--desktop-muted); }
+.headerControls, .paintActions, .selectionActions, .targets, .themeButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.appHeader button, .deliveryBar button, .deliveryBar input, .paintDock button {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid var(--desktop-border);
+  border-radius: 5px;
+  background: var(--desktop-control);
+  color: var(--desktop-text);
+  font-size: 12px;
+}
+.appHeader button, .deliveryBar button, .paintDock button { font-weight: 600; cursor: pointer; }
+.desktopShell :is(.appHeader, .deliveryBar, .paintDock) button:hover:not(:disabled) {
+  border-color: var(--desktop-accent);
+}
+.desktopShell :is(.appHeader, .deliveryBar, .paintDock) :is(button, input):focus-visible {
+  outline: 2px solid var(--desktop-accent);
+  outline-offset: 2px;
+}
+.desktopShell :is(.appHeader, .deliveryBar, .paintDock) button:disabled { opacity: .48; cursor: default; }
+.connectionButton { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.connectionDot { width: 7px; height: 7px; border-radius: 50%; background: var(--desktop-muted); }
+.connectionDot[data-connected="true"] { background: #219164; }
+.themeButtons, .targets {
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--desktop-border);
+  border-radius: 6px;
+}
+.themeButtons button, .targets button {
+  display: grid;
+  place-items: center;
+  min-height: 28px;
+  border-color: transparent;
+  background: transparent;
+  padding: 3px 8px;
+}
+.themeButtons button { width: 29px; padding: 0; }
+.themeButtons button[aria-pressed="true"], .targets button[aria-pressed="true"] {
+  background: var(--desktop-surface);
+  border-color: var(--desktop-border);
+  color: var(--desktop-accent);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.workspaceScroll {
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 16px var(--desktop-inset);
+}
+.deliveryBar {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) auto auto;
+  align-items: center;
+  justify-content: start;
+  gap: 6px 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--desktop-border);
+}
+.deliveryBar h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.deliveryBar label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--desktop-muted);
+  white-space: nowrap;
+}
+.deliveryBar input { width: 100%; min-width: 0; caret-color: var(--desktop-accent); }
+.deliveryBar > button { white-space: nowrap; }
+.swatchImportTrigger { display: inline-flex; align-items: center; gap: 4px; anchor-name: --swatch-import; }
+.swatchImportOptions {
+  position-anchor: --swatch-import;
+  inset: auto;
+  right: anchor(right, var(--desktop-inset, 12px));
+  bottom: anchor(top, 72px);
+  width: min(262px, calc(100vw - 24px));
+  max-height: min(260px, calc(100dvh - 150px));
+  margin: 0 0 6px;
+  padding: 4px;
+  border: 1px solid var(--desktop-border);
+  border-radius: 6px;
+  background: var(--desktop-surface);
+  color: var(--desktop-text);
+  overflow-y: auto;
+}
+.swatchImportOptions button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  background: transparent;
+  border-color: transparent;
+  text-align: left;
+}
+.swatchImportOptions button:focus-visible { outline-offset: -2px; }
+.swatchImportOptions button span:first-child { overflow-wrap: anywhere; }
+.swatchImportOptions button span:last-child { color: var(--desktop-muted); font-variant-numeric: tabular-nums; }
+.desktopShell .primaryButton { color: #fff; background: #245f85; border-color: #245f85; }
+.desktopShell .primaryButton:hover:not(:disabled) { background: #194865; }
+
+.paintDock { padding-block: 9px 6px; border-top: 1px solid var(--desktop-border); }
+.paintActions { justify-content: space-between; }
+.colorChip {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  border: 1px solid #ffffff8c;
+  border-radius: 2px;
+}
+.notice {
+  min-height: 16px;
+  margin: 5px 0 0;
+  color: var(--desktop-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.notice[data-error="true"] { color: var(--desktop-error); }
+
+@media (orientation: portrait) and (min-width: 720px) {
+  .workspaceScroll { scrollbar-gutter: stable both-edges; }
+  .workspaceScroll > section { max-width: 800px; margin-inline: auto; }
+  .workspaceScroll > .desktopPicker {
+    --wheel-size: 184px;
+    --wheel-thickness: 34px;
+    --marker-size: 16px;
+  }
+}
+
+@media (max-width: 719px) {
+  .desktopShell { --desktop-inset: 12px; }
+  .workspaceScroll { padding-block: 9px; scrollbar-gutter: stable both-edges; }
+  .workspaceScroll > section { max-width: 496px; margin-inline: auto; }
+  .workspaceScroll > .desktopPicker {
+    --picker-section-gap: 8px;
+    --picker-panel-gap: 6px;
+    --picker-panel-padding: 7px;
+    --picker-metadata-row-padding: 2px;
+    --picker-saved-swatch-height: 30px;
+  }
+  .identity h1 span { display: block; }
+  .appHeader { gap: 8px; padding-block: 10px; }
+  .headerControls { gap: 5px; }
+  .paintActions, .selectionActions { gap: 5px; }
+  .paintDock button { padding-inline: 7px; }
+  .paintDock { padding-top: 6px; }
+  .deliveryBar { margin-top: 10px; padding-top: 8px; column-gap: 5px; }
+  .deliveryBar > button { padding-inline: 7px; }
+}

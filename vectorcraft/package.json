@@ -1,0 +1,62 @@
+{
+  "name": "hueprint-vectorcraft",
+  "version": "1.0.2",
+  "description": "HuePrint color harmonies and palettes connected to the VectorCraft desktop editor.",
+  "author": "Winton Diaz Dauhajre",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "CODEX_main.cjs",
+  "scripts": {
+    "dev": "node tools/CODEX_development.mjs",
+    "build": "vite build --config CODEX_vite.config.ts",
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "package": "npm run typecheck && npm test && npm run build && node -p \"require('electron')\" && electron-builder --win nsis --x64 && node tools/CODEX_checksum.mjs"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.mrwinch.hueprint.vectorcraft",
+    "productName": "HuePrint for VectorCraft",
+    "executableName": "CODEX_HuePrint",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release/${version}"
+    },
+    "files": [
+      "CODEX_main.cjs",
+      "CODEX_preload.cjs",
+      "CODEX_connection.cjs",
+      "CODEX_operations.cjs",
+      "CODEX_screen_picker.cjs",
+      "CODEX_screen_preload.cjs",
+      "screen-picker.html",
+      "dist/**/*",
+      "assets/**/*",
+      "package.json",
+      "README.md",
+      "LICENSE",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/hueprint.png",
+      "artifactName": "CODEX_HuePrint-VectorCraft-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "HuePrint for VectorCraft",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": false
+    }
+  }
+}

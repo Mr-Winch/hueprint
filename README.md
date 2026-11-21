@@ -4,6 +4,8 @@ A reusable React + TypeScript studio for creating, discovering, and managing pal
 
 Live demo: https://mr-winch.github.io/hueprint/
 
+Windows desktop integration: [HuePrint for VectorCraft](vectorcraft/README.md), with a redistributable installer, direct fill/stroke application and native swatch groups.
+
 It includes a color wheel with radial lightness, visible harmony geometry, visual harmony and recipe browsers, generated swatches, reusable named palettes, GPL/JSON exchange, and production color metadata.
 
 ## Features
@@ -21,7 +23,7 @@ It includes a color wheel with radial lightness, visible harmony geometry, visua
 - GPL and HuePrint JSON import/export with legacy JSON compatibility
 - Category-aware randomized palette exploration
 - Custom harmony rules store OKLCH transforms from the anchor color, not fixed colors
-- Four layout modes for wide surfaces and narrow editor panels
+- Five layout modes for wide surfaces and narrow editor panels
 
 ## Palette creation and management
 
@@ -81,7 +83,7 @@ export interface ColorHarmonyPickerProps {
   maxSwatches?: number;
   showGeometryOverlay?: boolean;
   theme?: "light" | "dark";
-  layout?: "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact";
+  layout?: "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact" | "portrait";
   className?: string;
 }
 ```
@@ -90,7 +92,7 @@ export interface ColorHarmonyPickerProps {
 
 The component supports `theme="light"` and `theme="dark"`. It is intentionally self-contained and uses `ColorHarmonyPicker.module.css`. You can theme it by overriding or editing CSS variables such as `--wheel-size`, `--wheel-thickness`, `--marker-size`, `--overlay-opacity`, `--overlay-stroke-width`, `--swatch-band-height`, `--surface`, `--border`, `--text`, `--muted`, `--accent`, `--control-bg`, and `--strong`.
 
-Use `layout="horizontal"` for the standard wide layout, `layout="vertical"` for narrow panels with wheel metadata beside the donut, `layout="verticalCompact"` for tighter narrow panels, and `layout="horizontalCompact"` for a compact side-by-side layout that wraps cleanly in tighter containers. Compact layouts omit the metadata table while retaining color-name tooltips on their swatches.
+Use `layout="horizontal"` for a wide layout or `layout="vertical"` for a narrow panel with a centered wheel. `layout="portrait"` puts the wheel next to Active Color with the selectors below. The `verticalCompact` and `horizontalCompact` layouts omit the metadata table and keep the color tooltips.
 
 ## Palette Persistence
 

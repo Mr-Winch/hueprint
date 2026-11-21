@@ -6,6 +6,7 @@ import { ColorHarmonyWheel } from "./ColorHarmonyWheel";
 import styles from "./ColorHarmonyPicker.module.css";
 import { GeneratedSwatches } from "./GeneratedSwatches";
 import { HarmonyOverlay } from "./HarmonyOverlay";
+import { DEFAULT_WHEEL_RING_RATIO } from "./colorHarmony.geometry";
 import { HarmonyRuleSelector } from "./HarmonyRuleSelector";
 import { PaletteMetadataTable } from "./PaletteMetadataTable";
 import { PaletteRecipeSelector } from "./PaletteRecipeSelector";
@@ -89,6 +90,7 @@ export function ColorHarmonyPicker({
   onSavedPalettesChange,
   resolveCommunityColorName,
   onApplyPalette,
+  onPickScreenColor,
   initialRule = "analogous",
   initialSwatchCount = 5,
   minSwatches = 2,
@@ -99,6 +101,7 @@ export function ColorHarmonyPicker({
   className,
 }: ColorHarmonyPickerProps) {
   const [activeHex, setActiveHex] = useState(() => sanitizeHex(value));
+  const [wheelRingRatio, setWheelRingRatio] = useState(DEFAULT_WHEEL_RING_RATIO);
   const [rule, setRule] = useState<HarmonyRule>(initialRule);
   const [paletteRecipe, setPaletteRecipe] = useState<PaletteRecipe>("none");
   const [lastHarmonyRule, setLastHarmonyRule] = useState<HarmonyRule>(isTonalRule(initialRule) ? "analogous" : initialRule);
@@ -288,17 +291,24 @@ export function ColorHarmonyPicker({
   const dark = theme === "dark";
   const compact = layout === "verticalCompact" || layout === "horizontalCompact";
   const layoutClass = styles[layout] ?? styles.horizontal;
+  const paletteProps = {
+    colors: generatedColors,
+    activeHex,
+    onSelect: (color: GeneratedColor) => commitColor(color.hex),
+    onAddAll: addAllToPalette,
+    namesByHex,
+  };
   return (
     <section className={`${styles.picker} ${layoutClass} ${dark ? styles.dark : ""} ${className ?? ""}`}>
       <div className={styles.wheelColumn}>
         <div className={styles.wheelWrap}>
-          <ColorHarmonyWheel color={activeHex} hue={activeHue} onChange={commitColor} />
-          {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={paletteRecipe === "none" ? rule : "custom"} recipeMode={paletteRecipe !== "none"} /> : null}
+          <ColorHarmonyWheel color={activeHex} hue={activeHue} onChange={commitColor} onRingRatioChange={setWheelRingRatio} />
+          {showGeometryOverlay ? <HarmonyOverlay colors={generatedColors} activeHex={activeHex} rule={paletteRecipe === "none" ? rule : "custom"} recipeMode={paletteRecipe !== "none"} ringThicknessRatio={wheelRingRatio} /> : null}
         </div>
       </div>
 
       <div className={styles.controlColumn}>
-        <ActiveColorPanel activeHex={activeHex} canAddActiveColor={!activeColorIsSaved} onAddActiveColor={() => addToPalette(activeGeneratedColor)} onColorChange={commitColor} onRuleChange={(nextRule) => { setRandomColors(null); setPaletteRecipe("none"); setRule(nextRule); }} />
+        <ActiveColorPanel activeHex={activeHex} canAddActiveColor={!activeColorIsSaved} onAddActiveColor={() => addToPalette(activeGeneratedColor)} onColorChange={commitColor} onPickScreenColor={onPickScreenColor} onRuleChange={(nextRule) => { setRandomColors(null); setPaletteRecipe("none"); setRule(nextRule); }} />
         <div className={styles.controlRow}>
           <HarmonyRuleSelector activeHex={activeHex} chooserName={chooserName} value={paletteRecipe === "none" && !isTonalRule(rule) ? rule : lastHarmonyRule} onChange={selectHarmonyRule} dimmed={paletteRecipe !== "none"} />
           <PaletteRecipeSelector activeHex={activeHex} chooserName={chooserName} value={paletteRecipe} onChange={selectPaletteRecipe} onRandomize={randomizePalette} randomized={Boolean(randomColors)} dimmed={paletteRecipe === "none"} />
@@ -309,20 +319,37 @@ export function ColorHarmonyPicker({
 
       <section className={styles.currentPaletteBlock} aria-labelledby="current-palette-title">
         <div className={styles.sectionHeader}><h2 id="current-palette-title">Current Palette</h2><SwatchCountControl value={rule === "custom" ? customTransforms.length : swatchCount} min={swatchMin} max={swatchMax} onChange={changeSwatchCount} /></div>
-        <GeneratedSwatches colors={generatedColors} activeHex={activeHex} onSelect={(color) => commitColor(color.hex)} onAddAll={addAllToPalette} namesByHex={namesByHex} />
-        {!compact ? <PaletteMetadataTable colors={generatedColors} namesByHex={namesByHex} /> : null}
+        {compact ? <GeneratedSwatches {...paletteProps} /> : <PaletteMetadataTable {...paletteProps} />}
       </section>
 
       <section className={`${styles.paletteBlock} ${styles.savedSwatchesBlock}`} aria-labelledby="saved-swatches-title">
         <div className={styles.paletteHeader}>
           <div><h2 id="saved-swatches-title">Saved Swatches</h2><p>Load these colors as Current Palette before applying them in the host application.</p></div>
-          <div className={styles.paletteTools}>
-            <button type="button" className={styles.customRuleButton} onClick={() => loadCustomPalette(savedPalette)} disabled={!savedPalette.length}>Use as Current Palette</button>
-            <button type="button" className={styles.squareIconButton} aria-label="Save Saved Swatches as a reusable palette" title="Save as reusable palette" onClick={() => setSaveDialogOpen(true)} disabled={!savedPalette.length}><span className={`${styles.toolIcon} ${styles.saveIcon}`} aria-hidden="true" /></button>
-            <button type="button" className={styles.squareIconButton} aria-label="Import GPL or JSON palette" title="Import GPL or JSON" onClick={() => fileInputRef.current?.click()}><span className={`${styles.toolIcon} ${styles.importIcon}`} aria-hidden="true" /></button>
-            <button type="button" className={styles.squareIconButton} aria-label="Export GPL palette" title="Export GPL for Inkscape" onClick={() => exportPalette("gpl")} disabled={!savedPalette.length}><span className={`${styles.toolIcon} ${styles.exportIcon}`} aria-hidden="true" /></button>
-            <button type="button" className={styles.squareIconButton} aria-label="Export HuePrint JSON" title="Export HuePrint JSON" onClick={() => exportPalette("json")} disabled={!savedPalette.length}>JSON</button>
-            <button type="button" className={styles.squareIconButton} aria-label="Clear Saved Swatches" title="Clear Saved Swatches" onClick={() => updateSavedPalette((current) => current.length ? [] : current)} disabled={!savedPalette.length}><svg className={styles.trashSvgIcon} viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L17.2 18C17.1 20 16.6 21 14 21H10C7.4 21 6.9 20 6.8 18L6 6M4 6H20M8 6L9 3H15L16 6M14 10V17M10 10V17" /></svg></button>
+          <div className={styles.paletteTools} role="group" aria-label="Saved Swatches actions">
+            <button type="button" className={styles.paletteUseButton} onClick={() => loadCustomPalette(savedPalette)} disabled={!savedPalette.length}>
+              <svg className={styles.paletteToolIcon} viewBox="0 0 20 20" aria-hidden="true"><path d="m3 7 7-3.5L17 7l-7 3.5L3 7Zm0 3.5 7 3.5 7-3.5M3 14l7 3.5 7-3.5" /></svg>
+              Use as Current Palette
+            </button>
+            <div className={styles.paletteUtilityTools}>
+              <div className={styles.paletteFileTools} role="group" aria-label="Palette files">
+                <button type="button" aria-label="Save Saved Swatches as a reusable palette" title="Save as reusable palette" onClick={() => setSaveDialogOpen(true)} disabled={!savedPalette.length}>
+                  <svg className={styles.paletteToolIcon} viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 4.5A1.5 1.5 0 0 1 7 3h6a1.5 1.5 0 0 1 1.5 1.5V17L10 14l-4.5 3V4.5Z" /></svg>
+                </button>
+                <button type="button" aria-label="Import GPL or JSON palette" title="Import GPL or JSON" onClick={() => fileInputRef.current?.click()}>
+                  <svg className={styles.paletteToolIcon} viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m-3.5-3.5L10 12l3.5-3.5M4 12v3.5A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5V12" /></svg>
+                </button>
+                <div className={styles.paletteExportTools}>
+                  <button type="button" aria-label="Export GPL palette" title="Export GPL palette" onClick={() => exportPalette("gpl")} disabled={!savedPalette.length}>
+                    <svg className={styles.paletteToolIcon} viewBox="0 0 20 20" aria-hidden="true"><path d="M10 12V3M6.5 6.5 10 3l3.5 3.5M4 12v3.5A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5V12" /></svg>
+                    GPL
+                  </button>
+                  <button type="button" aria-label="Export HuePrint JSON" title="Export HuePrint JSON" onClick={() => exportPalette("json")} disabled={!savedPalette.length}>JSON</button>
+                </div>
+              </div>
+              <button type="button" className={styles.paletteClearButton} aria-label="Clear Saved Swatches" title="Clear Saved Swatches" onClick={() => updateSavedPalette((current) => current.length ? [] : current)} disabled={!savedPalette.length}>
+                <svg className={styles.paletteToolIcon} viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13m-9.5 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M5 5.5l.8 10.1A1.5 1.5 0 0 0 7.3 17h5.4a1.5 1.5 0 0 0 1.5-1.4L15 5.5M8 8.5v5m4-5v5" /></svg>
+              </button>
+            </div>
           </div>
         </div>
         <input ref={fileInputRef} className={styles.fileInput} type="file" accept=".gpl,.json,text/plain,application/json" onChange={importPalette} />

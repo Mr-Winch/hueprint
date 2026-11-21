@@ -88,7 +88,7 @@ export type PaletteRecipe =
 export type GeneratedColorRole = "anchor" | "harmony" | "tint" | "shade" | "tone" | "custom" | "recipe";
 export type GeneratedColorSource = HarmonyRule | Exclude<PaletteRecipe, "none">;
 export type ColorHarmonyTheme = "light" | "dark";
-export type ColorHarmonyLayout = "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact";
+export type ColorHarmonyLayout = "horizontal" | "vertical" | "verticalCompact" | "horizontalCompact" | "portrait";
 export type SavedPaletteInput = string | GeneratedColor;
 
 export interface SavedPaletteCollection {
@@ -127,6 +127,7 @@ export interface ColorHarmonyPickerProps {
   onSavedPalettesChange?: (palettes: SavedPaletteCollection[]) => void;
   resolveCommunityColorName?: CommunityColorNameResolver;
   onApplyPalette?: (colors: GeneratedColor[]) => void;
+  onPickScreenColor?: () => Promise<string | null>;
   initialRule?: HarmonyRule;
   initialSwatchCount?: number;
   minSwatches?: number;

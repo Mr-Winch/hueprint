@@ -144,3 +144,13 @@ vite.config.ts.timestamp-*
 
 # Local npm cache
 .npm-cache/
+
+# VectorCraft desktop build artifacts and local integration test profiles
+vectorcraft/release/
+vectorcraft/.test-profile/
+vectorcraft/.app-test-profile/
+vectorcraft/.app-diagnose-profile/
+vectorcraft/.app-render-profile/
+vectorcraft/test-output/
+vectorcraft/.builder-cache/
+vectorcraft-commands.json

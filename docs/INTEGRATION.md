@@ -10,7 +10,7 @@
 6. Use `savedPalettes` with `onSavedPalettesChange` when the host should own the reusable named-palette library.
 7. Use `onAddToPalette` if the host editor also needs add-event hooks for analytics, toasts, or external palette stores.
 8. Set `theme="light"` or `theme="dark"` to match the host application.
-9. Choose the layout for the available panel width: `horizontal`, `vertical`, `verticalCompact`, or `horizontalCompact`.
+9. Choose `horizontal`, `vertical`, `portrait`, `verticalCompact`, or `horizontalCompact` to suit the editor panel.
 10. Keep `showGeometryOverlay` enabled unless the host UI needs a simplified picker.
 11. Pass `onApplyPalette` only when the host has a meaningful generic Apply action.
 
@@ -53,7 +53,7 @@ HuePrint separates transient Saved Swatches from reusable named Saved Palettes. 
 
 ## Layouts
 
-`horizontal` is the default wide layout. Use `vertical` for 300-450px editor panels, `verticalCompact` for a tighter tool panel, and `horizontalCompact` for a compact side-by-side presentation. Current Palette spans the component width in every layout; its detailed metadata table is intentionally omitted in both compact layouts.
+`horizontal` is the default wide layout. Use `vertical` for narrow panels with a centered wheel or `portrait` for a portrait workspace with Active Color beside the wheel. Use `verticalCompact` or `horizontalCompact` when the panel has less space. Current Palette spans the component width in every layout. The two compact layouts omit the metadata table.
 
 ## Palette Recipes
 
