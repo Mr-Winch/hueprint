@@ -1,4 +1,5 @@
 const { BrowserWindow, desktopCapturer, ipcMain, screen } = require('electron');
+const os = require('node:os');
 const path = require('node:path');
 const { setTimeout: delay } = require('node:timers/promises');
 
@@ -19,6 +20,38 @@ ipcMain.on('hueprint:screen-picked', (event, point) => {
     .map((channel) => channel.toString(16).padStart(2, '0')).join('');
   overlay.done(`#${hex.toUpperCase()}`);
 });
+
+function createProgressWindow({ workArea }) {
+  const width = 272;
+  const window = new BrowserWindow({
+    x: workArea.x + Math.round((workArea.width - width) / 2),
+    y: workArea.y + 18,
+    width,
+    height: 36,
+    title: 'Cuentagotas de HuePrint',
+    show: false,
+    frame: false,
+    skipTaskbar: true,
+    focusable: false,
+    resizable: false,
+    backgroundColor: '#16181c',
+  });
+  window.setAlwaysOnTop(true, 'screen-saver');
+  window.setIgnoreMouseEvents(true);
+  return window;
+}
+
+async function captureScreens(thumbnailSize) {
+  let timer;
+  try {
+    const deadline = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('La captura tardó demasiado. Vuelve a intentar el cuentagotas.')), 8000);
+    });
+    return await Promise.race([desktopCapturer.getSources({ types: ['screen'], thumbnailSize }), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function createOverlay(display, thumbnail, done) {
   const window = new BrowserWindow({
@@ -75,11 +108,19 @@ async function pickScreenColor(owner) {
       width: Math.max(...displays.map(({ size, scaleFactor }) => Math.round(size.width * scaleFactor))),
       height: Math.max(...displays.map(({ size, scaleFactor }) => Math.round(size.height * scaleFactor))),
     };
-    owner.hide();
+    const progress = createProgressWindow(screen.getDisplayNearestPoint(screen.getCursorScreenPoint()));
     try {
+      // Older versions of Windows render excluded windows as black in the screenshot.
+      const excludeFromCapture = process.platform === 'win32' && Number(os.release().split('.')[2]) >= 19041;
+      if (excludeFromCapture) progress.setContentProtection(true);
+      await progress.loadFile(samplePage, { hash: 'preparing' });
+      owner.hide();
+      if (excludeFromCapture) progress.showInactive();
+
       // Let Windows recomposite the desktop after hiding HuePrint.
       await delay(140);
-      const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize });
+      const sources = await captureScreens(thumbnailSize);
+      if (!excludeFromCapture) progress.showInactive();
       let done;
       const result = new Promise((resolve) => { done = resolve; });
       const windows = [];
@@ -89,6 +130,7 @@ async function pickScreenColor(owner) {
       }
       if (!windows.length) throw new Error('No se pudo capturar la pantalla. Vuelve a intentar el cuentagotas.');
       for (const window of windows) window.showInactive();
+      progress.destroy();
       const point = screen.getCursorScreenPoint();
       const current = windows.find((window) => {
         const { x, y, width, height } = window.getBounds();
@@ -106,6 +148,7 @@ async function pickScreenColor(owner) {
         screen.removeListener('display-metrics-changed', doneOnDisplayChange);
       }
     } finally {
+      if (!progress.isDestroyed()) progress.destroy();
       for (const overlay of Array.from(overlays.values())) {
         if (!overlay.window.isDestroyed()) overlay.window.destroy();
       }

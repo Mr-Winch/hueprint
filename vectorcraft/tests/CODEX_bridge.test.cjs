@@ -42,9 +42,18 @@ test('invalid color, target, and palette are rejected before making changes',asy
   for(const input of [{name:' ',colors:['#123456']},{name:'Test',colors:[]},{name:'Test',colors:['invalid']}]) await assert.rejects(ops.sendPalette(input));
 });
 test('palette goes in one undoable native command with deduplicated colors',async()=>{
-  const calls=[];const ops=createOperations(async(method,params)=>{calls.push({method,params});return {name:'HuePrint 2'};});
-  assert.deepEqual(await ops.sendPalette({name:' HuePrint ',colors:['#aabbcc','#AABBCC','#123456']}),{name:'HuePrint 2',count:2});
-  assert.deepEqual(calls,[{method:'engine.execute',params:{command:'swatch.newGroup',params:{name:'HuePrint',colors:['#AABBCC','#123456']}}}]);
+  const calls = [];
+  const ops = createOperations(async (method, params) => {
+    calls.push({method, params});
+    return params.command === 'swatch.list'
+      ? {groups:[], swatches:[]}
+      : {name:'HuePrint', swatches:['Blue', 'Ink']};
+  });
+  assert.deepEqual(await ops.sendPalette({name:' HuePrint ',colors:['#aabbcc','#AABBCC','#123456']}),{name:'HuePrint',count:2,created:true});
+  assert.deepEqual(calls,[
+    {method:'engine.execute',params:{command:'swatch.list',params:{}}},
+    {method:'engine.execute',params:{command:'swatch.newGroup',params:{name:'HuePrint',colors:['#AABBCC','#123456']}}},
+  ]);
 });
 test('the swatch catalog preserves native groups and filters out non-solid paints', async () => {
   const ops = createOperations(async (method, params) => {

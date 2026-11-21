@@ -191,7 +191,11 @@ export function App() {
           <label><span>Nombre de paleta</span><input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} /></label>
           <button type="button" className="primaryButton" disabled={unavailable || !status.document || !generated.length || !name.trim()} onClick={() => void action('Enviando paleta…', async () => {
             const result = await bridge!.sendPalette({ name, colors: generated.map((item) => item.hex) });
-            return `“${result.name}”: ${result.count} colores añadidos a Muestras.`;
+            if (!result.count) return `«${result.name}» ya contiene todos esos colores.`;
+            const quantity = `${result.count} ${result.count === 1 ? 'muestra' : 'muestras'}`;
+            return result.created
+              ? `Grupo «${result.name}» creado con ${quantity}.`
+              : `${quantity} ${result.count === 1 ? 'añadida' : 'añadidas'} a «${result.name}».`;
           })}>Enviar paleta actual</button>
           <button type="button" ref={importTrigger} className="swatchImportTrigger" popoverTarget="vectorcraft-swatch-options" disabled={unavailable || !status.document} onClick={(event) => {
             if (importOptions.current?.matches(':popover-open')) return;

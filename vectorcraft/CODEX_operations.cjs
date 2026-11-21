@@ -15,6 +15,29 @@ function selectedIds(inspection) {
 }
 function createOperations(request) {
   const execute = (command, params = {}) => request('engine.execute', {command, params});
+
+  async function missingColors(colors, swatches) {
+    const existingHex = new Set(swatches.map(({ hex }) => hex?.toUpperCase()));
+    const missing = colors.filter((hex) => !existingHex.has(hex));
+    const cmyk = new Set(swatches.filter(({ color }) => color?.model === 'cmyk')
+      .map(({ color }) => [color.c, color.m, color.y, color.k].join(',')));
+    if (!cmyk.size || !missing.length) return missing;
+
+    const document = await request('document.inspect', {depth:0, childLimit:0});
+    if (document.colorMode?.toLowerCase() !== 'cmyk') return missing;
+
+    // VectorCraft can display a different HEX after converting RGB to working CMYK.
+    const additions = [];
+    for (const color of missing) {
+      const converted = await execute('color.convert', {color, to:'cmyk'});
+      const key = converted.values.join(',');
+      if (cmyk.has(key)) continue;
+      cmyk.add(key);
+      additions.push(color);
+    }
+    return additions;
+  }
+
   return {
     async status() {
       const ui = await request('ui.inspect', {}, 2500);
@@ -42,10 +65,19 @@ function createOperations(request) {
       catch { throw new Error('El primer objeto seleccionado no tiene un color sólido de ' + (target === 'fill' ? 'relleno' : 'trazo') + '.'); }
     },
     async sendPalette(input) {
-      const palette = paletteInput(input);
-      // VectorCraft adds the entire group in one undo step and resolves duplicate names.
-      const result = await execute('swatch.newGroup', palette);
-      return {name:result.name, count:palette.colors.length};
+      const { name, colors } = paletteInput(input);
+      const catalog = await execute('swatch.list');
+      if (!catalog.groups.some((group) => group.name === name)) {
+        const result = await execute('swatch.newGroup', {name, colors});
+        return {name:result.name, count:result.swatches.length, created:true};
+      }
+
+      const swatches = catalog.swatches.filter((swatch) => swatch.group === name && swatch.kind === 'color');
+      const additions = await missingColors(colors, swatches);
+      if (!additions.length) return {name, count:0, created:false};
+
+      const result = await execute('swatch.new', {group:name, colors:additions});
+      return {name, count:result.names.length, created:false};
     },
     async readSwatches() {
       const result = await execute('swatch.list');

@@ -18,7 +18,7 @@ export interface VectorCraftBridge {
   pickScreenColor(): Promise<string | null>;
   applyColor(input: {color:string; target:'fill'|'stroke'}): Promise<{result:{objects:number}}>;
   readColor(target:'fill'|'stroke'): Promise<{color:string}>;
-  sendPalette(input:{name:string; colors:string[]}): Promise<{name:string; count:number}>;
+  sendPalette(input:{name:string; colors:string[]}): Promise<{name:string; count:number; created:boolean}>;
   readSwatches(): Promise<VectorCraftSwatchCatalog>;
 }
 declare global { interface Window {hueprintVectorCraft?: VectorCraftBridge;} }

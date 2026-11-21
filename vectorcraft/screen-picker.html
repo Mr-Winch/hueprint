@@ -8,7 +8,16 @@
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; cursor: crosshair; }
     img { position: fixed; width: 100%; height: 100%; inset: 0; pointer-events: none; }
     p { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); margin: 0; padding: 8px 13px; border-radius: 5px; background: #16181c; color: #fff; font: 13px "Segoe UI", sans-serif; pointer-events: none; }
+    #preparing { display: none; }
+    #preparing:target { display: flex; align-items: center; justify-content: center; gap: 8px; inset: 0; transform: none; }
+    #preparing:target ~ * { display: none; }
+    .spinner { width: 10px; height: 10px; border: 2px solid #596271; border-top-color: #c4defe; border-radius: 50%; animation: spin 800ms linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
   </style>
 </head>
-<body><img alt="" /><p>Haz clic en un color · Esc para cancelar</p></body>
+<body>
+  <p id="preparing" role="status"><span class="spinner" aria-hidden="true"></span>Preparando el cuentagotas…</p>
+  <p>Haz clic en un color · Esc para cancelar</p>
+</body>
 </html>
